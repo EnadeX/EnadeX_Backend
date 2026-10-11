@@ -3,6 +3,7 @@ import os
 import pandas as pd
 
 from educluster.educluster_config import (
+    ORIGEM_PADRAO,
     ESCALA_PERCEPCAO_PROVA,
     RANDOM_STATE,
     ROTULOS_PERCEPCAO_PROVA,
@@ -23,7 +24,7 @@ QUADRANTES = {
 }
 
 
-def preparar_dados_calibracao(origem: str = "local") -> pd.DataFrame:
+def preparar_dados_calibracao(origem: str = ORIGEM_PADRAO) -> pd.DataFrame:
     df = derivar_area(carregar_arq3(origem))
     base = df[df["NT_GER"].notna()].copy()
 
@@ -99,7 +100,7 @@ def medir_calibracao(df_classificado: pd.DataFrame) -> dict:
     return metricas
 
 
-def educluster_modelo_calibracao_prova(origem: str = "local") -> pd.DataFrame:
+def educluster_modelo_calibracao_prova(origem: str = ORIGEM_PADRAO) -> pd.DataFrame:
     print("[educluster] A3: calibracao entre percepcao da prova e desempenho real")
     df = classificar_calibracao(preparar_dados_calibracao(origem))
     perfil = perfilar_calibracao(df)

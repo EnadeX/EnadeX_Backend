@@ -6,6 +6,7 @@ from educluster.educluster_config import (
     K_MAXIMO,
     K_MINIMO,
     N_MINIMO_RESPONDENTES,
+    ORIGEM_PADRAO,
     ROTULOS_DIMENSAO,
 )
 from educluster.educluster_interpretacao import descrever
@@ -57,18 +58,18 @@ _cache_estudantes = {}
 _cache_calibracao = {}
 _cache_discursiva = {}
 
-ORIGEM = Query("local", pattern="^(local|supabase)$", description="Fonte dos dados")
+ORIGEM = Query(ORIGEM_PADRAO, pattern="^(local|supabase)$", description="Fonte dos dados")
 N_MINIMO = Query(N_MINIMO_RESPONDENTES, ge=1, le=500, description="Respondentes minimos por curso")
 K_OPCIONAL = Query(None, ge=K_MINIMO, le=K_MAXIMO, description="Reclusteriza em memoria com este k")
 
 
 def _traduzir_erro(erro: Exception):
-    if isinstance(erro, (ModuleNotFoundError, FileNotFoundError)):
+    if isinstance(erro, (ModuleNotFoundError, FileNotFoundError, ConnectionError)):
         raise HTTPException(
             status_code=503,
             detail=(
                 f"Fonte de dados indisponivel: {erro}. "
-                "Para origem=supabase instale as dependencias e configure util/..env "
+                "Para origem=supabase instale as dependencias e configure o .env na raiz do repositorio EnadeX "
                 "(SUPABASE_URL e SUPABASE_KEY). Para origem=local confira a pasta microdados/."
             ),
         )

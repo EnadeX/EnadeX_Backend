@@ -9,7 +9,7 @@ Projeto irmao de `multi_enade/`, com pipeline e dependencias proprias. Nao modif
 ```
 educluster/
   educluster_config.py       constantes, dimensoes do arq4, features, reprodutibilidade
-  educluster_dados.py        carga plugavel: microdados locais ou Supabase
+  educluster_dados.py        carga plugavel: Supabase (padrao) ou microdados locais
   educluster_preparo.py      limpeza da escala, derivacao de area, agregacao por curso
   educluster_endpoints.py    API FastAPI
   educluster_interpretacao.py  descricao automatica dos perfis via Gemini, com cache
@@ -19,6 +19,11 @@ educluster/
     mdl_calibracao_prova/      A3: percepcao da prova versus desempenho
     mdl_situacao_discursiva/   A4: desistencia versus erro conceitual
     mdl_dimensao_desempenho/   A8: qual dimensao percebida se associa ao desempenho
+    mdl_comparacao_tradicional/ Fase 6: artefato versus ranking por nota media
+  banco/
+    criar_tabelas_educluster.sql   cria as tabelas do EduCluster no Supabase
+    carga_supabase.py              sobe a base nacional do zip do INEP para o Supabase
+    verificar_ponta_a_ponta.py     confere banco, analises e modelos contra os resultados aprovados
 ```
 
 ## Analises implementadas
@@ -30,28 +35,43 @@ educluster/
 ## Decisoes de tratamento
 
 - **Escala do arq4**: os codigos 7 (nao sei responder) e 8 (nao se aplica) viram nulo. O codigo 6 e resposta valida (concordo totalmente) e e preservado
-- **Area do curso**: derivada de `DS_VT_GAB_OCE_FIN`, que tem 30 valores e mapeia 1 para 1 com o curso. Recupera o recorte por area sem depender do arq1
+- **Area do curso**: derivada de `DS_VT_GAB_OCE_FIN`, que tem 30 valores e mapeia 1 para 1 com o curso e com o `CO_GRUPO` do arq1
 - **Reprodutibilidade**: `random_state=42` e `n_init=10` em todo K-Means, `sample_size` explicito no silhouette do nivel estudante
 
 ## Como rodar
 
-Instalar dependencias e executar da raiz do repositorio (`EnadeX/`):
+Executar da raiz do repositorio (`EnadeX/`), com o `.env` (SUPABASE_URL e SUPABASE_KEY) na raiz:
 
 ```
 pip install -r educluster/requirements.txt
-PYTHONPATH=. python -m educluster.modelos.mdl_curso_percepcao.modelo_curso_percepcao
-PYTHONPATH=. python -m educluster.modelos.mdl_perfil_desempenho.modelo_perfil_desempenho
-```
-
-Subir a API:
-
-```
 PYTHONPATH=. python -m educluster.educluster_endpoints
+```
+
+A documentacao interativa fica em `http://localhost:8001/docs`. A primeira chamada baixa o arq3 e o arq4 do Supabase (cerca de 60 s); as seguintes usam o cache em memoria.
+
+Verificar se banco, analises e modelos continuam batendo com os resultados aprovados:
+
+```
+PYTHONPATH=. python -m educluster.banco.verificar_ponta_a_ponta
 ```
 
 ## Fonte de dados
 
-O parametro `origem` aceita `local` (le os `.txt` de `microdados/`, com cache em parquet) ou `supabase` (usa `consultar_dados` de `util/util_db.py`). O padrao e `local` porque o volume das tabelas no Supabase ainda nao foi conferido.
+O padrao e o Supabase, nas tabelas proprias do EduCluster:
+
+| Tabela | Conteudo | Linhas |
+|---|---|---|
+| `tbl_educluster_arq3_2021` | notas, presenca, gabarito do CE, percepcao da prova, situacao das discursivas | 489.866 |
+| `tbl_educluster_arq4_2021` | as 42 assertivas QE_I27 a QE_I68 | 489.866 |
+| `tbl_educluster_cursos_2021` | atributos do curso vindos do arq1 (IES, categoria, organizacao, grupo, modalidade, municipio, UF, regiao) | 7.997 |
+
+Sao a base nacional completa do ENADE 2021. As tabelas `tbl_arqN_2021` do grupo nao servem ao EduCluster: guardam so o recorte do MultiENADE (CC e SI do Norte e Nordeste) e sao esvaziadas e recarregadas pelos scripts de refino dele.
+
+Para recriar: rodar `banco/criar_tabelas_educluster.sql` no SQL Editor do Supabase e depois `PYTHONPATH=. python -m educluster.banco.carga_supabase` (le direto do zip do INEP em `~/Downloads/microdados_enade_2021.zip` ou do caminho em `EDUCLUSTER_ZIP_MICRODADOS`; `--substituir` recarrega tabelas ja preenchidas).
+
+A leitura busca faixas de 1.000 ids em paralelo, com novas tentativas automaticas, e confere se recebeu todas as linhas. Cada tabela e baixada uma unica vez por processo, mesmo com chamadas simultaneas.
+
+A origem pode ser trocada pela variavel de ambiente `EDUCLUSTER_ORIGEM` (`supabase` ou `local`) ou pelo parametro `origem` de cada rota. `local` le os `.txt` de `../microdados/microdados_Enade_2021_LGPD/2.DADOS/`.
 
 ## Rotas
 
@@ -69,7 +89,7 @@ Prefixo `/api/educluster`. Organizadas por recurso e granularidade, nao por anal
 | `GET /dimensoes` | catalogo | ODP, OPORT e INFRA com seus itens |
 | `GET /espacos-desempenho` | catalogo | Espacos de variaveis da A1 |
 
-Parametros gerais: `origem` (`local` ou `supabase`), `n_minimo`, `k` (reclusteriza em memoria).
+Parametros gerais: `origem` (`supabase`, padrao, ou `local`), `n_minimo`, `k` (reclusteriza em memoria).
 
 A A1 nao expoe colecao completa: seriam 51,2 MB para 354.899 estudantes. Expoe resumo e amostra.
 

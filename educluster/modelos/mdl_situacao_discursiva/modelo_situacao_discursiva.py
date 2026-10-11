@@ -3,6 +3,7 @@ import os
 import pandas as pd
 
 from educluster.educluster_config import (
+    ORIGEM_PADRAO,
     CODIGOS_ABANDONO,
     CODIGOS_SITUACAO_DISCURSIVA,
     SITUACAO_DISCURSIVAS,
@@ -20,7 +21,7 @@ PERFIS = {
 }
 
 
-def preparar_dados_situacao(origem: str = "local") -> pd.DataFrame:
+def preparar_dados_situacao(origem: str = ORIGEM_PADRAO) -> pd.DataFrame:
     df = derivar_area(carregar_arq3(origem))
     base = df[df["NT_GER"].notna()].copy()
 
@@ -112,7 +113,7 @@ def medir_situacao(df_classificado: pd.DataFrame) -> dict:
     return metricas
 
 
-def educluster_modelo_situacao_discursiva(origem: str = "local") -> pd.DataFrame:
+def educluster_modelo_situacao_discursiva(origem: str = ORIGEM_PADRAO) -> pd.DataFrame:
     print("[educluster] A4: desistencia versus erro conceitual nas questoes discursivas")
     base = preparar_dados_situacao(origem)
     distribuir_situacoes(base)
