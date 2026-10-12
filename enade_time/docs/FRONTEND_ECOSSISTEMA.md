@@ -12,7 +12,7 @@ da verdade do dashboard é a do `EnadeX_Frontend`.
 | Rotas e componentes | `EnadeX_Frontend/app/enade-time/` |
 | Cliente HTTP, tipos, hooks, utilitários | `EnadeX_Frontend/lib/enade-time/` |
 | Código compartilhado alterado | `app/page.tsx` (`href` e período `2005–2021` do card), `package.json` e `pnpm-lock.yaml` (+ `@tanstack/react-query`) |
-| Publicação | `master`, commits `b04118e` … `f3bcdaf` (12/10/2026), todos com prefixo `enade-time:` |
+| Publicação | `master`, commits `b04118e` … `3ebeff7` (12/10/2026), todos com prefixo `enade-time:` |
 
 Nada fora dessas pastas foi tocado: nem `app/layout.tsx`, nem `globals.css`, nem
 `components/`, nem os módulos dos colegas.
@@ -35,15 +35,16 @@ pnpm dev -p 3000                      # http://localhost:3000/enade-time
 - **Variável:** `NEXT_PUBLIC_ENADE_TIME_API_URL` (padrão `http://localhost:8002`).
   Com o router no `api_main.py` central, use `http://localhost:8000`. A variável é
   embutida no build: mudar o valor exige novo build.
-- **Dados:** as telas de análises precisam do banco local carregado
-  (`scripts/05` e `06`); as de benchmark só têm dados no Postgres de quem rodou o
-  experimento. Sem banco, o módulo mostra "Banco indisponível", sem derrubar nada.
+- **Dados:** a API lê do Postgres local (`scripts/05` e `06`, mais o experimento) ou,
+  com `--fonte supabase`, do Supabase do grupo, onde a base e o benchmark estão
+  publicados (`scripts/12`). O pill do módulo mostra qual fonte está em uso. Sem banco
+  acessível, o módulo mostra "Banco indisponível", sem derrubar nada.
 - `next dev` gera `AGENTS.md` e `CLAUDE.md` na raiz do frontend: são artefatos da
   ferramenta, não devem ser commitados.
 
 ## Contrato com a API
 
-O módulo consome 18 das 19 rotas GET de `/api/enade-time` (`/benchmark/campanhas`
+O módulo consome 19 das 20 rotas GET de `/api/enade-time` (`/benchmark/campanhas`
 existe e não é usada). Só o prefixo e a URL base mudaram em relação à SPA original;
 tipos e parâmetros são os mesmos de `api/schemas/`.
 
@@ -90,13 +91,13 @@ Rodada sobre o build de produção, com a campanha oficial `899faa82` no banco.
 |---|---|
 | `tsc --noEmit` no projeto inteiro | 0 erros (o `next build` do grupo não checa tipos) |
 | `next build` | passa, com todas as rotas `/enade-time/*` e sem erro de Suspense |
-| Códigos HTTP | 200 nas 12 páginas; 307 em `/enade-time/enade` e `/spd`; 404 do módulo em URL desconhecida e em id inválido |
-| Funcional no Chrome (`funcional.mjs`) | 55/55: dados, deep link, filtros sem rolar, abas, exportações CSV/SVG/Markdown, alerta de amostra, paginação, benchmark, 404, responsivo em 375/768/1280/1920 px sem rolagem horizontal, console sem erros |
+| Códigos HTTP | 200 nas 13 páginas; 307 em `/enade-time/enade` e `/spd`; 404 do módulo em URL desconhecida e em id inválido |
+| Funcional no Chrome (`funcional.mjs`) | 59/59: dados, deep link, filtros sem rolar, abas, exportações CSV/SVG/Markdown, alerta de amostra, paginação, benchmark, 404, responsivo em 375/768/1280/1920 px sem rolagem horizontal, console sem erros |
 | Degradação (`degradacao.mjs`) | 10/10: API parada, banco parado (503) e recuperação sem reiniciar, benchmark vazio |
-| Acessibilidade (`acessibilidade.mjs`) | axe-core (WCAG 2.0/2.1 A e AA e boas práticas): 0 violações em 12 páginas; 24 paradas de foco por teclado, todas com indicador visível |
-| Modo central simulado | mesma bateria de 55 com o router incluído num `FastAPI()` sem lifespan, CORS idêntico ao do `api_main.py`, na porta 8000 |
+| Acessibilidade (`acessibilidade.mjs`) | axe-core (WCAG 2.0/2.1 A e AA e boas práticas): 0 violações em 13 páginas; 24 paradas de foco por teclado, todas com indicador visível |
+| Modo central simulado | mesma bateria (então com 55 verificações, antes da página de custo de publicação) com o router incluído num `FastAPI()` sem lifespan, CORS idêntico ao do `api_main.py`, na porta 8000 |
 | Clone limpo | `pnpm install --frozen-lockfile` e `pnpm build` a partir dos commits |
-| Backend | 73 testes (`tests/test_router_ecossistema.py` cobre as 19 rotas, o 503 com CORS, a conexão morta e a recuperação) |
+| Backend | 120 testes, 1 pulado sem a chave pública do Supabase (`tests/test_router_ecossistema.py` cobre as 20 rotas, o 503 com CORS, a conexão morta e a recuperação) |
 
 Ruído esperado no console, vindo do layout raiz do grupo e não do módulo: os
 ícones `/icon*.png` e `/icon.svg` (a pasta `public/` não existe) e o script

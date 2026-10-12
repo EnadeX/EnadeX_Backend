@@ -24,8 +24,15 @@ python enade_time\scripts\07_validar_banco.py            # → BASE VALIDADA (24
 python enade_time\enade_time_rotas.py                    # API standalone na PORTA 8002
 ```
 
-Swagger: `http://localhost:8002/docs` — **19 endpoints read-only** sob
+Swagger: `http://localhost:8002/docs` — **20 endpoints read-only** sob
 `/api/enade-time/*` (health, dimensões, análises, benchmark).
+
+**Sem Docker:** a API também lê do Supabase do grupo, onde os dados estão publicados
+(`python enade_time\enade_time_rotas.py --fonte supabase`). Ela usa um papel
+**somente leitura** (`enade_time_reader`) por DSN próprio, na variável
+`ENADE_TIME_DB_URL_SUPABASE` do `.env` (nunca versionado). Quem quiser esse acesso pede a
+mim em privado; não existe senha no repositório. O `/health` informa `fonte`
+(`local`/`supabase`) e a data da última publicação.
 
 ### Para o líder: ligar ao `api_main.py` central (2 linhas)
 
@@ -52,8 +59,8 @@ O módulo **`/enade-time`** foi publicado no `EnadeX_Frontend` (somente em
 período do card na home e a dependência `@tanstack/react-query`). Ele fala com
 a API acima pela variável `NEXT_PUBLIC_ENADE_TIME_API_URL` (padrão
 `http://localhost:8002`; com o router no `api_main`, `http://localhost:8000`).
-Sem o banco do ENADE-Time ligado, o módulo mostra "Banco indisponível" — os dados
-de SPD só existem hoje no Postgres local de quem rodou o experimento. A SPA
+Sem banco acessível (local ou Supabase), o módulo mostra "Banco indisponível" e
+volta sozinho quando ele reaparece. A SPA
 original (Vite), em `enade_time/frontend/`, fica preservada como artefato do TCC.
 Detalhes e verificação: `enade_time/docs/FRONTEND_ECOSSISTEMA.md`.
 
@@ -74,27 +81,35 @@ Detalhes e verificação: `enade_time/docs/FRONTEND_ECOSSISTEMA.md`.
   Resultado-chave: melhor configuração **6 workers·crescente, 2,701× mediana**;
   a perda é decomposta em granularidade+escalonamento / contenção de CPU /
   overhead (`docs/RESULTADOS_BENCHMARK.md`, gerado do banco).
-- **Qualidade:** 73 testes pytest (`enade_time/tests`, pulados sem o Postgres
-  local), regressão "golden" das rotas, e `docs/geradores/verificar_numeros.py`
+- **Qualidade:** 120 testes pytest (`enade_time/tests`, os que dependem do banco
+  são pulados sem o Postgres local), regressão "golden" das rotas, e `docs/geradores/verificar_numeros.py`
   garante que **nenhum número** do documento/slides existe sem linha no banco.
 - Correção documentada de um bug real: o comparativo antigo usava "o sequencial
   mais recente" como baseline e misturou rodadas (`docs/DESIGN_LOG.md`, D13).
 
-## O que ainda vem (fases seguintes, já planejadas)
+## Publicado no Supabase (12/10) e o que ainda vem
 
-1. **Publicação no Supabase** com os nomes na convenção do grupo:
-   `tbl_enade_time_fato` (24.967 linhas, consumível por `consultar_dados`),
-   `tbl_enade_time_dim_*` e as views de benchmark.
-2. **`v_enade_time_curso_ano` (582 linhas)** — o *swap point* combinado com o
-   E-XplainENADE, com os MESMOS nomes de coluna do `load_raw()` do JP
-   (`NU_ANO, CO_CURSO, NT_GER, NT_FG, NT_CE, QT_ALUNOS, CO_GRUPO, CO_REGIAO,
-   TP_CATEGAD_BIN`): extensão longitudinal 2005–2017 para o recorte comum.
-3. ~~Router 100 % autocontido~~ — **feito em 12/10** (pool preguiçoso, 503 com
-   CORS sem banco; ver acima). Falta a proposta de `api_main.py` central de
-   referência para o líder.
-4. Medição do **custo de publicar na nuvem** (COPY local × COPY via pooler ×
-   upsert PostgREST) com o mesmo instrumental do benchmark.
-5. PR final para a `main` + evidências/screenshots atualizados.
+**Já está lá**, com os nomes na convenção do grupo (`tbl_enade_time_*`, `v_enade_time_*`;
+mesmos nomes no banco local), RLS ligada, leitura pública só de `SELECT` e `md5` linha a
+linha conferido contra o banco local:
+- `tbl_enade_time_fato` (24.967 linhas, consumível por `consultar_dados`) e as 7 dimensões;
+- `tbl_enade_time_benchmark_execucao`, `_etapa` e `_carga`, e as views de benchmark;
+- **`v_enade_time_curso_ano` (582 linhas)** — o *swap point* combinado com o
+  E-XplainENADE, com os MESMOS nomes de coluna do `load_raw()` do JP
+  (`NU_ANO, CO_CURSO, NT_GER, NT_FG, NT_CE, QT_ALUNOS, CO_GRUPO, CO_REGIAO,
+  TP_CATEGAD_BIN`): extensão longitudinal 2005–2017 para o recorte comum. A diferença
+  de definição de `QT_ALUNOS` (inscritos × presentes) está documentada na view.
+- O **custo de publicar** a base (COPY local × COPY pelo pooler, com controles que isolam
+  índices e chaves estrangeiras) foi medido e aparece em `/enade-time/spd/carga`. É uma
+  medição situada (uma rede, uma máquina, n = 10), não um speedup. O upsert pelo PostgREST
+  ainda não foi medido: precisa da `SUPABASE_URL` e da chave pública na máquina da medição.
+
+**Falta:**
+1. Contrato do swap point confirmado pelo JP (ver pedidos abaixo).
+2. Medir o upsert pelo PostgREST (`util_db` do grupo).
+3. PR da branch para a `main`, com as propostas em `enade_time/docs/PROPOSTAS_COMPARTILHADAS.md`
+   (arquivos fora de `enade_time/` que o líder pode adotar; nenhum foi alterado por mim).
+4. Router no `api_main` central: 2 linhas, acima. Falta a decisão do líder.
 
 ## Pedidos ao grupo
 
