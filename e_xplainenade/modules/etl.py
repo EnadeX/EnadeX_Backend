@@ -29,8 +29,16 @@ FONTE DE DADOS (2026-08-30): load_raw() lê os 13 arquivos exclusivamente do
 Supabase (tbl_arq1_2021 ... tbl_arq29_2021) via modules.supabase_client. Não
 há mais caminho local/offline — decisão do usuário de depender só do banco
 compartilhado do ecossistema EnadeX (ver DEVELOPMENT.md).
+
+PERFORMANCE (2026-08-30, reaplicada em 2026-09-21 — ver DEVELOPMENT.md): as 13
+buscas são feitas em PARALELO (ThreadPoolExecutor) — cada uma pagina ~26 vezes
+contra o Supabase (~8-15s), e em série isso levava mais de 2 minutos por
+chamada fria (medido: 123s). Em paralelo, o tempo total fica limitado pela
+busca mais lenta, não pela soma de todas. Cada busca também pede só as
+colunas realmente usadas (não mais "*"), reduzindo o payload.
 """
-from typing import List, Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -61,10 +69,35 @@ _ARQUIVOS_SIMPLES = [
     (29, ["QE_I23"],             ["QE_HORAS_ESTUDO"]),
 ]
 
+# Colunas brutas realmente necessárias por arquivo (evita pedir "*" do Supabase).
+_COLUNAS_ARQ1 = ["CO_CURSO", "CO_GRUPO", "CO_REGIAO_CURSO", "CO_CATEGAD"]
+_COLUNAS_ARQ3 = ["CO_CURSO", "NT_GER", "NT_FG", "NT_CE", "TP_PRES"]
 
-def _read_arq(n: int) -> pd.DataFrame:
+
+def _colunas_por_arquivo() -> Dict[int, List[str]]:
+    cols = {1: _COLUNAS_ARQ1, 3: _COLUNAS_ARQ3}
+    for n, cols_raw, _ in _ARQUIVOS_SIMPLES:
+        cols[n] = ["CO_CURSO"] + cols_raw
+    return cols
+
+
+def _read_arq(n: int, colunas: Optional[List[str]] = None) -> pd.DataFrame:
     from modules.supabase_client import fetch_table
-    return fetch_table(table_name(n))
+    columns = ",".join(colunas) if colunas else "*"
+    return fetch_table(table_name(n), columns=columns)
+
+
+def _read_todos_arquivos() -> Dict[int, pd.DataFrame]:
+    """Busca os 13 arquivos em paralelo (I/O-bound — cada um pagina contra o
+    Supabase independentemente dos outros, então rodar em série só soma
+    tempo de espera de rede à toa)."""
+    colunas_por_arquivo = _colunas_por_arquivo()
+    with ThreadPoolExecutor(max_workers=13) as pool:
+        futures = {
+            n: pool.submit(_read_arq, n, cols)
+            for n, cols in colunas_por_arquivo.items()
+        }
+        return {n: fut.result() for n, fut in futures.items()}
 
 
 def _preprocessar(df: pd.DataFrame) -> pd.DataFrame:
@@ -97,7 +130,9 @@ def load_raw(grupos: Optional[List[int]] = None) -> pd.DataFrame:
     """
     grupos = grupos or [4004, 4006]
 
-    a1 = _read_arq(1)
+    arquivos = _read_todos_arquivos()  # as 13 buscas rodam em paralelo aqui
+
+    a1 = arquivos[1]
     a1["CO_GRUPO"] = a1["CO_GRUPO"].astype(int)
     cursos_recorte = set(a1.loc[a1["CO_GRUPO"].isin(grupos), "CO_CURSO"])
 
@@ -106,7 +141,7 @@ def load_raw(grupos: Optional[List[int]] = None) -> pd.DataFrame:
 
     # ── arq3 — notas (Y) + peso (QT_ALUNOS = nº de presentes) ────────────────
     df3 = _preprocessar(
-        _restringir(_read_arq(3))[["CO_CURSO", "NT_GER", "NT_FG", "NT_CE", "TP_PRES"]]
+        _restringir(arquivos[3])[["CO_CURSO", "NT_GER", "NT_FG", "NT_CE", "TP_PRES"]]
     )
     df3 = df3[df3["TP_PRES"] == 555]
     df3 = df3[df3["NT_GER"].notna() & (df3["NT_GER"] > 0)]
@@ -129,7 +164,7 @@ def load_raw(grupos: Optional[List[int]] = None) -> pd.DataFrame:
 
     # ── Demais arquivos: uma pergunta cada, agregada por média/proporção ─────
     for n, cols_raw, cols_final in _ARQUIVOS_SIMPLES:
-        df = _preprocessar(_restringir(_read_arq(n))[["CO_CURSO"] + cols_raw])
+        df = _preprocessar(_restringir(arquivos[n])[["CO_CURSO"] + cols_raw])
         df = df.dropna(subset=cols_final)
         agg = df.groupby("CO_CURSO")[cols_final].mean().reset_index()
         base = base.merge(agg, on="CO_CURSO", how="inner")

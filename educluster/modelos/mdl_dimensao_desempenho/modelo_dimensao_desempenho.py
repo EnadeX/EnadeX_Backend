@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from educluster.educluster_config import DIMENSOES_ARQ4, N_MINIMO_RESPONDENTES, ROTULOS_DIMENSAO
+from educluster.educluster_config import ORIGEM_PADRAO, DIMENSOES_ARQ4, N_MINIMO_RESPONDENTES, ROTULOS_DIMENSAO
 from educluster.modelos.mdl_curso_percepcao.modelo_curso_percepcao import preparar_dados_curso_percepcao
 
 DIRETORIO_MODELO = os.path.dirname(os.path.abspath(__file__))
@@ -12,7 +12,7 @@ ALVOS = ["NT_FG", "NT_CE"]
 MINIMO_CURSOS_POR_AREA = 30
 
 
-def preparar_dados_dimensao(origem: str = "local", n_minimo: int = N_MINIMO_RESPONDENTES) -> pd.DataFrame:
+def preparar_dados_dimensao(origem: str = ORIGEM_PADRAO, n_minimo: int = N_MINIMO_RESPONDENTES) -> pd.DataFrame:
     return preparar_dados_curso_percepcao(origem, n_minimo)
 
 
@@ -66,7 +66,7 @@ def ranquear_dimensoes(tabela_areas: pd.DataFrame) -> dict:
 
 
 def educluster_modelo_dimensao_desempenho(
-    origem: str = "local",
+    origem: str = ORIGEM_PADRAO,
     n_minimo: int = N_MINIMO_RESPONDENTES,
     alvo: str = "NT_CE",
 ) -> dict:

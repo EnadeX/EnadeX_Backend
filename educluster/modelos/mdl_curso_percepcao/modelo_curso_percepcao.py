@@ -9,6 +9,7 @@ from sklearn.metrics import adjusted_rand_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 from educluster.educluster_config import (
+    ORIGEM_PADRAO,
     FEATURES_A6,
     K_MAXIMO,
     K_MINIMO,
@@ -26,7 +27,7 @@ ARQ_KMEANS = "kmeans_curso_percepcao.joblib"
 ARQ_PCA = "pca_curso_percepcao.joblib"
 
 
-def preparar_dados_curso_percepcao(origem: str = "local", n_minimo: int = N_MINIMO_RESPONDENTES) -> pd.DataFrame:
+def preparar_dados_curso_percepcao(origem: str = ORIGEM_PADRAO, n_minimo: int = N_MINIMO_RESPONDENTES) -> pd.DataFrame:
     return montar_base_curso(carregar_arq3(origem), carregar_arq4(origem), n_minimo)
 
 
@@ -209,7 +210,7 @@ def comparar_estabilidade_por_k(df_base: pd.DataFrame, k_minimo: int = K_MINIMO,
 
 
 def educluster_modelo_curso_percepcao(
-    origem: str = "local",
+    origem: str = ORIGEM_PADRAO,
     n_minimo: int = N_MINIMO_RESPONDENTES,
     num_clusters: int = None,
     flag_exe_treino: bool = False,

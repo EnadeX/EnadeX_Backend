@@ -1,3 +1,7 @@
 .env
 *.png
 .idea/
+
+# Microdados brutos do INEP (centenas de MB) — baixados localmente, nunca versionados.
+multi_enade/dados_brutos/*.txt
+multi_enade/dados_brutos/*.csv

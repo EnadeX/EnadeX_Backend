@@ -9,6 +9,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 from educluster.educluster_config import (
+    ORIGEM_PADRAO,
     AMOSTRA_SILHOUETTE,
     ESPACOS_PERFIL_DESEMPENHO,
     K_MAXIMO,
@@ -28,7 +29,7 @@ ARQ_KMEANS = "kmeans_perfil_desempenho.joblib"
 ARQ_PCA = "pca_perfil_desempenho.joblib"
 
 
-def preparar_dados_perfil_desempenho(origem: str = "local", espaco: str = "objetivo_discursivo") -> pd.DataFrame:
+def preparar_dados_perfil_desempenho(origem: str = ORIGEM_PADRAO, espaco: str = "objetivo_discursivo") -> pd.DataFrame:
     colunas = ESPACOS_PERFIL_DESEMPENHO[espaco]
     df = carregar_arq3(origem)
     base = df[colunas].dropna(subset=colunas)
@@ -190,7 +191,7 @@ def amostrar_para_plotagem(df_resultado: pd.DataFrame, n: int = 5000) -> pd.Data
 
 
 def educluster_modelo_perfil_desempenho(
-    origem: str = "local",
+    origem: str = ORIGEM_PADRAO,
     espaco: str = "objetivo_discursivo",
     num_clusters: int = None,
     flag_exe_treino: bool = False,

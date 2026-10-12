@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 RAIZ_PROJETO = Path(__file__).resolve().parent.parent
@@ -6,6 +7,8 @@ DIR_MICRODADOS = RAIZ_TCC / "microdados" / "microdados_Enade_2021_LGPD" / "2.DAD
 DIR_CACHE = RAIZ_PROJETO / "educluster" / ".cache"
 
 ANO_EDICAO = 2021
+
+ORIGEM_PADRAO = os.getenv("EDUCLUSTER_ORIGEM", "supabase")
 
 RANDOM_STATE = 42
 N_INIT = 10
@@ -69,7 +72,17 @@ COLS_ARQ4_CURSO = ["CO_CURSO"] + ITENS_ARQ4
 FEATURES_A6 = ["NT_FG", "NT_CE", "tx_presenca", "ODP", "OPORT", "INFRA"]
 FEATURES_A6_RELATIVAS = ["NT_FG_z", "NT_CE_z", "tx_presenca", "ODP", "OPORT", "INFRA"]
 
-TABELAS_SUPABASE = {3: "tbl_arq3_2021", 4: "tbl_arq4_2021"}
+TABELAS_SUPABASE = {3: "tbl_educluster_arq3_2021", 4: "tbl_educluster_arq4_2021"}
+TABELA_CURSOS_SUPABASE = "tbl_educluster_cursos_2021"
+SUPABASE_PAGINA = 1000
+SUPABASE_PARALELISMO = 8
+
+CAMINHO_ZIP_MICRODADOS = Path(os.getenv("EDUCLUSTER_ZIP_MICRODADOS", Path.home() / "Downloads" / "microdados_enade_2021.zip"))
+PASTA_DADOS_NO_ZIP = "microdados_Enade_2021_LGPD/2.DADOS"
+ATRIBUTOS_CURSO = [
+    "CO_IES", "CO_CATEGAD", "CO_ORGACAD", "CO_GRUPO",
+    "CO_MODALIDADE", "CO_MUNIC_CURSO", "CO_UF_CURSO", "CO_REGIAO_CURSO",
+]
 
 ROTULOS_DIMENSAO = {
     "ODP": "Organizacao Didatico Pedagogica",

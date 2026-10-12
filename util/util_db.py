@@ -3,6 +3,7 @@ from pandas import DataFrame
 import pandas as pd
 import warnings
 import dotenv
+import json
 import os
 
 # Silenciando avisos desnecessários para manter seu console limpo
@@ -84,25 +85,22 @@ def upsert_supabase(dataf: pd.DataFrame, nome_tabela: str, url_conexao: str, key
         print("O DataFrame está vazio.")
         return True
 
-    try:
-        # 1. Inicializa o cliente do Supabase
-        supabase: Client = create_client(url_conexao, key_conexao)
+    # 1. Inicializa o cliente do Supabase
+    supabase: Client = create_client(url_conexao, key_conexao)
 
-        # 2. Prepara o Pandas para a API do Supabase (Substitui NaN por None, pois JSON não aceita NaN)
-        df_limpo = dataf.where(pd.notnull(dataf), None)
+    # 2. Prepara o Pandas para a API do Supabase. IMPORTANTE: dataf.where(...,
+    # None) NÃO funciona em colunas float64 — o pandas converte o None de
+    # volta para NaN por causa do dtype da coluna, e NaN não é JSON válido
+    # (gera "Out of range float values are not JSON compliant: nan"). to_json
+    # já serializa NaN/NaT como null corretamente, então fazemos o round-trip
+    # por JSON em vez de to_dict() direto.
+    dados_lote = json.loads(dataf.to_json(orient='records', date_format='iso'))
 
-        # 3. Converte o DataFrame para uma lista de dicionários (formato exigido)
-        dados_lote = df_limpo.to_dict(orient='records')
+    # 3. O Upsert nativo: Ele descobre a chave primária sozinho e resolve os conflitos
+    resposta = supabase.table(nome_tabela).upsert(dados_lote).execute()
 
-        # 4. O Upsert nativo: Ele descobre a chave primária sozinho e resolve os conflitos
-        resposta = supabase.table(nome_tabela).upsert(dados_lote).execute()
-
-        print(f"Sucesso! {len(resposta.data)} linha(s) processada(s) na tabela '{nome_tabela}'.")
-        return True
-
-    except Exception as e:
-        print(f"Ocorreu um erro na função (upsert_supabase): {e}")
-        return False
+    print(f"Sucesso! {len(resposta.data)} linha(s) processada(s) na tabela '{nome_tabela}'.")
+    return True
 
 
 def truncar_tabela_supabase(nome_tabela: str, url_conexao: str, key_conexao: str) -> bool:

@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.preprocessing import StandardScaler
 
-from educluster.educluster_config import DIMENSOES_ARQ4, FEATURES_A6, N_MINIMO_RESPONDENTES, RANDOM_STATE
+from educluster.educluster_config import ORIGEM_PADRAO, DIMENSOES_ARQ4, FEATURES_A6, N_MINIMO_RESPONDENTES, RANDOM_STATE
 from educluster.modelos.mdl_curso_percepcao.modelo_curso_percepcao import (
     aplicar_clusters,
     preparar_dados_curso_percepcao,
@@ -127,7 +127,7 @@ def resumir_ganho(comparacao: dict, informacao: dict, total_pares: int) -> dict:
 
 
 def educluster_modelo_comparacao_tradicional(
-    origem: str = "local",
+    origem: str = ORIGEM_PADRAO,
     n_minimo: int = N_MINIMO_RESPONDENTES,
     tolerancia: float = 0.5,
 ) -> dict:

@@ -56,8 +56,9 @@ def build_hypothesis(
     _interactions = interactions or []
 
     if df is not None:
-        missing = [v for v in [y] + x_vars if v not in df.columns]
+        vars_interacoes = [v for par in _interactions for v in par]
+        missing = [v for v in [y] + x_vars + vars_interacoes if v not in df.columns]
         if missing:
-            raise ValueError(f"Variáveis não encontradas no DataFrame: {missing}")
+            raise ValueError(f"Variáveis não encontradas no DataFrame: {sorted(set(missing))}")
 
     return HypothesisConfig(y=y, x_vars=x_vars, interactions=_interactions)

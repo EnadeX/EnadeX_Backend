@@ -15,7 +15,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 
-_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"  # modules/ -> E-XplainENADE/ -> EnadeX/
+_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"  # modules/ -> e_xplainenade/ -> EnadeX/
 
 _env_loaded = False
 
@@ -66,11 +66,14 @@ def fetch_table(
     Normaliza todo valor não-nulo para string, coluna a coluna: o restante do
     pipeline (modules.loader.preprocess) foi escrito para ler os .txt brutos do
     INEP com dtype=str (ex: letras 'A'..'H' do questionário, mapeadas para
-    inteiro via _LETTER_TO_INT). Como as 13 tabelas ainda não têm dados reais
-    no Supabase, não é possível confirmar hoje como o Postgres vai tipar cada
-    coluna quando o usuário subir os arquivos — esta normalização é uma
-    suposição defensiva para que o pipeline se comporte da mesma forma
-    independente disso. Ver DEVELOPMENT.md para o registro dessa decisão.
+    inteiro via _LETTER_TO_INT). As 13 tabelas foram populadas com as colunas
+    tipadas como `text` (decisão registrada no DEVELOPMENT.md, 2026-08-30, ver
+    Supabase/criar_tabelas_faltantes.sql) — a normalização aqui garante que o
+    pipeline se comporte da mesma forma mesmo que isso mude no futuro.
+
+    Chamada por até 13 threads em paralelo (ver modules/etl.py::load_raw()) —
+    cada chamada cria seu próprio client via _client(), sem estado
+    compartilhado entre threads.
     """
     client = _client()
     registros: List[dict] = []

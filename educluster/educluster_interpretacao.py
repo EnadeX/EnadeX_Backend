@@ -3,7 +3,11 @@ import json
 import os
 from pathlib import Path
 
-from educluster.educluster_config import DIR_CACHE, MODELO_GEMINI
+from dotenv import load_dotenv
+
+from educluster.educluster_config import DIR_CACHE, MODELO_GEMINI, RAIZ_PROJETO
+
+load_dotenv(RAIZ_PROJETO / ".env")
 
 DIR_DESCRICOES = DIR_CACHE / "descricoes"
 

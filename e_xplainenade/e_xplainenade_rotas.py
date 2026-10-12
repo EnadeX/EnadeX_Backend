@@ -20,7 +20,7 @@ from typing import Any, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from config.variable_map import CURSO_OPTS, IES_OPTS, X_CATEGORIAS, X_OPTS, Y_OPTS
 from modules import loader
@@ -38,8 +38,8 @@ router = APIRouter(prefix="/api/e-xplainenade", tags=["E-XplainENADE"])
 
 
 class HipoteseRequest(BaseModel):
-    y: str
-    x_vars: List[str]
+    y: str = Field(min_length=1)
+    x_vars: List[str] = Field(min_length=1)
     interactions: List[Tuple[str, str]] = []
     grupos: Optional[List[int]] = None
     ies_filter: Optional[List[int]] = None
@@ -199,8 +199,37 @@ def relatorio(req: HipoteseRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    from fastapi import FastAPI
+    from contextlib import asynccontextmanager
 
-    app = FastAPI(title="E-XplainENADE")
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+
+    @asynccontextmanager
+    async def _lifespan(app: FastAPI):
+        # A primeira consulta ao Supabase é a mais cara (13 tabelas paginadas,
+        # ~10s mesmo em paralelo — ver modules/etl.py). Aquecendo no startup,
+        # o primeiro request de um usuário real não paga esse custo.
+        from modules import loader
+        try:
+            loader.get_dataset_from_supabase()
+        except RuntimeError:
+            pass  # tabelas podem não estar prontas ainda — não impede o boot
+        yield
+
+    app = FastAPI(title="E-XplainENADE", lifespan=_lifespan)
+
+    # CORS: sem isso, qualquer frontend rodando em outra origem (localhost:3000,
+    # domínio de produção, etc.) tem as chamadas bloqueadas pelo navegador.
+    # "*" é só para teste local — quando o frontend real existir, restringir
+    # allow_origins à(s) origem(ns) dele. O mesmo precisa ser configurado no
+    # api_main.py central quando ele existir (middleware é do FastAPI(), não
+    # do APIRouter — incluir este router ali não herda esta configuração).
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.include_router(router)
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8003)
