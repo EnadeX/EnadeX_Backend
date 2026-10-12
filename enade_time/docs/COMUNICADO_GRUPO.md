@@ -1,6 +1,6 @@
 # ENADE-Time Distribuído entrou no EnadeX — o que chegou e o que vem
 
-**De:** Lucas Eduardo Tavares Costa · **Data:** 02/09/2026
+**De:** Lucas Eduardo Tavares Costa · **Data:** 02/09/2026 · **Atualizado:** 12/10/2026
 **Branch:** `enade-time/migracao` → pasta **`enade_time/`** (nada fora dela foi alterado)
 
 ---
@@ -10,7 +10,8 @@
 O Projeto 4 do ecossistema (Critério B, Módulos 1 e 3): a **base longitudinal do
 ENADE 2005–2021** para Computação no Norte/Nordeste (24.967 inscrições =
 **582 cursos-ano**, a unidade analítica), o **experimento de processamento
-paralelo** da disciplina de SPD e o **dashboard React** que exibe tudo.
+paralelo** da disciplina de SPD e o **dashboard** (módulo `/enade-time` do
+`EnadeX_Frontend`, em Next.js) que exibe tudo.
 
 ## Como rodar (da raiz do EnadeX, como o educluster)
 
@@ -24,12 +25,37 @@ python enade_time\enade_time_rotas.py                    # API standalone na POR
 ```
 
 Swagger: `http://localhost:8002/docs` — **19 endpoints read-only** sob
-`/api/enade-time/*` (health, dimensões, análises, benchmark). Para o
-`api_main.py` central: `from enade_time.enade_time_rotas import router`
-(o docstring explica o ciclo de vida do pool de conexões).
+`/api/enade-time/*` (health, dimensões, análises, benchmark).
 
-Portas combinadas: 8000 = multi_enade · 8001 = educluster/E-XplainENADE ·
-**8002 = enade_time**.
+### Para o líder: ligar ao `api_main.py` central (2 linhas)
+
+```python
+from enade_time.enade_time_rotas import router as enade_time_router
+app.include_router(enade_time_router)
+```
+
+O router é autocontido: **não precisa de lifespan**. O pool de conexões nasce na
+primeira requisição e, se o Postgres do ENADE-Time estiver fora, as rotas
+respondem **503 com os cabeçalhos CORS** — a API central continua de pé e as
+rotas dos outros subprojetos não são afetadas. Só falta acrescentar
+`psycopg2-binary`, `pydantic-settings` e `uvicorn` ao `requirements.txt` da raiz.
+(Atenção: a linha `# app.include_router(enade_time_router)` comentada hoje no
+`api_main.py` dá `NameError` se for apenas descomentada — falta o import acima.)
+
+Portas combinadas: 8000 = api_main · 8001 = educluster · **8002 = enade_time** ·
+8003 = e_xplainenade.
+
+## Dashboard: já está no frontend do grupo
+
+O módulo **`/enade-time`** foi publicado no `EnadeX_Frontend` (somente em
+`app/enade-time/` e `lib/enade-time/`; no código compartilhado só o `href` e o
+período do card na home e a dependência `@tanstack/react-query`). Ele fala com
+a API acima pela variável `NEXT_PUBLIC_ENADE_TIME_API_URL` (padrão
+`http://localhost:8002`; com o router no `api_main`, `http://localhost:8000`).
+Sem o banco do ENADE-Time ligado, o módulo mostra "Banco indisponível" — os dados
+de SPD só existem hoje no Postgres local de quem rodou o experimento. A SPA
+original (Vite), em `enade_time/frontend/`, fica preservada como artefato do TCC.
+Detalhes e verificação: `enade_time/docs/FRONTEND_ECOSSISTEMA.md`.
 
 ## O que foi entregue nesta branch
 
@@ -48,7 +74,7 @@ Portas combinadas: 8000 = multi_enade · 8001 = educluster/E-XplainENADE ·
   Resultado-chave: melhor configuração **6 workers·crescente, 2,701× mediana**;
   a perda é decomposta em granularidade+escalonamento / contenção de CPU /
   overhead (`docs/RESULTADOS_BENCHMARK.md`, gerado do banco).
-- **Qualidade:** 59 testes pytest (`enade_time/tests`, pulados sem o Postgres
+- **Qualidade:** 73 testes pytest (`enade_time/tests`, pulados sem o Postgres
   local), regressão "golden" das rotas, e `docs/geradores/verificar_numeros.py`
   garante que **nenhum número** do documento/slides existe sem linha no banco.
 - Correção documentada de um bug real: o comparativo antigo usava "o sequencial
@@ -63,8 +89,9 @@ Portas combinadas: 8000 = multi_enade · 8001 = educluster/E-XplainENADE ·
    E-XplainENADE, com os MESMOS nomes de coluna do `load_raw()` do JP
    (`NU_ANO, CO_CURSO, NT_GER, NT_FG, NT_CE, QT_ALUNOS, CO_GRUPO, CO_REGIAO,
    TP_CATEGAD_BIN`): extensão longitudinal 2005–2017 para o recorte comum.
-3. Router 100 % autocontido (pool inicializado na 1ª requisição) + proposta de
-   `api_main.py` central de referência para o líder.
+3. ~~Router 100 % autocontido~~ — **feito em 12/10** (pool preguiçoso, 503 com
+   CORS sem banco; ver acima). Falta a proposta de `api_main.py` central de
+   referência para o líder.
 4. Medição do **custo de publicar na nuvem** (COPY local × COPY via pooler ×
    upsert PostgREST) com o mesmo instrumental do benchmark.
 5. PR final para a `main` + evidências/screenshots atualizados.

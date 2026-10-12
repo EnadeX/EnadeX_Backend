@@ -105,10 +105,16 @@ Resultados e leitura: [`RESULTADOS_BENCHMARK.md`](RESULTADOS_BENCHMARK.md)
 ### Opção A — no host, com hot reload (recomendada para desenvolver)
 
 ```powershell
-# venv já ativo
-pip install -r api\requirements.txt      # primeira vez apenas
-python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+# da raiz do EnadeX, venv já ativo
+$env:PYTHONPATH='.'
+pip install -r enade_time\requirements.txt   # primeira vez apenas
+python enade_time\enade_time_rotas.py        # API standalone em http://localhost:8002
 ```
+
+> As URLs desta seção que citam a porta 8000 e o prefixo `/api/` são da API
+> legada (`enade_time.api.main`, usada pela SPA Vite e pelos testes). No
+> ecossistema a API é a de cima: porta **8002**, prefixo **`/api/enade-time`**
+> (ex.: `http://localhost:8002/api/enade-time/health`).
 
 ### Opção B — em container (Fase 5)
 
@@ -138,6 +144,19 @@ URLs úteis:
 ---
 
 ## 4. Subir o frontend (em outro terminal)
+
+### Dashboard canônico: módulo `/enade-time` do `EnadeX_Frontend`
+
+```powershell
+cd C:\Projetos\EnadeX_Frontend
+pnpm install --frozen-lockfile           # primeira vez apenas (pnpm 12.3.4)
+pnpm dev -p 3000                         # http://localhost:3000/enade-time
+```
+
+Use sempre a porta 3000: é a única origem liberada no CORS da API. Detalhes,
+variável de ambiente e verificação em `docs/FRONTEND_ECOSSISTEMA.md`.
+
+### SPA original (Vite) — artefato do TCC
 
 ```powershell
 cd C:\Projetos\ENADE\frontend

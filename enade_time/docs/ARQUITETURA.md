@@ -125,6 +125,12 @@ Hierarquia: **campanha** (1 por `10 --oficial`) → **suíte** = repetição
   adicionaria complexidade sem ganho. SQL explícito é mais auditável
   para um projeto acadêmico.
 
+> **Atualização (12/10/2026):** o dashboard canônico é hoje o módulo
+> `/enade-time` do `EnadeX_Frontend` (Next.js 16 + TanStack Query + Recharts), no
+> repositório de frontend do grupo. A SPA React + Vite descrita abaixo foi a
+> implementação original, validada no TCC, e permanece em `frontend/` como
+> artefato. As justificativas a seguir valem para ela.
+
 ### Por que React + Vite?
 
 - **Vite** entrega HMR rápido e build pequeno; sem a complexidade do

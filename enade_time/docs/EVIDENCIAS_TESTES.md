@@ -138,6 +138,11 @@ pytest -q
 
 ## 4. Fase 4 — frontend
 
+> As evidências desta seção e da 5 são da SPA original (Vite, `frontend/`). O
+> mesmo dashboard, portado para o `EnadeX_Frontend`, foi verificado com
+> checagens automatizadas no navegador — ver `docs/FRONTEND_ECOSSISTEMA.md` e
+> `tools/e2e_frontend/`.
+
 ### 4.1 Visão geral
 
 **URL:** http://localhost:5173

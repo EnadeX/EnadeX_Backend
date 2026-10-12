@@ -66,7 +66,8 @@ para visualização longitudinal e dos resultados do experimento de paralelismo.
 | Banco de dados | PostgreSQL 16 (Docker Compose) |
 | Orquestração local | Docker Compose |
 | API | FastAPI + Pydantic v2 + psycopg2 (ThreadedConnectionPool) |
-| Frontend | React 18 + TypeScript + Vite |
+| Dashboard (canônico) | Next.js 16 (App Router) + TypeScript — módulo `/enade-time` do `EnadeX_Frontend` |
+| Dashboard (artefato do TCC) | SPA React 18 + TypeScript + Vite, em `frontend/` |
 | Cache HTTP/estado | TanStack Query 5 |
 | Gráficos | Recharts |
 | Estilo | Tailwind CSS |
@@ -116,7 +117,8 @@ C:\Projetos\ENADE\
 │   ├── dependencies.py
 │   ├── requirements.txt
 │   ├── routers/  repositories/  schemas/
-├── frontend/                  ← Dashboard React/Vite (Fase 4)
+├── frontend/                  ← SPA React/Vite original (artefato do TCC; o dashboard canônico
+│                                está em EnadeX_Frontend/app/enade-time)
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── tailwind.config.ts
@@ -157,13 +159,16 @@ python scripts\07_validar_banco.py
 
 ### 3. Subir a API (FastAPI)
 
-No host, com hot reload:
+Da raiz do EnadeX, no host (porta 8002):
 
 ```powershell
-# venv já ativo
-pip install -r api\requirements.txt   # primeira vez apenas
-python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+$env:PYTHONPATH='.'
+pip install -r enade_time\requirements.txt   # primeira vez apenas
+python enade_time\enade_time_rotas.py
 ```
+
+O pool de conexões é criado na primeira requisição; com o Postgres fora do ar as
+rotas respondem 503 (com CORS) e voltam sozinhas quando o banco volta.
 
 Ou em container (sobe banco + API de uma vez):
 
@@ -172,6 +177,20 @@ docker compose --profile api up -d --build
 ```
 
 ### 4. Subir o frontend (em outro terminal)
+
+**Dashboard canônico** — módulo `/enade-time` do `EnadeX_Frontend` (Next.js):
+
+```powershell
+cd C:\Projetos\EnadeX_Frontend
+pnpm install --frozen-lockfile    # primeira vez apenas (pnpm 12.3.4)
+pnpm dev -p 3000                  # http://localhost:3000/enade-time
+```
+
+A API padrão é `http://localhost:8002`; para outra URL, defina
+`NEXT_PUBLIC_ENADE_TIME_API_URL` antes do build/dev. Detalhes em
+`docs/FRONTEND_ECOSSISTEMA.md`.
+
+**SPA original (Vite)** — mantida como artefato do TCC:
 
 ```powershell
 cd C:\Projetos\ENADE\frontend
@@ -191,11 +210,11 @@ npm run preview -- --host 0.0.0.0 --port 3000
 
 | Recurso | URL |
 |---|---|
-| API (FastAPI) | http://localhost:8000 |
-| Swagger UI | http://localhost:8000/docs |
-| Health da API | http://localhost:8000/api/health |
-| Frontend (dev) | http://localhost:5173 |
-| Frontend (preview/build) | http://localhost:3000 |
+| API (FastAPI, standalone) | http://localhost:8002 |
+| Swagger UI | http://localhost:8002/docs |
+| Health da API | http://localhost:8002/api/enade-time/health |
+| Dashboard (EnadeX_Frontend) | http://localhost:3000/enade-time |
+| SPA original Vite (dev) | http://localhost:5173 |
 | PostgreSQL | localhost:5432 (db `enade_db`, user `enade_user`) |
 
 ---

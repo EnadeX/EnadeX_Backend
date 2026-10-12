@@ -71,19 +71,22 @@ df = pd.read_csv(
 - Indicado para projetos que rodam ETL/estatística offline.
 
 ### 2.2 Via API REST (read-only) — recomendada para dashboards
-Base URL local: `http://localhost:8000`. Endpoints úteis para outros projetos:
+Base URL local: `http://localhost:8002/api/enade-time` (API standalone; com o
+router no `api_main.py` central, `http://localhost:8000/api/enade-time`).
+Endpoints úteis para outros projetos (caminhos relativos à base):
 
 | Endpoint | Uso |
 |---|---|
-| `GET /api/health` | Verificar disponibilidade |
-| `GET /api/dim/*` | Dimensões (regiões, UFs, anos, grupos, categorias…) |
-| `GET /api/analises/resumo-anual` | Série por ano (média FG/GER/CE + n), aceita filtros |
-| `GET /api/analises/resumo-regiao` / `resumo-uf` / `resumo-ies` | Agregações |
-| `GET /api/analises/registros` | Registros paginados (3 notas) |
+| `GET /health` | Verificar disponibilidade (503 quando o banco está fora) |
+| `GET /dim/*` | Dimensões (regiões, UFs, anos, grupos, categorias…) |
+| `GET /analises/resumo-anual` | Série por ano (média FG/GER/CE + n), aceita filtros |
+| `GET /analises/resumo-regiao` / `resumo-uf` / `resumo-ies` | Agregações |
+| `GET /analises/registros` | Registros paginados (3 notas) |
 
 Filtros combináveis (AND): `nu_ano, co_regiao, co_uf, co_ies, co_grupo,
 co_modalidade, co_categad, co_orgacad`. A API é **somente leitura** (sem
-POST/PUT/DELETE). Contrato detalhado: Swagger em `http://localhost:8000/docs`.
+POST/PUT/DELETE). Contrato detalhado: Swagger em `http://localhost:8002/docs`. O consumidor de
+referência é o módulo `/enade-time` do `EnadeX_Frontend`.
 
 ### 2.4 Supabase — contrato do ecossistema EnadeX (em implantação, DESIGN_LOG D11/D15)
 
@@ -99,7 +102,7 @@ renomeada para a convenção do grupo, com leitura por
 | `v_enade_time_curso_ano` | **curso × ano** | **582** | colunas com os nomes do `load_raw()` do E-XplainENADE: `"NU_ANO", "CO_CURSO", "NT_GER", "NT_FG", "NT_CE", "QT_ALUNOS", "CO_GRUPO", "CO_REGIAO", "TP_CATEGAD_BIN"`; `QT_ALUNOS` = inscritos (não `TP_PRES == 555`) — documentado em `COMMENT ON COLUMN` |
 | `tbl_enade_time_benchmark_*`, `v_enade_time_benchmark_*` | execução / etapa / agregados | — | resultados do experimento de SPD |
 
-O swap point registrado em `E-XplainENADE/modules/etl.py` ("quando o
+O swap point registrado em `e_xplainenade/modules/etl.py` ("quando o
 ENADE-Time (Lucas) entregar uma base normalizada equivalente…") é atendido
 como **extensão longitudinal** (2005–2017 para os 82 cursos do recorte), não
 como substituição: o recorte do E-XplainENADE (753 cursos, CC+SI, Brasil,

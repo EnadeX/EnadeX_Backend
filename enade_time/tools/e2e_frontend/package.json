@@ -1,0 +1,15 @@
+{
+  "name": "enade-time-e2e-frontend",
+  "private": true,
+  "type": "module",
+  "description": "Verificações no navegador do módulo /enade-time do EnadeX_Frontend (funcional, degradação e acessibilidade).",
+  "scripts": {
+    "funcional": "node funcional.mjs",
+    "degradacao": "node degradacao.mjs",
+    "acessibilidade": "node acessibilidade.mjs"
+  },
+  "dependencies": {
+    "axe-core": "^4.10.0",
+    "playwright-core": "^1.50.0"
+  }
+}
