@@ -22,6 +22,14 @@ def init_pool(settings: Settings) -> None:
     global _pool
     if _pool is not None:
         return
+    if settings.enade_time_db_url:
+        _pool = ThreadedConnectionPool(
+            settings.pool_minconn,
+            settings.pool_maxconn,
+            dsn=settings.enade_time_db_url,
+            connect_timeout=settings.db_connect_timeout,
+        )
+        return
     _pool = ThreadedConnectionPool(
         minconn=settings.pool_minconn,
         maxconn=settings.pool_maxconn,

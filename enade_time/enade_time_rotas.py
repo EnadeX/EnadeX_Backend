@@ -81,7 +81,32 @@ def criar_app():
     return app
 
 
+def _escolher_fonte(fonte: str) -> None:
+    """`--fonte supabase` aponta a API para a nuvem pelo papel somente-leitura gravado pelo
+    script 12. Sem a flag, a API lê do Postgres local (ou do ENADE_TIME_DB_URL, se definido)."""
+    if fonte != "supabase":
+        return
+    import os
+
+    from enade_time.api.settings import get_settings
+
+    url = get_settings().enade_time_db_url_supabase
+    if not url:
+        raise SystemExit(
+            "ENADE_TIME_DB_URL_SUPABASE não está definida. Rode scripts/12_publicar_supabase.py "
+            "(ele grava o DSN do papel leitor em enade_time/.env)."
+        )
+    os.environ["ENADE_TIME_DB_URL"] = url
+    get_settings.cache_clear()
+
+
 if __name__ == "__main__":
+    import argparse
+
     import uvicorn
 
+    ap = argparse.ArgumentParser(description="API standalone do ENADE-Time (porta 8002).")
+    ap.add_argument("--fonte", choices=["local", "supabase"], default="local",
+                    help="De onde a API lê: o Postgres local (padrão) ou o Supabase (papel leitor).")
+    _escolher_fonte(ap.parse_args().fonte)
     uvicorn.run(criar_app(), host="0.0.0.0", port=PORTA_STANDALONE)

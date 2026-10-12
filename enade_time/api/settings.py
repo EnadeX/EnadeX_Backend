@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,6 +12,14 @@ class Settings(BaseSettings):
     postgres_db: str = "enade_db"
     postgres_user: str = "enade_user"
     postgres_password: str = "enade_password"
+
+    # DSN completo (ex.: o Supabase pelo papel somente-leitura enade_time_reader). Quando
+    # definido, tem precedência sobre POSTGRES_*: é assim que a mesma API lê do banco local
+    # (o instrumento do experimento) ou da nuvem (onde os resultados são publicados).
+    enade_time_db_url: str | None = None
+    # DSN do Supabase gravado pelo script 12 (papel leitor). Inativo por padrão: só vira
+    # ENADE_TIME_DB_URL quando a API sobe com `--fonte supabase`.
+    enade_time_db_url_supabase: str | None = None
 
     api_port: int = 8000
 
@@ -49,3 +58,11 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def fonte_dos_dados(settings: Settings) -> str:
+    """'supabase' quando o DSN aponta para o Supabase; 'local' no Postgres do docker-compose."""
+    if settings.enade_time_db_url:
+        host = (urlparse(settings.enade_time_db_url).hostname or "").lower()
+        return "supabase" if "supabase" in host else "externo"
+    return "local"
