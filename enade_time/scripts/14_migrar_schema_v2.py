@@ -35,6 +35,11 @@ v_enade_time_benchmark_resumo    (nova) mediana / mín / máx / IQR / n por
 tbl_enade_time_publicacao (nova) log das publicações no Supabase (script 12).
 v_enade_time_curso_ano (nova) 582 linhas, uma por curso e ano, com os MESMOS nomes de
                       coluna do `load_raw()` do E-XplainENADE (contrato D15).
+tbl_enade_time_benchmark_carga (nova) eixo de carga local × nuvem (D17, script 15): uma
+                      linha por repetição de cada estratégia de carga.
+v_enade_time_benchmark_carga_resumo (nova) mediana/IQR por estratégia.
+tbl_enade_time_fato_bench (nova) destino DEDICADO e descartável das cargas medidas; a fato
+                      publicada nunca é truncada pelo experimento.
 
 Backfill — fatos, não suposições
 --------------------------------
@@ -304,6 +309,96 @@ COMMENT ON COLUMN v_enade_time_curso_ano."NT_GER" IS
     'Média da Nota Geral do curso no ano (constante dentro do grupo).';
 """
 
+# Eixo de carga (D17). O resultado é custo de PUBLICAÇÃO (mediana/IQR), nunca speedup.
+SQL_CARGA = """
+CREATE TABLE IF NOT EXISTS tbl_enade_time_benchmark_carga (
+    id             BIGSERIAL PRIMARY KEY,
+    carga_id       UUID          NOT NULL,
+    executado_em   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    estrategia     TEXT          NOT NULL
+                   CHECK (estrategia IN ('copy_local', 'copy_pooler', 'upsert_postgrest',
+                                    'controle_local_sem_estrutura', 'controle_pooler_sem_estrutura',
+                                    'controle_local_so_indices', 'controle_local_so_fks')),
+    repeticao      SMALLINT      NOT NULL,
+    linhas_destino INTEGER       NOT NULL,
+    tempo_seg      NUMERIC(10,4) NOT NULL,
+    throughput_lps NUMERIC(12,2) NOT NULL,
+    rtt_ms         NUMERIC(10,3) NULL,
+    bytes_payload  BIGINT        NULL,
+    md5_confere    BOOLEAN       NOT NULL DEFAULT FALSE,
+    host_origem    TEXT          NULL,
+    host_destino   TEXT          NULL,
+    rede           TEXT          NULL,
+    observacoes    TEXT          NULL
+);
+CREATE INDEX IF NOT EXISTS idx_carga_carga_id ON tbl_enade_time_benchmark_carga(carga_id);
+-- tabelas criadas antes dos controles têm o CHECK antigo: refaz de forma idempotente
+ALTER TABLE tbl_enade_time_benchmark_carga DROP CONSTRAINT IF EXISTS tbl_enade_time_benchmark_carga_estrategia_check;
+ALTER TABLE tbl_enade_time_benchmark_carga ADD CONSTRAINT tbl_enade_time_benchmark_carga_estrategia_check
+    CHECK (estrategia IN ('copy_local', 'copy_pooler', 'upsert_postgrest',
+                                    'controle_local_sem_estrutura', 'controle_pooler_sem_estrutura',
+                                    'controle_local_so_indices', 'controle_local_so_fks'));
+"""
+
+SQL_VIEW_CARGA_RESUMO = """
+CREATE OR REPLACE VIEW v_enade_time_benchmark_carga_resumo AS
+SELECT
+    carga_id,
+    estrategia,
+    COUNT(*)::INT                                                                     AS n,
+    ROUND((percentile_cont(0.5) WITHIN GROUP (ORDER BY tempo_seg))::NUMERIC, 4)       AS tempo_mediana,
+    MIN(tempo_seg)                                                                    AS tempo_min,
+    MAX(tempo_seg)                                                                    AS tempo_max,
+    ROUND((percentile_cont(0.75) WITHIN GROUP (ORDER BY tempo_seg)
+         - percentile_cont(0.25) WITHIN GROUP (ORDER BY tempo_seg))::NUMERIC, 4)      AS tempo_iqr,
+    ROUND((percentile_cont(0.5) WITHIN GROUP (ORDER BY throughput_lps))::NUMERIC, 2)  AS throughput_mediana,
+    ROUND((percentile_cont(0.5) WITHIN GROUP (ORDER BY rtt_ms))::NUMERIC, 3)          AS rtt_mediana_ms,
+    MAX(bytes_payload)                                                                AS bytes_payload,
+    MIN(linhas_destino)                                                               AS linhas_destino,
+    bool_and(md5_confere)                                                             AS md5_confere,
+    MIN(host_destino)                                                                 AS host_destino,
+    MIN(rede)                                                                         AS rede,
+    MIN(executado_em)                                                                 AS inicio,
+    MAX(executado_em)                                                                 AS fim
+FROM tbl_enade_time_benchmark_carga
+GROUP BY carga_id, estrategia;
+"""
+
+# Destino dedicado das cargas medidas: a MESMA estrutura da fato publicada (FKs, checks e
+# índices), mas com id fornecido (ordinal da linha no CSV v1.1), sem identity.
+SQL_FATO_BENCH = """
+CREATE TABLE IF NOT EXISTS tbl_enade_time_fato_bench (
+    id                BIGINT       PRIMARY KEY,
+    nu_ano            SMALLINT     NOT NULL REFERENCES tbl_enade_time_dim_ano(co_ano),
+    co_curso          INTEGER      NOT NULL,
+    co_ies            INTEGER      NOT NULL,
+    co_categad        SMALLINT     NOT NULL REFERENCES tbl_enade_time_dim_categoria_adm(co_categad),
+    co_orgacad        SMALLINT     NOT NULL REFERENCES tbl_enade_time_dim_organizacao_acad(co_orgacad),
+    co_grupo          SMALLINT     NOT NULL REFERENCES tbl_enade_time_dim_grupo(co_grupo),
+    co_modalidade     SMALLINT     NULL     REFERENCES tbl_enade_time_dim_modalidade(co_modalidade),
+    co_munic_curso    INTEGER      NULL,
+    co_uf_curso       SMALLINT     NOT NULL REFERENCES tbl_enade_time_dim_uf(co_uf),
+    co_regiao_curso   SMALLINT     NOT NULL REFERENCES tbl_enade_time_dim_regiao(co_regiao),
+    media_nt_fg       NUMERIC(7,4) NULL,
+    media_nt_ger      NUMERIC(7,4) NULL,
+    media_nt_ce       NUMERIC(7,4) NULL,
+    CHECK (media_nt_fg  IS NULL OR (media_nt_fg  >= 0 AND media_nt_fg  <= 100)),
+    CHECK (media_nt_ger IS NULL OR (media_nt_ger >= 0 AND media_nt_ger <= 100)),
+    CHECK (media_nt_ce  IS NULL OR (media_nt_ce  >= 0 AND media_nt_ce  <= 100))
+);
+CREATE INDEX IF NOT EXISTS idx_fatobench_ano        ON tbl_enade_time_fato_bench(nu_ano);
+CREATE INDEX IF NOT EXISTS idx_fatobench_regiao     ON tbl_enade_time_fato_bench(co_regiao_curso);
+CREATE INDEX IF NOT EXISTS idx_fatobench_uf         ON tbl_enade_time_fato_bench(co_uf_curso);
+CREATE INDEX IF NOT EXISTS idx_fatobench_ies        ON tbl_enade_time_fato_bench(co_ies);
+CREATE INDEX IF NOT EXISTS idx_fatobench_curso      ON tbl_enade_time_fato_bench(co_curso);
+CREATE INDEX IF NOT EXISTS idx_fatobench_modalidade ON tbl_enade_time_fato_bench(co_modalidade);
+CREATE INDEX IF NOT EXISTS idx_fatobench_categad    ON tbl_enade_time_fato_bench(co_categad);
+CREATE INDEX IF NOT EXISTS idx_fatobench_ano_regiao ON tbl_enade_time_fato_bench(nu_ano, co_regiao_curso);
+CREATE INDEX IF NOT EXISTS idx_fatobench_ano_uf     ON tbl_enade_time_fato_bench(nu_ano, co_uf_curso);
+CREATE INDEX IF NOT EXISTS idx_fatobench_media_valida
+    ON tbl_enade_time_fato_bench(nu_ano, co_regiao_curso) WHERE media_nt_fg IS NOT NULL;
+"""
+
 PASSOS = [
     ("colunas e índices (aditivo)", SQL_COLUNAS),
     ("backfill factual das linhas antigas", SQL_BACKFILL),
@@ -311,6 +406,9 @@ PASSOS = [
     ("v_enade_time_benchmark_resumo (agregados por campanha)", SQL_VIEW_RESUMO),
     ("tbl_enade_time_publicacao", SQL_PUBLICACAO),
     ("v_enade_time_curso_ano (contrato com o E-XplainENADE)", SQL_VIEW_CURSO_ANO),
+    ("tbl_enade_time_benchmark_carga (eixo de carga)", SQL_CARGA),
+    ("v_enade_time_benchmark_carga_resumo", SQL_VIEW_CARGA_RESUMO),
+    ("tbl_enade_time_fato_bench (destino dedicado das cargas medidas)", SQL_FATO_BENCH),
 ]
 
 

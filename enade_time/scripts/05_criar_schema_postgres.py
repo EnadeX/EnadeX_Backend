@@ -259,8 +259,12 @@ INSERT INTO tbl_enade_time_dim_ano (co_ano, edicao) VALUES
 TABELAS_NA_ORDEM_DE_DROP = [
     # ordem inversa de dependência; CASCADE cuida do resto, mas listamos
     # explicitamente para o reset ser previsível
+    "v_enade_time_curso_ano",            # view
+    "v_enade_time_benchmark_carga_resumo",  # view
     "v_enade_time_benchmark_resumo",     # view (depende de v_enade_time_benchmark_metricas)
     "v_enade_time_benchmark_metricas",   # view
+    "tbl_enade_time_benchmark_carga",
+    "tbl_enade_time_fato_bench",
     "tbl_enade_time_publicacao",
     "tbl_enade_time_benchmark_etapa",
     "tbl_enade_time_benchmark_execucao",

@@ -5,8 +5,8 @@ O Postgres local é o instrumento (onde o experimento é medido); o Supabase é 
 resultados vivem para o resto do EnadeX. Este script copia, do local para a nuvem, com os
 MESMOS nomes nos dois bancos:
 
-  tbl_enade_time_dim_* (7) · tbl_enade_time_fato · tbl_enade_time_benchmark_execucao/_etapa
-  v_enade_time_benchmark_metricas · v_enade_time_benchmark_resumo · v_enade_time_curso_ano
+  tbl_enade_time_dim_* (7) · tbl_enade_time_fato · tbl_enade_time_benchmark_execucao/_etapa/_carga
+  v_enade_time_benchmark_metricas/_resumo/_carga_resumo · v_enade_time_curso_ano
   tbl_enade_time_publicacao (log: quem publicou, quando, md5 e versão)
 
 Como
@@ -120,12 +120,20 @@ _ETAPA = (
     ["id", "execucao_id", "ano", "tempo_seg", "linhas_arq3", "worker_pid", "timestamp_inicio",
      "timestamp_fim", "etapa_uid"],
 )
-PUBLICADAS = [*_DIMS, _FATO, _EXEC, _ETAPA]  # ordem de carga
+_CARGA = (
+    "tbl_enade_time_benchmark_carga",
+    ["id", "carga_id", "executado_em", "estrategia", "repeticao", "linhas_destino", "tempo_seg",
+     "throughput_lps", "rtt_ms", "bytes_payload", "md5_confere", "host_origem", "host_destino", "rede",
+     "observacoes"],
+)
+# Fora de propósito: tbl_enade_time_fato_bench (destino dedicado e descartável do script 15).
+PUBLICADAS = [*_DIMS, _FATO, _EXEC, _ETAPA, _CARGA]  # ordem de carga
 CHAVE_ORDEM = {t: c[0] for t, c in PUBLICADAS}
 VIEWS = [
     ("v_enade_time_benchmark_metricas", _m14.SQL_VIEW_METRICAS),
     ("v_enade_time_benchmark_resumo", _m14.SQL_VIEW_RESUMO),
     ("v_enade_time_curso_ano", _m14.SQL_VIEW_CURSO_ANO),
+    ("v_enade_time_benchmark_carga_resumo", _m14.SQL_VIEW_CARGA_RESUMO),
 ]
 TABELA_LOG = "tbl_enade_time_publicacao"
 
@@ -180,6 +188,34 @@ CREATE TABLE IF NOT EXISTS public.tbl_enade_time_benchmark_etapa (
 );
 CREATE INDEX        IF NOT EXISTS idx_bench_etapa_exec ON public.tbl_enade_time_benchmark_etapa(execucao_id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bench_etapa_uid   ON public.tbl_enade_time_benchmark_etapa(etapa_uid);
+
+CREATE TABLE IF NOT EXISTS public.tbl_enade_time_benchmark_carga (
+    id             BIGINT PRIMARY KEY,
+    carga_id       UUID          NOT NULL,
+    executado_em   TIMESTAMPTZ   NOT NULL,
+    estrategia     TEXT          NOT NULL
+                   CHECK (estrategia IN ('copy_local', 'copy_pooler', 'upsert_postgrest',
+                                    'controle_local_sem_estrutura', 'controle_pooler_sem_estrutura',
+                                    'controle_local_so_indices', 'controle_local_so_fks')),
+    repeticao      SMALLINT      NOT NULL,
+    linhas_destino INTEGER       NOT NULL,
+    tempo_seg      NUMERIC(10,4) NOT NULL,
+    throughput_lps NUMERIC(12,2) NOT NULL,
+    rtt_ms         NUMERIC(10,3) NULL,
+    bytes_payload  BIGINT        NULL,
+    md5_confere    BOOLEAN       NOT NULL DEFAULT FALSE,
+    host_origem    TEXT          NULL,
+    host_destino   TEXT          NULL,
+    rede           TEXT          NULL,
+    observacoes    TEXT          NULL
+);
+CREATE INDEX IF NOT EXISTS idx_carga_carga_id ON public.tbl_enade_time_benchmark_carga(carga_id);
+-- tabelas criadas antes dos controles têm o CHECK antigo: refaz de forma idempotente
+ALTER TABLE public.tbl_enade_time_benchmark_carga DROP CONSTRAINT IF EXISTS tbl_enade_time_benchmark_carga_estrategia_check;
+ALTER TABLE public.tbl_enade_time_benchmark_carga ADD CONSTRAINT tbl_enade_time_benchmark_carga_estrategia_check
+    CHECK (estrategia IN ('copy_local', 'copy_pooler', 'upsert_postgrest',
+                                    'controle_local_sem_estrutura', 'controle_pooler_sem_estrutura',
+                                    'controle_local_so_indices', 'controle_local_so_fks'));
 """
 
 
@@ -234,7 +270,8 @@ def checar_dependentes(cur) -> None:
     )
     for filha, mae in cur.fetchall():
         filha, mae = filha.replace("public.", ""), mae.replace("public.", "")
-        if mae in nossas and filha not in nossas:
+        # objetos com o prefixo da convenção (inclusive os descartáveis do script 15) são do ENADE-Time
+        if mae in nossas and filha not in nossas and not filha.startswith("tbl_enade_time_"):
             raise RuntimeError(f"{filha} referencia {mae}: não é do ENADE-Time; abortando o renome")
     cur.execute(
         """SELECT DISTINCT dependente.relname
@@ -246,7 +283,7 @@ def checar_dependentes(cur) -> None:
         (sorted(nossas),),
     )
     for (view,) in cur.fetchall():
-        if view not in {v for v, _ in VIEWS}:
+        if view not in {v for v, _ in VIEWS} and not view.startswith("v_enade_time_"):
             raise RuntimeError(f"a view {view} depende de tabelas do ENADE-Time; não é nossa; abortando")
 
 
@@ -364,6 +401,11 @@ def publicar_dados(local, remoto) -> dict[str, tuple[int, str]]:
     """TRUNCATE + COPY de todas as tabelas, e conferência de md5 contra o local."""
     lc, rc = local.cursor(), remoto.cursor()
     nomes = [sql.Identifier("public", t) for t, _ in PUBLICADAS]
+    # O TRUNCATE precisa listar toda tabela que referencia as dimensões: inclui as descartáveis
+    # do script 15 (destino dedicado das cargas medidas), que existem só na nuvem e não são publicadas.
+    for descartavel in ("tbl_enade_time_fato_bench", "tbl_enade_time_fato_ctl"):
+        if _existe(rc, descartavel):
+            nomes.append(sql.Identifier("public", descartavel))
     print("\nPublicando dados (uma transação):")
     rc.execute(sql.SQL("TRUNCATE {}").format(sql.SQL(", ").join(nomes)))
     for tabela, colunas in PUBLICADAS:
