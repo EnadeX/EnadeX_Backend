@@ -204,7 +204,7 @@ def test_conexao_morta_no_pool_devolve_503_com_cors(client_central):
 
 
 def test_erro_de_sql_devolve_500_com_cors(client_central):
-    pool = _PoolFalso(psycopg2.ProgrammingError('relation "v_benchmark_resumo" does not exist'))
+    pool = _PoolFalso(psycopg2.ProgrammingError('relation "v_enade_time_benchmark_resumo" does not exist'))
     pool.conn.closed = 0
     pool.conn.rollback = lambda: None
     database._pool = pool
@@ -214,7 +214,7 @@ def test_erro_de_sql_devolve_500_com_cors(client_central):
     assert r.status_code == 500
     assert r.headers["access-control-allow-origin"] == "http://localhost:3000"
     assert r.json()["detail"] == "Erro de banco no ENADE-Time"
-    assert "v_benchmark_resumo" not in r.text
+    assert "v_enade_time_benchmark_resumo" not in r.text
 
 
 ROTAS_COM_BANCO = [

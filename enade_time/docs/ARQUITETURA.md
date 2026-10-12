@@ -13,11 +13,11 @@
 │     └─ Routers: health, dim, analises, benchmark                        │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  4. Banco PostgreSQL 16           (Docker — enade_postgres)             │
-│     ├─ Tabelas dim_* · fato_enade · benchmark_execucao · benchmark_etapa│
-│     └─ View v_benchmark_metricas (speedup, eficiência, throughput)      │
+│     ├─ Tabelas tbl_enade_time_* (fato, 7 dimensões, benchmark)          │
+│     └─ Views v_enade_time_benchmark_* (speedup, eficiência, resumo)     │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  3. Benchmark sequencial/paralelo (scripts/08, 09, 10 + etl/)           │
-│     └─ multiprocessing.Pool · psutil · grava em benchmark_execucao      │
+│     └─ multiprocessing.Pool · psutil · grava no banco (benchmark)       │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  2. ETL e carga                   (scripts/02, 03, 05, 06)              │
 │     ├─ pandas: filtro/consolidação · psycopg2: COPY FROM STDIN          │
@@ -48,7 +48,7 @@ microdados_enade_*/  ──►  scripts/ ETL  ──►  dados_processados/  ─
 3. **Scripts 05 e 06** criam o schema dimensional e carregam o CSV no
    PostgreSQL via `COPY FROM STDIN`.
 4. **Scripts 08, 09, 10** rodam o experimento de paralelismo e gravam
-   resultados em `benchmark_execucao` / `benchmark_etapa`. O 10 organiza
+   resultados em `tbl_enade_time_benchmark_execucao` / `tbl_enade_time_benchmark_etapa`. O 10 organiza
    uma **campanha** (aquecimento descartado + N suítes; em cada suíte um
    sequencial e as paralelas em duas ordens de submissão); o 09 escolhe a
    ordem (`--ordem crescente|lpt`) — o `ProcessPoolExecutor` entrega cada
@@ -61,27 +61,27 @@ microdados_enade_*/  ──►  scripts/ ETL  ──►  dados_processados/  ─
 ## Modelo de dados
 
 **Tabela fato:**
-- `fato_enade` (24.967 linhas) — `id, nu_ano, co_curso, co_ies,
+- `tbl_enade_time_fato` (24.967 linhas) — `id, nu_ano, co_curso, co_ies,
   co_categad, co_orgacad, co_grupo, co_modalidade, co_munic_curso,
   co_uf_curso, co_regiao_curso, media_nt_fg`.
 
 **Dimensões (todas em singular):**
-- `dim_regiao, dim_uf, dim_ano, dim_grupo, dim_modalidade,
-  dim_categoria_adm, dim_organizacao_acad`.
+- `tbl_enade_time_dim_regiao, tbl_enade_time_dim_uf, tbl_enade_time_dim_ano, tbl_enade_time_dim_grupo, tbl_enade_time_dim_modalidade,
+  tbl_enade_time_dim_categoria_adm, tbl_enade_time_dim_organizacao_acad`.
 
 **Benchmark (schema v2 — `scripts/14_migrar_schema_v2.py`, aditivo):**
-- `benchmark_execucao` — uma linha por execução completa do ETL. Além de
+- `tbl_enade_time_benchmark_execucao` — uma linha por execução completa do ETL. Além de
   tempo/throughput/memória, guarda `campanha_id`, `suite_id`, `oficial`,
   `ordem_submissao` (`crescente` | `lpt`), `cpu_fisicos`, `cpu_logicos`,
   `cpu_percent_medio`, `disco_bytes_lidos`, `cache_quente`, `aquecimento`,
   `execucao_uid`.
-- `benchmark_etapa` — uma linha por ano processado dentro de uma
+- `tbl_enade_time_benchmark_etapa` — uma linha por ano processado dentro de uma
   execução (permite drill-down por `worker_pid`).
-- `v_benchmark_metricas` (view) — **definição única** de `speedup` e
+- `v_enade_time_benchmark_metricas` (view) — **definição única** de `speedup` e
   `eficiencia`: pareia cada execução paralela com o sequencial da **mesma
   suíte**; linhas antigas sem suíte usam o sequencial imediatamente anterior
   (`pareamento = 'temporal'`).
-- `v_benchmark_resumo` (view) — mediana, mín, máx, IQR e `n` por
+- `v_enade_time_benchmark_resumo` (view) — mediana, mín, máx, IQR e `n` por
   (campanha, workers, ordem de submissão).
 - `tbl_enade_time_publicacao` — log das publicações no Supabase.
 
@@ -96,7 +96,7 @@ Hierarquia: **campanha** (1 por `10 --oficial`) → **suíte** = repetição
   preservam a integridade do score ENADE (0–100).
 - **`COPY FROM STDIN`** carrega milhões de linhas em segundos — muito
   mais eficiente que `INSERT` linha a linha.
-- **Views** (`v_benchmark_metricas`, `v_benchmark_resumo`) são a **única**
+- **Views** (`v_enade_time_benchmark_metricas`, `v_enade_time_benchmark_resumo`) são a **única**
   definição das métricas de paralelismo. A API só lê as views; o Python
   recalcula a partir das tabelas apenas para **conferir**
   (`scripts/13_validar_metricas.py`, `tests/`). Essa inversão nasceu de um

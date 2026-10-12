@@ -105,6 +105,13 @@ sempre por `ALTER … RENAME`, com `--desfazer-renome` no script 14.
 (`tbl_multi_enade_*`); nada consome os nomes atuais no Supabase.
 **Pendência:** se o `DEVELOPMENT.md` do grupo (fora do repositório) trouxer outra
 convenção, registrar aqui; a decisão foi tomada sem ele.
+**Aplicado no banco local em 12/10/2026** (dump de segurança antes; 59 execuções, 354
+etapas e 24.967 linhas preservadas). O script 14 renomeia de forma idempotente e agora
+roda antes da migração v2; todo o SQL do projeto (API, scripts 05–13, ETL, geradores e
+testes) usa os nomes novos, então instalações novas já nascem com eles. A coluna
+`id` e os índices mantêm os nomes internos antigos (`idx_fato_*`, `fato_enade_id_seq`):
+são só de implementação. O texto das seções D1–D11 e dos relatórios históricos
+continua com os nomes da época.
 
 ## D13 — Bug do baseline no comparativo, ordem de despacho, máquina e campanha oficial
 **Ocorrência:** `api/repositories/benchmark_repo.py::comparativo` dividia **todas** as
@@ -199,6 +206,21 @@ N para inferência é 582.
 **Consequência:** `v_enade_time_curso_ano` como resposta preparada; KPI "Total de
 registros" rotulado como inscrições; `AlertaAmostra` passa a contar cursos
 (`total_cursos` na API); documentado em `DICIONARIO_VARIAVEIS` e `GUIA_APRESENTACAO`.
+**Implementado em 12/10/2026:**
+- `resumo-anual/regiao/uf/ies` devolvem `total_cursos` (`COUNT(DISTINCT co_curso)`), campo
+  aditivo. Conferido no dado: somar os cursos distintos de cada ano dá exatamente 582, e por
+  região também fecha (`tests/test_repositorios.py`).
+- O dashboard (módulo `/enade-time` do `EnadeX_Frontend`) alerta quando o grupo tem menos de
+  30 **cursos** no ano, mostrando as inscrições ao lado. Contra uma API antiga, volta a contar
+  inscrições. O efeito é grande: por UF e ano a mediana é de 5 a 10 cursos, e o alerta antigo
+  (n < 30 inscrições) marcava só 5 dos 92 pares UF×ano, subestimando a fragilidade.
+- `min_cursos` do ranking de IES contava inscrições (`COUNT(*)`) apesar do nome; passou a
+  contar cursos distintos. Muda o resultado de `resumo-ies` com `min_cursos > 1` (exceção
+  documentada no `diff_golden`, sem outras regressões nas 30 rotas).
+- O verificador de números (`docs/geradores/verificar_numeros.py`) não conferia nenhum
+  speedup: a regex terminava em `\b`, e depois de "×" não há fronteira de palavra. Corrigido
+  (com teste): passou de 43/39 para 98/122 números conferidos no .pptx/.docx, todos
+  rastreados às views em modo estrito.
 
 ## D17 — Eixo de carga local × nuvem como medição situada (essencial)
 **Decisão:** medir, com o mesmo instrumental, a etapa de carga das 24.967 linhas em

@@ -3,8 +3,8 @@ Benchmark SEQUENCIAL do ETL ENADE.
 
 Processa os 6 anos um após o outro no processo principal (sem
 multiprocessing). Mede tempo total, throughput, memória de pico, CPU média do
-sistema e bytes lidos do disco. Grava 1 linha em benchmark_execucao e 6 em
-benchmark_etapa.
+sistema e bytes lidos do disco. Grava 1 linha em tbl_enade_time_benchmark_execucao e 6 em
+tbl_enade_time_benchmark_etapa.
 
 Uso:
   python scripts/08_benchmark_sequencial.py
@@ -106,7 +106,7 @@ def rodar_sequencial(observacoes: str = "", *,
             print(f"  [{e['ano']}] {e['observacoes']}")
 
     # ----- grava no banco -----
-    print("\nGravando em benchmark_execucao + benchmark_etapa...")
+    print("\nGravando em tbl_enade_time_benchmark_execucao + tbl_enade_time_benchmark_etapa...")
     conn = conectar()
     try:
         execucao_id, ts = gravar_execucao(

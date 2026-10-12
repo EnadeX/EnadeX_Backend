@@ -1,5 +1,5 @@
 """
-Carrega o consolidado validado para a tabela fato_enade no PostgreSQL.
+Carrega o consolidado validado para a tabela tbl_enade_time_fato no PostgreSQL.
 
 Entrada (NÃO modificada):
   dados_processados/microdados_enade_2005_2021_filtrado_consolidado.csv
@@ -8,7 +8,7 @@ Método: COPY FROM STDIN (CSV) — caminho mais rápido do psycopg2 para carga
 em lote. Limpa BOM do utf-8-sig e converte NaN em vazio para o COPY tratar
 como NULL.
 
-Idempotência: por padrão faz TRUNCATE em fato_enade antes da carga, então
+Idempotência: por padrão faz TRUNCATE em tbl_enade_time_fato antes da carga, então
 rodar várias vezes produz o mesmo resultado (24.967 linhas). Use --append
 para concatenar (não recomendado).
 
@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
         "--append", action="store_true",
-        help="Não trunca fato_enade antes de inserir (default: trunca)."
+        help="Não trunca tbl_enade_time_fato antes de inserir (default: trunca)."
     )
     return ap.parse_args()
 
@@ -147,13 +147,13 @@ def main() -> int:
     conn.autocommit = False
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) FROM fato_enade;")
+            cur.execute("SELECT COUNT(*) FROM tbl_enade_time_fato;")
             antes = cur.fetchone()[0]
             print(f"\nfato_enade atual: {antes} linhas")
 
             if not args.append and antes > 0:
-                print(f"Truncando fato_enade (use --append para preservar).")
-                cur.execute("TRUNCATE TABLE fato_enade RESTART IDENTITY;")
+                print(f"Truncando tbl_enade_time_fato (use --append para preservar).")
+                cur.execute("TRUNCATE TABLE tbl_enade_time_fato RESTART IDENTITY;")
 
             print("\nPreparando buffer CSV...")
             buf = preparar_buffer(df)
@@ -161,14 +161,14 @@ def main() -> int:
             print("Executando COPY FROM STDIN...")
             t1 = time.perf_counter()
             copy_sql = (
-                f"COPY fato_enade ({', '.join(COLUNAS_DESTINO)}) "
+                f"COPY tbl_enade_time_fato ({', '.join(COLUNAS_DESTINO)}) "
                 f"FROM STDIN WITH (FORMAT csv, DELIMITER ';', NULL '')"
             )
             cur.copy_expert(copy_sql, buf)
             dt_copy = time.perf_counter() - t1
             inseridas = cur.rowcount
 
-            cur.execute("SELECT COUNT(*) FROM fato_enade;")
+            cur.execute("SELECT COUNT(*) FROM tbl_enade_time_fato;")
             depois = cur.fetchone()[0]
 
         conn.commit()
@@ -180,7 +180,7 @@ def main() -> int:
 
     print(f"\nCOPY concluído em {dt_copy:.2f}s")
     print(f"  inseridas: {inseridas}")
-    print(f"  fato_enade total: {depois} linhas "
+    print(f"  tbl_enade_time_fato total: {depois} linhas "
           f"({'+' if depois > antes else ''}{depois - antes})")
 
     if depois == LINHAS_ESPERADAS:

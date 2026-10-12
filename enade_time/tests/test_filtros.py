@@ -35,7 +35,7 @@ def test_alias_prefixa_a_coluna_e_nao_o_placeholder():
 
 
 def test_mapeamento_de_nomes_publicos_para_colunas_reais():
-    # nomes expostos na API != nomes das colunas em fato_enade
+    # nomes expostos na API != nomes das colunas em tbl_enade_time_fato
     assert _FILTRO_COLUNAS["co_regiao"] == "co_regiao_curso"
     assert _FILTRO_COLUNAS["co_uf"] == "co_uf_curso"
     assert set(_FILTRO_COLUNAS) == {
@@ -72,7 +72,7 @@ def test_fragmento_so_contem_colunas_da_lista_branca():
 def test_atributo_estranho_nao_vaza_para_o_sql():
     """Injeção por atributo: to_where itera o dicionário fixo, não o objeto."""
     f = FiltrosAnalise(nu_ano=2021)
-    f.__dict__["nu_ano; DROP TABLE fato_enade; --"] = 1
+    f.__dict__["nu_ano; DROP TABLE tbl_enade_time_fato; --"] = 1
     where, params = f.to_where()
     assert "DROP" not in where
     assert params == {"nu_ano": 2021}

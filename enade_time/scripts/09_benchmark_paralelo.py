@@ -216,7 +216,7 @@ def rodar_paralelo(num_workers: int, observacoes: str = "", *,
         f"ordem={ordem} [{','.join(str(a) for a in ordem_anos)}]"
 
     # ----- grava no banco (apenas no processo principal) -----
-    print("\nGravando em benchmark_execucao + benchmark_etapa...")
+    print("\nGravando em tbl_enade_time_benchmark_execucao + tbl_enade_time_benchmark_etapa...")
     conn = conectar()
     try:
         execucao_id, ts = gravar_execucao(

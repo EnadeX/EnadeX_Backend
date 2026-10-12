@@ -1,16 +1,16 @@
 # Resultados do benchmark — campanha oficial
 
-> **Gerado automaticamente** por `docs/geradores/gerar_resultados_md.py` em 2 de setembro de 2026, a partir das views `v_benchmark_resumo` e `v_benchmark_metricas` do banco local. Não edite números à mão: rode o gerador. Campanha `899faa82-2cb8-4a02-91fe-eefb89b308d3`.
+> **Gerado automaticamente** por `docs/geradores/gerar_resultados_md.py` em 12 de outubro de 2026, a partir das views `v_enade_time_benchmark_resumo` e `v_enade_time_benchmark_metricas` do banco local. Não edite números à mão: rode o gerador. Campanha `899faa82-2cb8-4a02-91fe-eefb89b308d3`.
 
 ## Desenho do experimento
 
 - **Campanha:** 5 suítes completas + 1 parcial — interrompida por desligamento da máquina; as execuções já gravadas permanecem válidas (pareamento por suíte) e elevam o n de algumas configurações. Em cada suíte completa, 1 sequencial (baseline da suíte) + 4 tamanhos de pool (2, 3, 4, 6 workers) × 2 ordens de submissão (crescente e LPT) = 9 execuções; total de 48 execuções oficiais (`oficial = TRUE`), entre 01/09/2026 16:14 e 02/09/2026 13:49 UTC. O n de cada configuração está na tabela.
-- **Pareamento:** cada paralela é comparada com o sequencial da **própria suíte** (`v_benchmark_metricas`, `pareamento = 'suite'`); mediana, mínimo, máximo e IQR por configuração em `v_benchmark_resumo`.
+- **Pareamento:** cada paralela é comparada com o sequencial da **própria suíte** (`v_enade_time_benchmark_metricas`, `pareamento = 'suite'`); mediana, mínimo, máximo e IQR por configuração em `v_enade_time_benchmark_resumo`.
 - **Ordens de submissão:** `crescente` (2005 → 2021, comportamento histórico do script 09) e `lpt` (maior tempo primeiro — Graham, 1969 — com os tempos por ano do sequencial da mesma suíte). O `ProcessPoolExecutor` entrega cada ano ao primeiro worker livre na ordem de submissão; ele **não** balanceia.
 - **Máquina:** Intel64 Family 6 Model 140 Stepping 1, GenuineIntel — **4 núcleos físicos / 8 lógicos** (Intel Core i5-1135G7), NVMe Samsung, 24 GB RAM, Windows 11. p = 4 satura os núcleos físicos; p = 6 roda em hyperthreads.
 - **Cache:** passada de aquecimento descartada antes da campanha (leu **51 MB** do disco); todas as execuções oficiais com **cache de páginas quente** — mediana de **17,3 MB** lidos por execução.
-- **Carga de fundo declarada:** CPU ociosa por 10 s antes de medir = **40,4 %**; containers ativos: enade_postgres, zabbix-agent; CPU média do sistema durante as execuções: 67,0 %. Sem API nem frontend rodando. Diretório fora do OneDrive.
-- **Pipeline por execução:** leitura dos TXT (arq1 + arq3 dos 6 anos, 5.340.372 linhas), filtro e agregação com pandas; workers puros (sem I/O em disco, sem banco); só o processo principal grava (1 linha em `benchmark_execucao` + 6 em `benchmark_etapa`). p = 8 fica fora da campanha: com 6 unidades de trabalho, dois workers ficariam ociosos por construção.
+- **Carga de fundo declarada:** CPU ociosa por 10 s antes de medir = **40,4 %**; containers ativos: não registrado; CPU média do sistema durante as execuções: 67,0 %. Sem API nem frontend rodando. Diretório fora do OneDrive.
+- **Pipeline por execução:** leitura dos TXT (arq1 + arq3 dos 6 anos, 5.340.372 linhas), filtro e agregação com pandas; workers puros (sem I/O em disco, sem banco); só o processo principal grava (1 linha em `tbl_enade_time_benchmark_execucao` + 6 em `tbl_enade_time_benchmark_etapa`). p = 8 fica fora da campanha: com 6 unidades de trabalho, dois workers ficariam ociosos por construção.
 
 ## Resultados por configuração
 
@@ -75,6 +75,7 @@ O banco preserva todas as rodadas anteriores (nenhuma linha foi apagada ou sobre
 |---|---|--:|--:|---|--:|--:|
 | #2 (2 workers, 68,40 s) | #4 (112,93 s) | 1,6510× | 82,5 % | #1 | 1,3096× | 65,5 % |
 | #3 (4 workers, 43,17 s) | #4 (112,93 s) | 2,6157× | 65,4 % | #1 | 2,0749× | 51,9 % |
+| #89 (2 workers, 53,01 s) | #4 (112,93 s) | 2,1302× | 106,5 % | #80 | 1,5736× | 78,7 % |
 
 Esse card entrou no documento acadêmico de 21/08/2026. **Correção (DESIGN_LOG D13):** a view pareia por suíte; a API só lê a view; `scripts/13_validar_metricas.py` e `tests/` recalculam em Python e falham em qualquer divergência; documento, slides e este arquivo são gerados das views e conferidos por `docs/geradores/verificar_numeros.py`.
 
@@ -97,9 +98,9 @@ python docs\geradores\gerar_resultados_md.py          # regenera este arquivo
 Auditoria direta no banco:
 
 ```sql
-SELECT * FROM v_benchmark_resumo WHERE campanha_id = '899faa82-2cb8-4a02-91fe-eefb89b308d3' ORDER BY num_workers, ordem_submissao;
+SELECT * FROM v_enade_time_benchmark_resumo WHERE campanha_id = '899faa82-2cb8-4a02-91fe-eefb89b308d3' ORDER BY num_workers, ordem_submissao;
 SELECT execucao_id, num_workers, ordem_submissao, speedup, eficiencia, baseline_execucao_id, pareamento
-  FROM v_benchmark_metricas WHERE campanha_id = '899faa82-2cb8-4a02-91fe-eefb89b308d3' ORDER BY suite_id, num_workers, ordem_submissao;
+  FROM v_enade_time_benchmark_metricas WHERE campanha_id = '899faa82-2cb8-4a02-91fe-eefb89b308d3' ORDER BY suite_id, num_workers, ordem_submissao;
 ```
 
 Lições registradas: clientes de sincronização em nuvem contaminam I/O (2026-06); um baseline escolhido por recência mistura rodadas (2026-08); uma explicação por "disco" não sobrevive aos bytes medidos (2026-09). Medir > supor.

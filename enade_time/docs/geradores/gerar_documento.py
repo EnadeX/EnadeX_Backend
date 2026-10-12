@@ -11,8 +11,8 @@ docs/GUIA_APRESENTACAO.md, docs/EVIDENCIAS_TESTES.md, docs/PROXIMOS_PASSOS.md)
 e do codigo-fonte efetivamente implementado — nao ha numeros nem trechos de
 codigo inventados.
 
-Números de benchmark: TODOS vêm do banco (views v_benchmark_resumo /
-v_benchmark_metricas da campanha oficial) via dados_benchmark.carregar().
+Números de benchmark: TODOS vêm do banco (views v_enade_time_benchmark_resumo /
+v_enade_time_benchmark_metricas da campanha oficial) via dados_benchmark.carregar().
 verificar_numeros.py confere o .docx gerado contra as views.
 
 Uso:
@@ -668,7 +668,7 @@ def secao_6_processo(doc):
          "cadastro filtrado e concatenação de todos os anos em um único CSV, com "
          "validação de escala das notas e contagem de linhas por ano."),
         ("Modelagem do esquema relacional — ",
-         "projeto de um esquema dimensional (tabela fato_enade + sete dimensões: "
+         "projeto de um esquema dimensional (tabela tbl_enade_time_fato + sete dimensões: "
          "região, UF, grupo, categoria administrativa, organização acadêmica, "
          "modalidade, ano), com chaves estrangeiras, checks de escala [0,100] e "
          "índices compostos para os filtros mais usados pela API."),
@@ -687,10 +687,10 @@ def secao_6_processo(doc):
          "granularidade de um processo por ano."),
         ("Instrumentação e persistência das métricas de benchmark — ",
          "cada execução (sequencial ou paralela) grava tempo total, throughput, "
-         "memória de pico e metadados de máquina em benchmark_execucao, com o "
-         "detalhamento por ano em benchmark_etapa, em uma única transação."),
+         "memória de pico e metadados de máquina em tbl_enade_time_benchmark_execucao, com o "
+         "detalhamento por ano em tbl_enade_time_benchmark_etapa, em uma única transação."),
         ("Cálculo de speedup e eficiência — ",
-         "implementação de uma view SQL (v_benchmark_metricas) que pareia cada "
+         "implementação de uma view SQL (v_enade_time_benchmark_metricas) que pareia cada "
          "execução paralela com o sequencial da própria suíte e calcula "
          "S(p) = T(1)/T(p) e E(p) = S(p)/p diretamente em SQL, auditável "
          "independentemente do código Python; linhas antigas, sem suíte, mantêm o "
@@ -731,7 +731,7 @@ def secao_6_processo(doc):
         ("Campanha oficial com repetições e instrumentação — ",
          "cinco suítes, cada uma com sequencial + {2, 3, 4, 6} workers × {crescente, "
          "LPT}; aquecimento de cache descartado; CPU média e bytes lidos do disco "
-         "por execução; medianas, mínimos, máximos e IQR em v_benchmark_resumo."),
+         "por execução; medianas, mínimos, máximos e IQR em v_enade_time_benchmark_resumo."),
     ])
 
     h2(doc, "6.2 Implantação — como o sistema é colocado em execução")
@@ -961,7 +961,7 @@ def secao_8_3_resultados(doc):
                  "Speedup mín–máx", "Eficiência", "Throughput (linhas/s)"],
            rows, widths_cm=[3.4, 0.8, 3.3, 1.3, 2.0, 2.2, 1.8, 2.2],
            legenda_texto=f"Campanha oficial — mediana, mínimo, máximo e IQR sobre as suítes da campanha, por configuração (n na tabela) "
-                         f"(fonte: v_benchmark_resumo).", font_size=9)
+                         f"(fonte: v_enade_time_benchmark_resumo).", font_size=9)
     if melhor:
         par(doc,
             f"A melhor configuração foi {melhor['rotulo']}: speedup mediano de "
@@ -993,7 +993,7 @@ def secao_8_3_resultados(doc):
            rows, widths_cm=[0.6, 1.5, 0.6, 1.2, 2.2, 2.0, 1.6, 1.2, 1.2, 1.3, 1.5, 1.3],
            legenda_texto="Tetos por granularidade + escalonamento (ordem usada e LPT), makespan medido, "
                          "inflação das etapas, overhead e fração do teto atingida — medianas por configuração "
-                         "(fonte: benchmark_etapa e v_benchmark_metricas, via analise_escalonamento.py).",
+                         "(fonte: tbl_enade_time_benchmark_etapa e v_enade_time_benchmark_metricas, via analise_escalonamento.py).",
            font_size=8.5)
 
     h3(doc, "Hipóteses pré-registradas")
@@ -1037,7 +1037,7 @@ def secao_8_3_resultados(doc):
         tabela(doc, ["Execução", "Baseline usado (errado)", "Speedup exibido", "Eficiência exibida",
                      "Baseline pareado", "Speedup correto", "Eficiência correta"],
                rows, widths_cm=[3.4, 3.0, 2.0, 2.0, 1.9, 2.0, 2.2],
-               legenda_texto="Efeito do baseline errado nas rodadas históricas (fonte: benchmark_execucao e v_benchmark_metricas).",
+               legenda_texto="Efeito do baseline errado nas rodadas históricas (fonte: tbl_enade_time_benchmark_execucao e v_enade_time_benchmark_metricas).",
                font_size=9)
     rows = []
     for rod in D["historico"]:
@@ -1084,7 +1084,7 @@ def secao_9_capturas(doc):
         "porta 5432 e API enade_api em execução (saída real do comando)",
         "screenshots/01_docker_ps.png", "docker compose ps")
     screenshot_real(
-        doc, "Validação do banco — 24.967 linhas em fato_enade, integridade "
+        doc, "Validação do banco — 24.967 linhas em tbl_enade_time_fato, integridade "
         "referencial e coerência de nulos confirmadas: \"BASE VALIDADA COM "
         "SUCESSO\" (saída real do comando)",
         "screenshots/02_validar_banco.png",
@@ -1093,7 +1093,7 @@ def secao_9_capturas(doc):
     h2(doc, "9.2 Benchmark sequencial × paralelo")
     screenshot_real(
         doc, "Benchmark sequencial (baseline) — execução real com tempo total, "
-        "throughput e gravação em benchmark_execucao (saída real do comando; rodada "
+        "throughput e gravação em tbl_enade_time_benchmark_execucao (saída real do comando; rodada "
         "histórica de 21/08/2026)",
         "screenshots/03_bench_sequencial.png",
         "python scripts\\08_benchmark_sequencial.py")
@@ -1267,7 +1267,7 @@ etapas.sort(key=lambda e: e["ano"])''',
     code_quadro(
         doc,
         "Cálculo de speedup e eficiência como view SQL auditável",
-        '''CREATE OR REPLACE VIEW v_benchmark_metricas AS
+        '''CREATE OR REPLACE VIEW v_enade_time_benchmark_metricas AS
 SELECT
     p.id                 AS execucao_id,
     p.num_workers,
@@ -1279,9 +1279,9 @@ SELECT
     p.suite_id, p.campanha_id, p.ordem_submissao,
     s.id                 AS baseline_execucao_id,
     CASE WHEN p.suite_id IS NULL THEN 'temporal' ELSE 'suite' END AS pareamento
-FROM benchmark_execucao p
+FROM tbl_enade_time_benchmark_execucao p
 LEFT JOIN LATERAL (
-    SELECT b.* FROM benchmark_execucao b
+    SELECT b.* FROM tbl_enade_time_benchmark_execucao b
     WHERE b.modo = 'sequencial' AND b.aquecimento = FALSE
       AND ((p.suite_id IS NOT NULL AND b.suite_id = p.suite_id)
         OR (p.suite_id IS NULL AND b.timestamp_inicio < p.timestamp_inicio))
@@ -1468,7 +1468,7 @@ def secao_fontes(doc):
         "docs/ARQUITETURA.md — camadas, fluxo de dados e decisões técnicas.",
         "docs/DESIGN_LOG.md — histórico cronológico de decisões (D1–D17).",
         "docs/RELATORIO_VERIFICACAO.md — estado real do projeto, do EnadeX e do Supabase em 2026-09-01.",
-        "Banco de dados local: views v_benchmark_metricas e v_benchmark_resumo (fonte de todos os números da Seção 8.3).",
+        "Banco de dados local: views v_enade_time_benchmark_metricas e v_enade_time_benchmark_resumo (fonte de todos os números da Seção 8.3).",
         "docs/DICIONARIO_VARIAVEIS.md — harmonização variável a variável entre edições.",
         "docs/LOG_EXECUCAO_ETL.md — versão do dataset e contagens por ano.",
         "docs/RESULTADOS_BENCHMARK.md — números oficiais do experimento de paralelismo.",

@@ -134,7 +134,7 @@ trabalho ou para extensões da pesquisa.
 ### Intervalo de confiança formal
 - **Esforço:** pequeno · **Benefício:** acadêmico.
 - Com 5 suítes reportamos mediana, mín–máx e IQR. Com ~15–20 suítes cabe um
-  IC por bootstrap do speedup mediano — `v_benchmark_resumo` já agrega por
+  IC por bootstrap do speedup mediano — `v_enade_time_benchmark_resumo` já agrega por
   campanha; só o `--reps` muda.
 
 ### Profiling por etapa
@@ -158,7 +158,7 @@ trabalho ou para extensões da pesquisa.
 
 ### Particionar o banco
 - **Esforço:** médio · **Benefício:** acadêmico.
-- Particionar `fato_enade` por `nu_ano` no Postgres e medir impacto
+- Particionar `tbl_enade_time_fato` por `nu_ano` no Postgres e medir impacto
   no `COPY` paralelo.
 
 ---

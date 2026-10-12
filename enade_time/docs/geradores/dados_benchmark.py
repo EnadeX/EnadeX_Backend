@@ -1,6 +1,6 @@
 """
 Dados do benchmark para os geradores de documento e apresentação — TUDO lido
-do banco (views `v_benchmark_resumo` / `v_benchmark_metricas` e tabelas), nada
+do banco (views `v_enade_time_benchmark_resumo` / `v_enade_time_benchmark_metricas` e tabelas), nada
 digitado. `verificar_numeros.py` confere depois que cada número do .docx/.pptx
 existe nas views.
 
@@ -104,7 +104,7 @@ def carregar(campanha: str = "oficial") -> dict:
                        tempo_mediana, tempo_min, tempo_max, tempo_iqr, throughput_mediana,
                        speedup_mediana, speedup_min, speedup_max,
                        eficiencia_mediana, eficiencia_min, eficiencia_max
-                FROM v_benchmark_resumo WHERE campanha_id = %s
+                FROM v_enade_time_benchmark_resumo WHERE campanha_id = %s
                 ORDER BY num_workers, ordem_submissao NULLS FIRST
             """, (cid,))
             resumo = _dicts(cur)
@@ -122,7 +122,7 @@ def carregar(campanha: str = "oficial") -> dict:
                        MIN(observacoes) AS observacoes,
                        ROUND(AVG(cpu_percent_medio), 1) AS cpu_percent_medio,
                        MIN(memoria_pico_mb) AS mem_min, MAX(memoria_pico_mb) AS mem_max
-                FROM benchmark_execucao WHERE campanha_id = %s AND NOT aquecimento
+                FROM tbl_enade_time_benchmark_execucao WHERE campanha_id = %s AND NOT aquecimento
             """, (cid,))
             maquina = _dicts(cur)[0]
             m = re.search(r"cpu_ocioso=([\d.]+)%", maquina.get("observacoes") or "")
@@ -135,7 +135,7 @@ def carregar(campanha: str = "oficial") -> dict:
             cur.execute("""
                 SELECT suite_id::text AS suite_id, COUNT(*) AS n_execs,
                        MIN(timestamp_inicio) AS inicio
-                FROM benchmark_execucao
+                FROM tbl_enade_time_benchmark_execucao
                 WHERE campanha_id = %s AND NOT aquecimento
                 GROUP BY suite_id ORDER BY MIN(timestamp_inicio)
             """, (cid,))
@@ -151,7 +151,7 @@ def carregar(campanha: str = "oficial") -> dict:
 
             cur.execute("""
                 SELECT id, tempo_total_seg, disco_bytes_lidos, cpu_percent_medio
-                FROM benchmark_execucao WHERE campanha_id = %s AND aquecimento ORDER BY id
+                FROM tbl_enade_time_benchmark_execucao WHERE campanha_id = %s AND aquecimento ORDER BY id
             """, (cid,))
             aquecimento = [{"id": r["id"], "tempo": _f(r["tempo_total_seg"]),
                             "disco_mb": (r["disco_bytes_lidos"] or 0) / 1e6,
@@ -162,7 +162,7 @@ def carregar(campanha: str = "oficial") -> dict:
                 SELECT modo, num_workers, ordem_submissao,
                        percentile_cont(0.5) WITHIN GROUP (ORDER BY disco_bytes_lidos) AS disco_med,
                        percentile_cont(0.5) WITHIN GROUP (ORDER BY cpu_percent_medio) AS cpu_med
-                FROM benchmark_execucao WHERE campanha_id = %s AND NOT aquecimento
+                FROM tbl_enade_time_benchmark_execucao WHERE campanha_id = %s AND NOT aquecimento
                 GROUP BY modo, num_workers, ordem_submissao
             """, (cid,))
             instr = {(r["modo"], r["num_workers"], r["ordem_submissao"]):
@@ -178,8 +178,8 @@ def carregar(campanha: str = "oficial") -> dict:
                 SELECT e.id, e.modo, e.num_workers, e.tempo_total_seg, e.throughput_lps,
                        e.timestamp_inicio, e.observacoes,
                        m.speedup, m.eficiencia, m.baseline_execucao_id
-                FROM benchmark_execucao e
-                LEFT JOIN v_benchmark_metricas m ON m.execucao_id = e.id
+                FROM tbl_enade_time_benchmark_execucao e
+                LEFT JOIN v_enade_time_benchmark_metricas m ON m.execucao_id = e.id
                 WHERE e.campanha_id IS NULL ORDER BY e.id
             """)
             legado = _dicts(cur)
@@ -216,7 +216,7 @@ def carregar(campanha: str = "oficial") -> dict:
                 SELECT campanha_id::text AS campanha_id, MIN(timestamp_inicio) AS inicio,
                        COUNT(*) FILTER (WHERE NOT aquecimento) AS n, bool_and(oficial) AS oficial,
                        MIN(observacoes) AS observacoes
-                FROM benchmark_execucao WHERE campanha_id IS NOT NULL AND campanha_id <> %s
+                FROM tbl_enade_time_benchmark_execucao WHERE campanha_id IS NOT NULL AND campanha_id <> %s
                 GROUP BY campanha_id ORDER BY 2
             """, (cid,))
             outras = _dicts(cur)

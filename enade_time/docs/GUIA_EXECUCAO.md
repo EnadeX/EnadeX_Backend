@@ -39,7 +39,7 @@ Ative o ambiente virtual e rode o validador:
 python scripts\07_validar_banco.py
 ```
 
-Esperado: o script reporta **24.967 linhas** em `fato_enade` e confirma
+Esperado: o script reporta **24.967 linhas** em `tbl_enade_time_fato` e confirma
 presença das dimensões e tabelas de benchmark.
 
 ### Primeira execução (banco vazio)
@@ -64,7 +64,7 @@ python scripts\14_migrar_schema_v2.py            # aplica (idempotente; nada é 
 ```
 
 > **Nunca** use `05_criar_schema_postgres.py --reset` em um banco com dados:
-> ele dropa `benchmark_execucao`/`benchmark_etapa` (incidente D9). O 14 só
+> ele dropa `tbl_enade_time_benchmark_execucao`/`tbl_enade_time_benchmark_etapa` (incidente D9). O 14 só
 > adiciona colunas e substitui views. Instalações novas já nascem com a v2
 > (o 05 importa o 14).
 

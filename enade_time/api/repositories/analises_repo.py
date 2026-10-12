@@ -17,7 +17,7 @@ def resumo_anual(cursor: PgCursor, filtros: FiltrosAnalise) -> list[dict]:
             STDDEV(media_nt_fg)::float AS desvio_padrao,
             AVG(media_nt_ger)::float AS media_geral_ger,
             AVG(media_nt_ce)::float  AS media_geral_ce
-        FROM fato_enade
+        FROM tbl_enade_time_fato
         WHERE 1=1 {where}
         GROUP BY nu_ano
         ORDER BY nu_ano
@@ -42,8 +42,8 @@ def resumo_regiao(cursor: PgCursor, filtros: FiltrosAnalise) -> list[dict]:
             STDDEV(f.media_nt_fg)::float AS desvio_padrao,
             AVG(f.media_nt_ger)::float AS media_geral_ger,
             AVG(f.media_nt_ce)::float  AS media_geral_ce
-        FROM fato_enade f
-        JOIN dim_regiao r ON f.co_regiao_curso = r.co_regiao
+        FROM tbl_enade_time_fato f
+        JOIN tbl_enade_time_dim_regiao r ON f.co_regiao_curso = r.co_regiao
         WHERE 1=1 {where}
         GROUP BY r.co_regiao, r.nome
         ORDER BY r.co_regiao
@@ -70,8 +70,8 @@ def resumo_uf(cursor: PgCursor, filtros: FiltrosAnalise) -> list[dict]:
             STDDEV(f.media_nt_fg)::float AS desvio_padrao,
             AVG(f.media_nt_ger)::float AS media_geral_ger,
             AVG(f.media_nt_ce)::float  AS media_geral_ce
-        FROM fato_enade f
-        JOIN dim_uf u ON f.co_uf_curso = u.co_uf
+        FROM tbl_enade_time_fato f
+        JOIN tbl_enade_time_dim_uf u ON f.co_uf_curso = u.co_uf
         WHERE 1=1 {where}
         GROUP BY u.co_uf, u.sigla, u.nome, u.co_regiao
         ORDER BY u.co_regiao, u.sigla
@@ -101,7 +101,7 @@ def resumo_ies(
             AVG(media_nt_fg)::float AS media_geral,
             AVG(media_nt_ger)::float AS media_geral_ger,
             AVG(media_nt_ce)::float  AS media_geral_ce
-        FROM fato_enade
+        FROM tbl_enade_time_fato
         WHERE 1=1 {where}
         GROUP BY co_ies
         HAVING COUNT(DISTINCT co_curso) >= %(min_cursos)s
@@ -116,7 +116,7 @@ def resumo_ies(
 def contar_registros(cursor: PgCursor, filtros: FiltrosAnalise) -> int:
     where, params = filtros.to_where()
     cursor.execute(
-        f"SELECT COUNT(*)::int AS total FROM fato_enade WHERE 1=1 {where}",
+        f"SELECT COUNT(*)::int AS total FROM tbl_enade_time_fato WHERE 1=1 {where}",
         params,
     )
     row = cursor.fetchone()
@@ -140,7 +140,7 @@ def listar_registros(
             media_nt_fg::float  AS media_nt_fg,
             media_nt_ger::float AS media_nt_ger,
             media_nt_ce::float  AS media_nt_ce
-        FROM fato_enade
+        FROM tbl_enade_time_fato
         WHERE 1=1 {where}
         ORDER BY id
         LIMIT %(limit)s OFFSET %(offset)s

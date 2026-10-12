@@ -136,7 +136,7 @@ class AmostradorCpu:
 # ---------------------------------------------------------------------------
 
 SQL_INSERT_EXECUCAO = """
-INSERT INTO benchmark_execucao
+INSERT INTO tbl_enade_time_benchmark_execucao
     (modo, num_workers, tempo_total_seg, linhas_processadas, throughput_lps,
      cpu_count_maquina, cpu_modelo, memoria_pico_mb, observacoes,
      campanha_id, suite_id, oficial, ordem_submissao,
@@ -150,7 +150,7 @@ RETURNING id, timestamp_inicio;
 """
 
 SQL_INSERT_ETAPA = """
-INSERT INTO benchmark_etapa
+INSERT INTO tbl_enade_time_benchmark_etapa
     (execucao_id, ano, tempo_seg, linhas_arq3,
      worker_pid, timestamp_inicio, timestamp_fim)
 VALUES (%s, %s, %s, %s, %s, %s, %s);
@@ -222,17 +222,17 @@ def _linhas_como_dicts(cur) -> list[dict]:
 
 
 def tempos_por_ano(conn, execucao_id: int) -> dict[int, float]:
-    """Tempo de cada ano (benchmark_etapa) de uma execução — base da ordem LPT."""
+    """Tempo de cada ano (tbl_enade_time_benchmark_etapa) de uma execução — base da ordem LPT."""
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT ano, tempo_seg FROM benchmark_etapa WHERE execucao_id = %s ORDER BY ano",
+            "SELECT ano, tempo_seg FROM tbl_enade_time_benchmark_etapa WHERE execucao_id = %s ORDER BY ano",
             (execucao_id,),
         )
         return {int(a): float(t) for a, t in cur.fetchall()}
 
 
 def consultar_metricas(conn, execucao_ids: list[int]) -> list[dict]:
-    """Lê v_benchmark_metricas filtrando pelos IDs informados."""
+    """Lê v_enade_time_benchmark_metricas filtrando pelos IDs informados."""
     if not execucao_ids:
         return []
     placeholders = ",".join(["%s"] * len(execucao_ids))
@@ -243,7 +243,7 @@ def consultar_metricas(conn, execucao_ids: list[int]) -> list[dict]:
                throughput_sequencial, throughput_paralelo,
                cpu_count_maquina, suite_id, campanha_id,
                baseline_execucao_id, pareamento
-        FROM v_benchmark_metricas
+        FROM v_enade_time_benchmark_metricas
         WHERE execucao_id IN ({placeholders})
         ORDER BY num_workers, ordem_submissao, execucao_id;
     """
@@ -253,7 +253,7 @@ def consultar_metricas(conn, execucao_ids: list[int]) -> list[dict]:
 
 
 def consultar_resumo(conn, campanha_id: UUID | str) -> list[dict]:
-    """Lê v_benchmark_resumo de uma campanha (mediana/min/máx/IQR/n por config)."""
+    """Lê v_enade_time_benchmark_resumo de uma campanha (mediana/min/máx/IQR/n por config)."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -263,7 +263,7 @@ def consultar_resumo(conn, campanha_id: UUID | str) -> list[dict]:
                    speedup_mediana, speedup_min, speedup_max,
                    eficiencia_mediana, eficiencia_min, eficiencia_max,
                    oficial, cpu_fisicos, cpu_logicos, cache_quente
-            FROM v_benchmark_resumo
+            FROM v_enade_time_benchmark_resumo
             WHERE campanha_id = %s
             ORDER BY num_workers, ordem_submissao NULLS FIRST
             """,
@@ -277,7 +277,7 @@ def ultima_campanha_oficial(conn) -> str | None:
         cur.execute(
             """
             SELECT campanha_id::text
-            FROM benchmark_execucao
+            FROM tbl_enade_time_benchmark_execucao
             WHERE oficial AND campanha_id IS NOT NULL
             GROUP BY campanha_id
             ORDER BY MIN(timestamp_inicio) DESC

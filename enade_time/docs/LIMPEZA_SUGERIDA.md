@@ -85,7 +85,7 @@ Outros itens arquiváveis após a entrega:
 Mesmo que pareçam "intermediários", estes itens são consultados
 durante a defesa e devem permanecer intactos:
 
-- Execuções **inválidas** #1, #2, #3 em `benchmark_execucao` — provam
+- Execuções **inválidas** #1, #2, #3 em `tbl_enade_time_benchmark_execucao` — provam
   a importância de rodar fora do OneDrive (lição aprendida do
   projeto).
 - `frontend/NOTAS_ORGANIZACAO.md` — referência histórica desta

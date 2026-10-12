@@ -53,7 +53,7 @@ para visualização longitudinal e dos resultados do experimento de paralelismo.
   [`docs/DICIONARIO_VARIAVEIS.md`](docs/DICIONARIO_VARIAVEIS.md).
 - Regiões: Norte e Nordeste (`CO_REGIAO_CURSO ∈ {1, 2}`).
 - Edições do ENADE: 2005, 2008, 2011, 2014, 2017, 2021.
-- Total consolidado em `fato_enade`: **24.967 registros** (inscrições) —
+- Total consolidado em `tbl_enade_time_fato`: **24.967 registros** (inscrições) —
   **582 cursos-ano**, que é a unidade analítica (ver `docs/DICIONARIO_VARIAVEIS.md`).
 
 ---
@@ -146,7 +146,7 @@ docker compose up -d postgres
 docker compose ps
 ```
 
-### 2. Validar o banco (deve reportar 24.967 linhas em `fato_enade`)
+### 2. Validar o banco (deve reportar 24.967 linhas em `tbl_enade_time_fato`)
 
 ```powershell
 .\.venv\Scripts\Activate.ps1

@@ -1,7 +1,7 @@
 """
 Confere que os números de benchmark citados no documento (.docx) e na
-apresentação (.pptx) existem no banco — nas views `v_benchmark_resumo` e
-`v_benchmark_metricas` — com tolerância de arredondamento. É o aceite (e) da
+apresentação (.pptx) existem no banco — nas views `v_enade_time_benchmark_resumo` e
+`v_enade_time_benchmark_metricas` — com tolerância de arredondamento. É o aceite (e) da
 Fase 1: nenhum número sem linha correspondente na view.
 
 O que é verificado
@@ -44,7 +44,8 @@ LISTA_NEGRA = {
 }
 
 RE_SEG = re.compile(r"(?<![\d.,])(\d{1,3}(?:\.\d{3})*,\d{1,4})\s?s\b")
-RE_X = re.compile(r"(?<![\d.,])(\d{1,2},\d{1,4})\s?[×x]\b")
+# (?!\w) e não \b: depois de "×" não há fronteira de palavra, então com \b nenhum speedup casava.
+RE_X = re.compile(r"(?<![\d.,])(\d{1,2},\d{1,4})\s?[×x](?!\w)")
 RE_PCT = re.compile(r"(?<![\d.,])(\d{1,3},\d{1,2})\s?%")
 RE_LPS = re.compile(r"(?<![\d.,])(\d{1,3}(?:\.\d{3})+|\d{4,6})\s?linhas/s")
 
@@ -110,34 +111,34 @@ def valores_permitidos(conn, escalonamento: dict | None) -> dict[str, set[str]]:
         lps.update({fmt_br(round(v), 0), fmt_br(v, 2)})
 
     with conn.cursor() as cur:
-        cur.execute("SELECT tempo_total_seg, throughput_lps FROM benchmark_execucao")
+        cur.execute("SELECT tempo_total_seg, throughput_lps FROM tbl_enade_time_benchmark_execucao")
         for t, thr in cur.fetchall():
             add_tempo(t); add_lps(thr)
-        cur.execute("SELECT speedup, eficiencia FROM v_benchmark_metricas WHERE speedup IS NOT NULL")
+        cur.execute("SELECT speedup, eficiencia FROM v_enade_time_benchmark_metricas WHERE speedup IS NOT NULL")
         for s, e in cur.fetchall():
             add_speedup(s); add_pct(e)
         cur.execute("""SELECT tempo_mediana, tempo_min, tempo_max, tempo_iqr, throughput_mediana,
                               speedup_mediana, speedup_min, speedup_max,
                               eficiencia_mediana, eficiencia_min, eficiencia_max
-                       FROM v_benchmark_resumo""")
+                       FROM v_enade_time_benchmark_resumo""")
         for row in cur.fetchall():
             for v in row[:4]: add_tempo(v)
             add_lps(row[4])
             for v in row[5:8]: add_speedup(v)
             for v in row[8:11]: add_pct(v)
-        cur.execute("SELECT tempo_seg FROM benchmark_etapa")
+        cur.execute("SELECT tempo_seg FROM tbl_enade_time_benchmark_etapa")
         for (t,) in cur.fetchall():
             add_tempo(t)
 
         # valores citados na EXPLICAÇÃO do bug do baseline (speedup contra o
         # sequencial mais recente) — calculados do banco, como em dados_benchmark
-        cur.execute("""SELECT tempo_total_seg FROM benchmark_execucao
+        cur.execute("""SELECT tempo_total_seg FROM tbl_enade_time_benchmark_execucao
                        WHERE campanha_id IS NULL AND modo = 'sequencial' AND NOT aquecimento
                        ORDER BY timestamp_inicio DESC LIMIT 1""")
         _row = cur.fetchone()
         if _row:
             _t_ult = float(_row[0])
-            cur.execute("""SELECT tempo_total_seg, num_workers FROM benchmark_execucao
+            cur.execute("""SELECT tempo_total_seg, num_workers FROM tbl_enade_time_benchmark_execucao
                            WHERE campanha_id IS NULL AND modo = 'paralelo'""")
             for _t_par, _w in cur.fetchall():
                 _s_err = _t_ult / float(_t_par)
@@ -145,7 +146,7 @@ def valores_permitidos(conn, escalonamento: dict | None) -> dict[str, set[str]]:
                 add_pct(_s_err / int(_w))
 
         # CPU ociosa registrada nas observações das campanhas (condição declarada)
-        cur.execute("SELECT DISTINCT observacoes FROM benchmark_execucao "
+        cur.execute("SELECT DISTINCT observacoes FROM tbl_enade_time_benchmark_execucao "
                     "WHERE observacoes LIKE %s", ("%cpu_ocioso=%",))
         for (obs,) in cur.fetchall():
             for mo in re.finditer(r"cpu_ocioso=([0-9.]+)%", obs or ""):

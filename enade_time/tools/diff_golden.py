@@ -10,8 +10,9 @@ Listas são comparadas item a item; em rotas de histórico de benchmark
 prefixo, na mesma ordem (ORDER BY id).
 
 Exceções documentadas (reportadas, mas não falham): `/benchmark/comparativo`
-(a correção do baseline muda os números de propósito — DESIGN_LOG D13) e
-`/health` (versão da API).
+(a correção do baseline muda os números de propósito — DESIGN_LOG D13), `/health`
+(versão da API) e `/analises/resumo-ies` com `min_cursos` (o filtro passou a contar
+cursos distintos, e não inscrições, como o nome sempre disse — DESIGN_LOG D16).
 
 Uso:
   python tools/diff_golden.py --base http://127.0.0.1:8010
@@ -28,7 +29,7 @@ import urllib.request
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
-EXCECOES = ("benchmark/comparativo", "health")
+EXCECOES = ("benchmark/comparativo", "health", "min_cursos")
 LISTAS_CRESCEM = ("benchmark/execucoes", "benchmark/metricas")
 
 

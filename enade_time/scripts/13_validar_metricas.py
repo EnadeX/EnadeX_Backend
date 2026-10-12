@@ -1,18 +1,18 @@
 """
 Checagem cruzada das métricas do benchmark — Python × views × API.
 
-A definição ÚNICA de speedup/eficiência é a view `v_benchmark_metricas`
+A definição ÚNICA de speedup/eficiência é a view `v_enade_time_benchmark_metricas`
 (pareamento por suíte; temporal só para linhas antigas sem `suite_id`). Este
 script recalcula tudo em Python a partir das TABELAS (não das views) e falha
 se qualquer número divergir — é a garantia de que a view diz o que o
 documento diz que ela diz.
 
 Checagens
-  A. v_benchmark_metricas: para cada execução paralela, speedup =
+  A. v_enade_time_benchmark_metricas: para cada execução paralela, speedup =
      round(t_seq_pareado / t_par, 4) e eficiência = round(speedup / p, 4),
      com o pareamento recalculado em Python (mesma suíte; senão, sequencial
      imediatamente anterior no tempo, sem aquecimento).
-  B. v_benchmark_resumo: por (campanha, modo, workers, ordem): n, mediana,
+  B. v_enade_time_benchmark_resumo: por (campanha, modo, workers, ordem): n, mediana,
      mín, máx, IQR (percentile_cont = interpolação linear) de tempo, mediana
      de throughput, mediana/mín/máx de speedup e eficiência — recalculados
      com numpy sobre as execuções (aquecimento excluído; sequencial = 1,0).
@@ -25,6 +25,7 @@ Uso
   python scripts/13_validar_metricas.py --campanha <uuid>
   python scripts/13_validar_metricas.py --campanha todas       # todas as campanhas + legado
   python scripts/13_validar_metricas.py --api http://127.0.0.1:8000
+  python scripts/13_validar_metricas.py --api http://127.0.0.1:8002 --prefixo /api/enade-time
 
 Saída: relatório por checagem e código de saída 0 (tudo confere) ou 1.
 """
@@ -79,7 +80,7 @@ def carregar_execucoes(conn) -> list[dict]:
             SELECT id, modo, num_workers, tempo_total_seg, throughput_lps, timestamp_inicio,
                    campanha_id::text AS campanha_id, suite_id::text AS suite_id,
                    ordem_submissao, oficial, aquecimento
-            FROM benchmark_execucao ORDER BY id
+            FROM tbl_enade_time_benchmark_execucao ORDER BY id
         """)
         cols = [d[0] for d in cur.description]
         return [dict(zip(cols, r)) for r in cur.fetchall()]
@@ -101,17 +102,17 @@ def parear_em_python(execs: list[dict]) -> dict[int, dict | None]:
 
 
 # ---------------------------------------------------------------------------
-# A. v_benchmark_metricas
+# A. v_enade_time_benchmark_metricas
 # ---------------------------------------------------------------------------
 
 def checar_metricas(conn, execs: list[dict], campanha: str | None) -> dict[int, dict]:
-    secao("A) v_benchmark_metricas × recálculo em Python")
+    secao("A) v_enade_time_benchmark_metricas × recálculo em Python")
     pares = parear_em_python(execs)
     with conn.cursor() as cur:
         cur.execute("""
             SELECT execucao_id, tempo_sequencial, tempo_paralelo, speedup, eficiencia,
                    baseline_execucao_id, pareamento, num_workers, campanha_id::text
-            FROM v_benchmark_metricas
+            FROM v_enade_time_benchmark_metricas
         """)
         cols = [d[0] for d in cur.description]
         view = {r[0]: dict(zip(cols, r)) for r in cur.fetchall()}
@@ -152,18 +153,18 @@ def checar_metricas(conn, execs: list[dict], campanha: str | None) -> dict[int, 
 
 
 # ---------------------------------------------------------------------------
-# B. v_benchmark_resumo
+# B. v_enade_time_benchmark_resumo
 # ---------------------------------------------------------------------------
 
 def checar_resumo(conn, execs: list[dict], view: dict[int, dict], campanha: str | None) -> None:
-    secao("B) v_benchmark_resumo × numpy")
+    secao("B) v_enade_time_benchmark_resumo × numpy")
     with conn.cursor() as cur:
         cur.execute("""
             SELECT campanha_id::text, modo, num_workers, ordem_submissao, n,
                    tempo_mediana, tempo_min, tempo_max, tempo_iqr, throughput_mediana,
                    speedup_mediana, speedup_min, speedup_max,
                    eficiencia_mediana, eficiencia_min, eficiencia_max
-            FROM v_benchmark_resumo
+            FROM v_enade_time_benchmark_resumo
         """)
         cols = [d[0] for d in cur.description]
         resumo = [dict(zip(cols, r)) for r in cur.fetchall()]
@@ -238,12 +239,12 @@ def _get(url: str):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def checar_api(base: str, view: dict[int, dict], conn, campanha: str | None) -> None:
+def checar_api(base: str, view: dict[int, dict], conn, campanha: str | None, prefixo: str = "/api") -> None:
     secao(f"C) API em {base}")
     try:
         params = f"?campanha_id={campanha}" if campanha not in (None, "todas") else ""
-        comp = _get(f"{base}/api/benchmark/comparativo{params}")
-        mets = _get(f"{base}/api/benchmark/metricas{params}")
+        comp = _get(f"{base}{prefixo}/benchmark/comparativo{params}")
+        mets = _get(f"{base}{prefixo}/benchmark/metricas{params}")
     except (urllib.error.URLError, OSError) as e:
         check(False, "", f"API indisponível: {e}")
         return
@@ -274,7 +275,7 @@ def checar_api(base: str, view: dict[int, dict], conn, campanha: str | None) -> 
     if comp.get("campanha_id"):
         with conn.cursor() as cur:
             cur.execute("SELECT modo, num_workers, ordem_submissao, speedup_mediana, tempo_mediana "
-                        "FROM v_benchmark_resumo WHERE campanha_id = %s", (comp["campanha_id"],))
+                        "FROM v_enade_time_benchmark_resumo WHERE campanha_id = %s", (comp["campanha_id"],))
             vr = {(r[0], r[1], r[2]): (r[3], r[4]) for r in cur.fetchall()}
         difs = 0
         for r in comp["resumo"]:
@@ -283,8 +284,8 @@ def checar_api(base: str, view: dict[int, dict], conn, campanha: str | None) -> 
                 vr[k][0] is not None and r4(r["speedup_mediana"]) != r4(vr[k][0])):
                 difs += 1
         check(difs == 0 and len(comp["resumo"]) == len(vr),
-              f"comparativo.resumo ({len(comp['resumo'])}) idêntico a v_benchmark_resumo",
-              f"comparativo.resumo diverge de v_benchmark_resumo ({difs} dif., {len(comp['resumo'])} × {len(vr)})")
+              f"comparativo.resumo ({len(comp['resumo'])}) idêntico a v_enade_time_benchmark_resumo",
+              f"comparativo.resumo diverge de v_enade_time_benchmark_resumo ({difs} dif., {len(comp['resumo'])} × {len(vr)})")
 
 
 def main() -> int:
@@ -292,6 +293,8 @@ def main() -> int:
     ap.add_argument("--campanha", default="oficial",
                     help="'oficial' (padrão), 'todas' ou um uuid.")
     ap.add_argument("--api", default=None, help="Base URL da API para a checagem C (ex.: http://127.0.0.1:8000).")
+    ap.add_argument("--prefixo", default="/api",
+                    help="Prefixo das rotas: /api (API legada) ou /api/enade-time (router do ecossistema).")
     ap.add_argument("--cruzado", action="store_true", help="local × Supabase (Fase 4).")
     args = ap.parse_args()
 
@@ -318,7 +321,7 @@ def main() -> int:
         else:
             print("\n(B) pulada: não há campanhas no banco.")
         if args.api:
-            checar_api(args.api.rstrip("/"), view, conn, campanha)
+            checar_api(args.api.rstrip("/"), view, conn, campanha, args.prefixo.rstrip("/"))
     finally:
         conn.close()
 

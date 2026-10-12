@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Tetos de escalonamento e decomposição das perdas de paralelismo, calculados a
-partir de `benchmark_etapa` (tempos por ano) e `benchmark_execucao`.
+partir de `tbl_enade_time_benchmark_etapa` (tempos por ano) e `tbl_enade_time_benchmark_execucao`.
 
 Para cada execução paralela da campanha:
   * **ideal**            = soma dos tempos por ano do sequencial da MESMA suíte ÷ p;
@@ -68,7 +68,7 @@ def carregar(conn, campanha: str, _reservado=None):
                    tempo_total_seg::float AS wall,
                    cpu_percent_medio::float AS cpu_pct,
                    disco_bytes_lidos, aquecimento
-            FROM benchmark_execucao
+            FROM tbl_enade_time_benchmark_execucao
             WHERE campanha_id = %s
             ORDER BY id
         """, (campanha,))
@@ -76,8 +76,8 @@ def carregar(conn, campanha: str, _reservado=None):
         execs = [dict(zip(cols, r)) for r in cur.fetchall()]
         cur.execute("""
             SELECT e.execucao_id, e.ano, e.tempo_seg::float AS t, e.worker_pid
-            FROM benchmark_etapa e
-            JOIN benchmark_execucao x ON x.id = e.execucao_id
+            FROM tbl_enade_time_benchmark_etapa e
+            JOIN tbl_enade_time_benchmark_execucao x ON x.id = e.execucao_id
             WHERE x.campanha_id = %s
         """, (campanha,))
         etapas: dict[int, list[tuple[int, float, int | None]]] = {}

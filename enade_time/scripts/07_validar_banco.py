@@ -2,7 +2,7 @@
 Valida a carga no PostgreSQL.
 
 Checagens:
-  1. COUNT(*) em fato_enade == 24967
+  1. COUNT(*) em tbl_enade_time_fato == 24967
   2. SELECT DISTINCT nu_ano = {2005, 2008, 2011, 2014, 2017, 2021}
   3. MIN(media_nt_fg) >= 0 e MAX(media_nt_fg) <= 100 (quando não NULL)
   4. Integridade referencial (JOIN nas dims, sem órfãos)
@@ -70,8 +70,8 @@ def main() -> int:
 
     with conn, conn.cursor() as cur:
         # 1) contagem total
-        secao("1) Contagem total em fato_enade")
-        cur.execute("SELECT COUNT(*) FROM fato_enade;")
+        secao("1) Contagem total em tbl_enade_time_fato")
+        cur.execute("SELECT COUNT(*) FROM tbl_enade_time_fato;")
         total = cur.fetchone()[0]
         print(f"  COUNT(*) = {total}")
         check(total == LINHAS_ESPERADAS,
@@ -79,8 +79,8 @@ def main() -> int:
               f"COUNT(*) = {total}, esperado {LINHAS_ESPERADAS}")
 
         # 2) anos distintos
-        secao("2) Anos distintos em fato_enade")
-        cur.execute("SELECT DISTINCT nu_ano FROM fato_enade ORDER BY nu_ano;")
+        secao("2) Anos distintos em tbl_enade_time_fato")
+        cur.execute("SELECT DISTINCT nu_ano FROM tbl_enade_time_fato ORDER BY nu_ano;")
         anos = {row[0] for row in cur.fetchall()}
         print(f"  anos: {sorted(anos)}")
         check(anos == ANOS_ESPERADOS,
@@ -90,7 +90,7 @@ def main() -> int:
 
         # 2b) linhas por ano
         cur.execute("""
-            SELECT nu_ano, COUNT(*) FROM fato_enade
+            SELECT nu_ano, COUNT(*) FROM tbl_enade_time_fato
             GROUP BY nu_ano ORDER BY nu_ano;
         """)
         for ano, n in cur.fetchall():
@@ -102,7 +102,7 @@ def main() -> int:
             SELECT MIN(media_nt_fg), MAX(media_nt_fg),
                    AVG(media_nt_fg), COUNT(media_nt_fg),
                    COUNT(*) - COUNT(media_nt_fg) AS nulas
-            FROM fato_enade;
+            FROM tbl_enade_time_fato;
         """)
         mn, mx, mean, ncount, nnulas = cur.fetchone()
         print(f"  min={mn}  max={mx}  mean={mean}")
@@ -122,7 +122,7 @@ def main() -> int:
                 SELECT COUNT({nota}) AS nao_nulos,
                        COUNT(*) - COUNT({nota}) AS nulos,
                        MIN({nota}), MAX({nota})
-                FROM fato_enade;
+                FROM tbl_enade_time_fato;
             """)
             nao_nulos, nulos, mn_n, mx_n = cur.fetchone()
             print(f"  {nota:<13} não_nulos={nao_nulos}  nulos={nulos}  "
@@ -152,7 +152,7 @@ def main() -> int:
               COUNT(*) FILTER (WHERE media_nt_fg IS NULL
                                  AND media_nt_ger IS NULL
                                  AND media_nt_ce IS NULL) AS nulos_nas_tres
-            FROM fato_enade;
+            FROM tbl_enade_time_fato;
         """)
         difere_ger, difere_ce, nulos_tres = cur.fetchone()
         difere_ger = int(difere_ger or 0)
@@ -181,14 +181,14 @@ def main() -> int:
               SUM(CASE WHEN da.co_ano      IS NULL THEN 1 ELSE 0 END) AS orf_ano,
               SUM(CASE WHEN f.co_modalidade IS NOT NULL
                        AND dm.co_modalidade IS NULL THEN 1 ELSE 0 END) AS orf_modalidade
-            FROM fato_enade f
-            LEFT JOIN dim_regiao         dr  ON dr.co_regiao    = f.co_regiao_curso
-            LEFT JOIN dim_uf             du  ON du.co_uf        = f.co_uf_curso
-            LEFT JOIN dim_grupo          dg  ON dg.co_grupo     = f.co_grupo
-            LEFT JOIN dim_categoria_adm  dc  ON dc.co_categad   = f.co_categad
-            LEFT JOIN dim_organizacao_acad doa ON doa.co_orgacad = f.co_orgacad
-            LEFT JOIN dim_ano            da  ON da.co_ano       = f.nu_ano
-            LEFT JOIN dim_modalidade     dm  ON dm.co_modalidade = f.co_modalidade;
+            FROM tbl_enade_time_fato f
+            LEFT JOIN tbl_enade_time_dim_regiao         dr  ON dr.co_regiao    = f.co_regiao_curso
+            LEFT JOIN tbl_enade_time_dim_uf             du  ON du.co_uf        = f.co_uf_curso
+            LEFT JOIN tbl_enade_time_dim_grupo          dg  ON dg.co_grupo     = f.co_grupo
+            LEFT JOIN tbl_enade_time_dim_categoria_adm  dc  ON dc.co_categad   = f.co_categad
+            LEFT JOIN tbl_enade_time_dim_organizacao_acad doa ON doa.co_orgacad = f.co_orgacad
+            LEFT JOIN tbl_enade_time_dim_ano            da  ON da.co_ano       = f.nu_ano
+            LEFT JOIN tbl_enade_time_dim_modalidade     dm  ON dm.co_modalidade = f.co_modalidade;
         """)
         orf = cur.fetchone()
         nomes = ["regiao", "uf", "grupo", "categad", "orgacad", "ano",
@@ -200,13 +200,13 @@ def main() -> int:
                   f"{n} órfãos em {nome}")
 
         # 4b) regiões e grupos observados
-        cur.execute("SELECT DISTINCT co_regiao_curso FROM fato_enade;")
+        cur.execute("SELECT DISTINCT co_regiao_curso FROM tbl_enade_time_fato;")
         regs = {r[0] for r in cur.fetchall()}
         check(regs == REGIOES_ESPERADAS,
               f"co_regiao_curso == {sorted(REGIOES_ESPERADAS)}",
               f"co_regiao_curso = {sorted(regs)}")
 
-        cur.execute("SELECT DISTINCT co_grupo FROM fato_enade;")
+        cur.execute("SELECT DISTINCT co_grupo FROM tbl_enade_time_fato;")
         grupos = {r[0] for r in cur.fetchall()}
         check(grupos == CODIGOS_COMPUTACAO,
               f"co_grupo == {sorted(CODIGOS_COMPUTACAO)}",
@@ -215,13 +215,13 @@ def main() -> int:
         # 5) Lookup tables populadas
         secao("5) Lookup tables")
         esperado = {
-            "dim_regiao": 2,
-            "dim_uf": 16,
-            "dim_grupo": 2,
-            "dim_categoria_adm": 6,
-            "dim_organizacao_acad": 6,
-            "dim_modalidade": 2,
-            "dim_ano": 6,
+            "tbl_enade_time_dim_regiao": 2,
+            "tbl_enade_time_dim_uf": 16,
+            "tbl_enade_time_dim_grupo": 2,
+            "tbl_enade_time_dim_categoria_adm": 6,
+            "tbl_enade_time_dim_organizacao_acad": 6,
+            "tbl_enade_time_dim_modalidade": 2,
+            "tbl_enade_time_dim_ano": 6,
         }
         for tbl, n_esp in esperado.items():
             cur.execute(f"SELECT COUNT(*) FROM {tbl};")
@@ -231,11 +231,11 @@ def main() -> int:
                   f"{tbl}: {n} linhas (esperado {n_esp})")
 
         # 6) Schema das colunas
-        secao("6) Schema esperado em fato_enade")
+        secao("6) Schema esperado em tbl_enade_time_fato")
         cur.execute("""
             SELECT column_name, data_type, is_nullable
             FROM information_schema.columns
-            WHERE table_name = 'fato_enade'
+            WHERE table_name = 'tbl_enade_time_fato'
             ORDER BY ordinal_position;
         """)
         cols = cur.fetchall()
@@ -258,8 +258,8 @@ def main() -> int:
             SELECT f.co_ies, dc.nome AS categoria,
                    ROUND(AVG(f.media_nt_fg)::numeric, 2) AS media,
                    COUNT(DISTINCT f.co_curso) AS qtd_cursos
-            FROM fato_enade f
-            JOIN dim_categoria_adm dc ON dc.co_categad = f.co_categad
+            FROM tbl_enade_time_fato f
+            JOIN tbl_enade_time_dim_categoria_adm dc ON dc.co_categad = f.co_categad
             WHERE f.nu_ano = 2017 AND f.media_nt_fg IS NOT NULL
             GROUP BY f.co_ies, dc.nome
             HAVING COUNT(*) >= 5

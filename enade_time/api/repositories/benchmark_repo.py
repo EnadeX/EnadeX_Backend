@@ -2,7 +2,7 @@
 Repositório do benchmark — SQL explícito, sem ORM.
 
 Regra de auditabilidade (DESIGN_LOG D13): speedup e eficiência têm UMA
-definição, em `v_benchmark_metricas` (pareamento de cada execução paralela com
+definição, em `v_enade_time_benchmark_metricas` (pareamento de cada execução paralela com
 o sequencial da própria suíte). Este módulo NÃO recalcula nada em Python — só
 lê as views e monta a resposta. A checagem cruzada em Python fica em
 `scripts/13_validar_metricas.py` e nos testes.
@@ -27,7 +27,7 @@ def _filtro_validas(
     return ("", {})
 
 
-# Colunas de benchmark_execucao expostas pela API (as da v2 são aditivas).
+# Colunas de tbl_enade_time_benchmark_execucao expostas pela API (as da v2 são aditivas).
 _COLS_EXECUCAO = """
     id, timestamp_inicio, modo, num_workers,
     tempo_total_seg::float AS tempo_total_seg,
@@ -61,7 +61,7 @@ def listar_execucoes(
     cursor.execute(
         f"""
         SELECT {_COLS_EXECUCAO}
-        FROM benchmark_execucao
+        FROM tbl_enade_time_benchmark_execucao
         WHERE 1=1 {where}
         ORDER BY id
         """,
@@ -81,7 +81,7 @@ def get_execucao(
     cursor.execute(
         f"""
         SELECT {_COLS_EXECUCAO}
-        FROM benchmark_execucao
+        FROM tbl_enade_time_benchmark_execucao
         WHERE id = %(id)s
         """,
         {"id": execucao_id},
@@ -99,7 +99,7 @@ def listar_etapas(
     if apenas_validas and execucao_id in ids_excluir:
         return None
     cursor.execute(
-        "SELECT 1 FROM benchmark_execucao WHERE id = %(id)s",
+        "SELECT 1 FROM tbl_enade_time_benchmark_execucao WHERE id = %(id)s",
         {"id": execucao_id},
     )
     if cursor.fetchone() is None:
@@ -112,7 +112,7 @@ def listar_etapas(
             tempo_seg::float AS tempo_seg,
             linhas_arq3, worker_pid,
             timestamp_inicio, timestamp_fim
-        FROM benchmark_etapa
+        FROM tbl_enade_time_benchmark_etapa
         WHERE execucao_id = %(execucao_id)s
         ORDER BY ano
         """,
@@ -150,7 +150,7 @@ def listar_metricas(
             suite_id::text    AS suite_id,
             campanha_id::text AS campanha_id,
             oficial, baseline_execucao_id, pareamento
-        FROM v_benchmark_metricas
+        FROM v_enade_time_benchmark_metricas
         WHERE 1=1 {where}
         ORDER BY execucao_id
         """,
@@ -174,7 +174,7 @@ def listar_campanhas(cursor: PgCursor) -> list[dict]:
             MIN(cpu_logicos) AS cpu_logicos,
             MIN(cpu_modelo)  AS cpu_modelo,
             MIN(observacoes) AS observacoes
-        FROM benchmark_execucao
+        FROM tbl_enade_time_benchmark_execucao
         WHERE campanha_id IS NOT NULL
         GROUP BY campanha_id
         ORDER BY MIN(timestamp_inicio) DESC
@@ -187,7 +187,7 @@ def campanha_oficial_mais_recente(cursor: PgCursor) -> str | None:
     cursor.execute(
         """
         SELECT campanha_id::text AS campanha_id
-        FROM benchmark_execucao
+        FROM tbl_enade_time_benchmark_execucao
         WHERE oficial AND campanha_id IS NOT NULL AND NOT aquecimento
         GROUP BY campanha_id
         ORDER BY MIN(timestamp_inicio) DESC
@@ -215,7 +215,7 @@ def resumo_campanha(cursor: PgCursor, campanha_id: str) -> list[dict]:
             eficiencia_min::float     AS eficiencia_min,
             eficiencia_max::float     AS eficiencia_max,
             oficial, cpu_fisicos, cpu_logicos, cache_quente
-        FROM v_benchmark_resumo
+        FROM v_enade_time_benchmark_resumo
         WHERE campanha_id = %(campanha_id)s
         ORDER BY num_workers, ordem_submissao NULLS FIRST
         """,
@@ -231,7 +231,7 @@ def _maquina_da_campanha(cursor: PgCursor, campanha_id: str) -> dict | None:
                MIN(cpu_modelo) AS cpu_modelo,
                bool_and(cache_quente) AS cache_quente,
                COUNT(DISTINCT suite_id)::int AS n_suites
-        FROM benchmark_execucao
+        FROM tbl_enade_time_benchmark_execucao
         WHERE campanha_id = %(campanha_id)s AND NOT aquecimento
         """,
         {"campanha_id": campanha_id},
@@ -255,10 +255,10 @@ def comparativo(
 
     Semântica (retrocompatível com a resposta antiga):
       * `itens[]`   — execuções individuais. Speedup/eficiência vêm SEMPRE de
-        `v_benchmark_metricas` (paralela pareada com o sequencial da própria
+        `v_enade_time_benchmark_metricas` (paralela pareada com o sequencial da própria
         suíte; nas linhas antigas, com o sequencial imediatamente anterior).
         Sequenciais recebem 1,0 por definição.
-      * `resumo[]`  — `v_benchmark_resumo` da campanha: mediana/mín/máx/IQR/n
+      * `resumo[]`  — `v_enade_time_benchmark_resumo` da campanha: mediana/mín/máx/IQR/n
         por (workers, ordem de submissão). Vazio quando não há campanha.
       * Seleção: `campanha_id` explícito > campanha oficial mais recente >
         (banco legado, sem campanha) todas as execuções. `suite_id` restringe
@@ -273,7 +273,7 @@ def comparativo(
 
     if suite_id is not None and campanha_id is None:
         cursor.execute(
-            "SELECT campanha_id::text AS c FROM benchmark_execucao WHERE suite_id = %(s)s LIMIT 1",
+            "SELECT campanha_id::text AS c FROM tbl_enade_time_benchmark_execucao WHERE suite_id = %(s)s LIMIT 1",
             {"s": suite_id},
         )
         row = cursor.fetchone()
@@ -300,8 +300,8 @@ def comparativo(
             CASE WHEN e.modo = 'sequencial' THEN 1.0 ELSE m.speedup::float    END AS speedup,
             CASE WHEN e.modo = 'sequencial' THEN 1.0 ELSE m.eficiencia::float END AS eficiencia,
             m.baseline_execucao_id, m.pareamento
-        FROM benchmark_execucao e
-        LEFT JOIN v_benchmark_metricas m ON m.execucao_id = e.id
+        FROM tbl_enade_time_benchmark_execucao e
+        LEFT JOIN v_enade_time_benchmark_metricas m ON m.execucao_id = e.id
         WHERE e.aquecimento = FALSE {where}
         ORDER BY e.modo, e.num_workers, e.ordem_submissao NULLS FIRST, e.id
         """,
@@ -364,7 +364,7 @@ def comparativo(
             f"""
             SELECT id, tempo_total_seg::float AS t, throughput_lps::float AS thr,
                    cpu_count_maquina
-            FROM benchmark_execucao
+            FROM tbl_enade_time_benchmark_execucao
             WHERE modo = 'sequencial' AND NOT aquecimento {where_b}
             ORDER BY timestamp_inicio DESC
             LIMIT 1

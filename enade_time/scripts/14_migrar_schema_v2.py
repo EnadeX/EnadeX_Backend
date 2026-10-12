@@ -1,25 +1,35 @@
 """
-Migração ADITIVA do schema local para a v2 do benchmark — campanhas, suítes,
-ordem de submissão e instrumentação da máquina — SEM apagar nada.
+Migração ADITIVA do schema local — nomes da convenção do ecossistema (D12) e v2 do
+benchmark (campanhas, suítes, ordem de submissão e instrumentação da máquina) —
+SEM apagar nada.
+
+Nomes (D12)
+-----------
+O banco local nasceu com fato_enade, dim_*, benchmark_execucao, benchmark_etapa,
+v_benchmark_metricas e v_benchmark_resumo. O ecossistema EnadeX nomeia por estudo
+(tbl_<estudo>_*, v_<estudo>_*), e o Supabase usa esses nomes; para a API poder ler
+do banco local ou do Supabase trocando só o DSN, o local passa a usar os mesmos.
+O renome é só de metadados (ALTER ... RENAME): nenhuma linha é copiada, as views e
+as FKs acompanham, e é reversível com --desfazer-renome. Idempotente.
 
 Substitui o `05_criar_schema_postgres.py --reset` em bancos que já têm dados:
-o --reset dropa benchmark_execucao/benchmark_etapa (incidente D9 do DESIGN_LOG).
+o --reset dropa tbl_enade_time_benchmark_execucao/tbl_enade_time_benchmark_etapa (incidente D9 do DESIGN_LOG).
 Aqui só há ALTER TABLE ... ADD COLUMN IF NOT EXISTS, CREATE INDEX IF NOT EXISTS
 e CREATE OR REPLACE VIEW. Pode rodar quantas vezes for preciso (idempotente).
 
 O que muda
 ----------
-benchmark_execucao  + campanha_id, suite_id, oficial, execucao_uid,
+tbl_enade_time_benchmark_execucao  + campanha_id, suite_id, oficial, execucao_uid,
                       ordem_submissao, cpu_fisicos, cpu_logicos,
                       cpu_percent_medio, disco_bytes_lidos, cache_quente,
                       aquecimento
-benchmark_etapa     + etapa_uid
-v_benchmark_metricas  passa a parear cada execução paralela com o sequencial
+tbl_enade_time_benchmark_etapa     + etapa_uid
+v_enade_time_benchmark_metricas  passa a parear cada execução paralela com o sequencial
                       da MESMA suíte. Linhas antigas (suite_id NULL) mantêm o
                       pareamento temporal (sequencial imediatamente anterior),
                       então os ids 1–6 continuam devolvendo os mesmos números.
                       Colunas novas só no FIM (exigência do CREATE OR REPLACE).
-v_benchmark_resumo    (nova) mediana / mín / máx / IQR / n por
+v_enade_time_benchmark_resumo    (nova) mediana / mín / máx / IQR / n por
                       (campanha, workers, ordem de submissão); o sequencial
                       entra como configuração (1, NULL) com speedup 1.
 tbl_enade_time_publicacao (nova) log das publicações no Supabase (script 12).
@@ -59,11 +69,60 @@ DB_CONFIG = {
 }
 
 # ---------------------------------------------------------------------------
+# Renome para a convenção do ecossistema (D12) — (nome antigo, nome novo)
+# ---------------------------------------------------------------------------
+
+RENOMES_TABELAS = [
+    ("fato_enade", "tbl_enade_time_fato"),
+    ("dim_regiao", "tbl_enade_time_dim_regiao"),
+    ("dim_uf", "tbl_enade_time_dim_uf"),
+    ("dim_grupo", "tbl_enade_time_dim_grupo"),
+    ("dim_categoria_adm", "tbl_enade_time_dim_categoria_adm"),
+    ("dim_organizacao_acad", "tbl_enade_time_dim_organizacao_acad"),
+    ("dim_modalidade", "tbl_enade_time_dim_modalidade"),
+    ("dim_ano", "tbl_enade_time_dim_ano"),
+    ("benchmark_execucao", "tbl_enade_time_benchmark_execucao"),
+    ("benchmark_etapa", "tbl_enade_time_benchmark_etapa"),
+]
+RENOMES_VIEWS = [
+    ("v_benchmark_metricas", "v_enade_time_benchmark_metricas"),
+    ("v_benchmark_resumo", "v_enade_time_benchmark_resumo"),
+]
+
+
+def _existe(cur, nome: str) -> bool:
+    cur.execute("SELECT to_regclass(%s) IS NOT NULL", (f"public.{nome}",))
+    return cur.fetchone()[0]
+
+
+def renomear(cur, verbose: bool = True, inverso: bool = False) -> int:
+    """Renomeia tabelas e views para a convenção (ou de volta, com `inverso`).
+
+    Idempotente: só age quando o nome de origem existe e o de destino não. Se os
+    dois existirem, aborta — seria sinal de duas cópias e não se adivinha qual vale.
+    Devolve quantos objetos foram renomeados.
+    """
+    feitos = 0
+    for tipo, pares in (("TABLE", RENOMES_TABELAS), ("VIEW", RENOMES_VIEWS)):
+        for antigo, novo in pares:
+            origem, destino = (novo, antigo) if inverso else (antigo, novo)
+            if not _existe(cur, origem):
+                continue
+            if _existe(cur, destino):
+                raise RuntimeError(f"{origem} e {destino} existem ao mesmo tempo; resolva à mão")
+            cur.execute(f'ALTER {tipo} "{origem}" RENAME TO "{destino}"')
+            feitos += 1
+            if verbose:
+                print(f"  {origem} -> {destino}")
+    return feitos
+
+
+# ---------------------------------------------------------------------------
 # Colunas (todas IF NOT EXISTS; nada é removido ou alterado)
 # ---------------------------------------------------------------------------
 
 SQL_COLUNAS = """
-ALTER TABLE benchmark_execucao
+ALTER TABLE tbl_enade_time_benchmark_execucao
     ADD COLUMN IF NOT EXISTS campanha_id       UUID          NULL,
     ADD COLUMN IF NOT EXISTS suite_id          UUID          NULL,
     ADD COLUMN IF NOT EXISTS oficial           BOOLEAN       NOT NULL DEFAULT FALSE,
@@ -76,7 +135,7 @@ ALTER TABLE benchmark_execucao
     ADD COLUMN IF NOT EXISTS cache_quente      BOOLEAN       NULL,
     ADD COLUMN IF NOT EXISTS aquecimento       BOOLEAN       NOT NULL DEFAULT FALSE;
 
-ALTER TABLE benchmark_etapa
+ALTER TABLE tbl_enade_time_benchmark_etapa
     ADD COLUMN IF NOT EXISTS etapa_uid UUID NOT NULL DEFAULT gen_random_uuid();
 
 -- CHECK não tem IF NOT EXISTS: protege via catálogo.
@@ -85,26 +144,26 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
         WHERE conname = 'chk_bench_ordem_submissao'
-          AND conrelid = 'benchmark_execucao'::regclass
+          AND conrelid = 'tbl_enade_time_benchmark_execucao'::regclass
     ) THEN
-        ALTER TABLE benchmark_execucao
+        ALTER TABLE tbl_enade_time_benchmark_execucao
             ADD CONSTRAINT chk_bench_ordem_submissao
             CHECK (ordem_submissao IS NULL OR ordem_submissao IN ('crescente', 'lpt'));
     END IF;
 END $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_bench_exec_uid       ON benchmark_execucao(execucao_uid);
-CREATE INDEX        IF NOT EXISTS idx_bench_exec_campanha ON benchmark_execucao(campanha_id);
-CREATE INDEX        IF NOT EXISTS idx_bench_exec_suite    ON benchmark_execucao(suite_id);
-CREATE UNIQUE INDEX IF NOT EXISTS ux_bench_etapa_uid      ON benchmark_etapa(etapa_uid);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_bench_exec_uid       ON tbl_enade_time_benchmark_execucao(execucao_uid);
+CREATE INDEX        IF NOT EXISTS idx_bench_exec_campanha ON tbl_enade_time_benchmark_execucao(campanha_id);
+CREATE INDEX        IF NOT EXISTS idx_bench_exec_suite    ON tbl_enade_time_benchmark_execucao(suite_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_bench_etapa_uid      ON tbl_enade_time_benchmark_etapa(etapa_uid);
 """
 
 SQL_BACKFILL = """
-UPDATE benchmark_execucao
+UPDATE tbl_enade_time_benchmark_execucao
    SET ordem_submissao = 'crescente'
  WHERE modo = 'paralelo' AND ordem_submissao IS NULL;
 
-UPDATE benchmark_execucao
+UPDATE tbl_enade_time_benchmark_execucao
    SET cpu_logicos = cpu_count_maquina
  WHERE cpu_logicos IS NULL;
 """
@@ -116,7 +175,7 @@ UPDATE benchmark_execucao
 # Colunas 1–10 idênticas à view original (nome, tipo e posição) — o CREATE OR
 # REPLACE exige isso. As novas vêm depois.
 SQL_VIEW_METRICAS = """
-CREATE OR REPLACE VIEW v_benchmark_metricas AS
+CREATE OR REPLACE VIEW v_enade_time_benchmark_metricas AS
 SELECT
     p.id                 AS execucao_id,
     p.timestamp_inicio,
@@ -135,9 +194,9 @@ SELECT
     p.oficial,
     s.id                 AS baseline_execucao_id,
     CASE WHEN p.suite_id IS NULL THEN 'temporal' ELSE 'suite' END AS pareamento
-FROM benchmark_execucao p
+FROM tbl_enade_time_benchmark_execucao p
 LEFT JOIN LATERAL (
-    SELECT b.* FROM benchmark_execucao b
+    SELECT b.* FROM tbl_enade_time_benchmark_execucao b
     WHERE b.modo = 'sequencial'
       AND b.aquecimento = FALSE
       AND (
@@ -151,7 +210,7 @@ WHERE p.modo = 'paralelo';
 """
 
 SQL_VIEW_RESUMO = """
-CREATE OR REPLACE VIEW v_benchmark_resumo AS
+CREATE OR REPLACE VIEW v_enade_time_benchmark_resumo AS
 WITH base AS (
     SELECT
         e.campanha_id,
@@ -166,8 +225,8 @@ WITH base AS (
         e.cache_quente,
         CASE WHEN e.modo = 'sequencial' THEN 1.0::NUMERIC ELSE m.speedup    END AS speedup,
         CASE WHEN e.modo = 'sequencial' THEN 1.0::NUMERIC ELSE m.eficiencia END AS eficiencia
-    FROM benchmark_execucao e
-    LEFT JOIN v_benchmark_metricas m ON m.execucao_id = e.id
+    FROM tbl_enade_time_benchmark_execucao e
+    LEFT JOIN v_enade_time_benchmark_metricas m ON m.execucao_id = e.id
     WHERE e.campanha_id IS NOT NULL
       AND e.aquecimento = FALSE
 )
@@ -215,14 +274,17 @@ CREATE TABLE IF NOT EXISTS tbl_enade_time_publicacao (
 PASSOS = [
     ("colunas e índices (aditivo)", SQL_COLUNAS),
     ("backfill factual das linhas antigas", SQL_BACKFILL),
-    ("v_benchmark_metricas (pareamento por suíte)", SQL_VIEW_METRICAS),
-    ("v_benchmark_resumo (agregados por campanha)", SQL_VIEW_RESUMO),
+    ("v_enade_time_benchmark_metricas (pareamento por suíte)", SQL_VIEW_METRICAS),
+    ("v_enade_time_benchmark_resumo (agregados por campanha)", SQL_VIEW_RESUMO),
     ("tbl_enade_time_publicacao", SQL_PUBLICACAO),
 ]
 
 
 def aplicar(cur, verbose: bool = True) -> None:
     """Executa todos os passos no cursor recebido. Quem chama controla a transação."""
+    if verbose:
+        print("  - nomes da convenção do ecossistema (D12)")
+    renomear(cur, verbose=verbose)
     for titulo, sql_txt in PASSOS:
         if verbose:
             print(f"  - {titulo}")
@@ -230,16 +292,21 @@ def aplicar(cur, verbose: bool = True) -> None:
 
 
 def status(cur) -> None:
+    pendentes = [a for a, _ in RENOMES_TABELAS + RENOMES_VIEWS if _existe(cur, a)]
+    if pendentes:
+        print("renome D12 pendente (rode o script 14 sem --status):", ", ".join(pendentes))
+    else:
+        print("nomes: convenção tbl_enade_time_* / v_enade_time_* em dia")
     cur.execute("""
         SELECT column_name FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'benchmark_execucao'
+        WHERE table_schema = 'public' AND table_name = 'tbl_enade_time_benchmark_execucao'
         ORDER BY ordinal_position
     """)
     cols = [r[0] for r in cur.fetchall()]
     novas = ["campanha_id", "suite_id", "oficial", "execucao_uid", "ordem_submissao",
              "cpu_fisicos", "cpu_logicos", "cpu_percent_medio", "disco_bytes_lidos",
              "cache_quente", "aquecimento"]
-    print("benchmark_execucao:")
+    print("tbl_enade_time_benchmark_execucao:")
     for c in novas:
         print(f"  [{'x' if c in cols else ' '}] {c}")
     cur.execute("SELECT viewname FROM pg_views WHERE schemaname = 'public' ORDER BY 1")
@@ -252,12 +319,12 @@ def status(cur) -> None:
             SELECT COUNT(*) FILTER (WHERE campanha_id IS NOT NULL),
                    COUNT(*) FILTER (WHERE oficial),
                    COUNT(*)
-            FROM benchmark_execucao
+            FROM tbl_enade_time_benchmark_execucao
         """)
         com_campanha, oficiais, total = cur.fetchone()
         print(f"execuções: {total} no total, {com_campanha} com campanha, {oficiais} oficiais")
     else:
-        cur.execute("SELECT COUNT(*) FROM benchmark_execucao")
+        cur.execute("SELECT COUNT(*) FROM tbl_enade_time_benchmark_execucao")
         print(f"execuções: {cur.fetchone()[0]} no total (schema ainda sem a v2)")
 
 
@@ -266,9 +333,16 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--status", action="store_true", help="Só mostra o estado atual.")
     ap.add_argument("--dry-run", action="store_true", help="Imprime o SQL e sai.")
+    ap.add_argument("--desfazer-renome", action="store_true",
+                    help="Volta aos nomes antigos (fato_enade, benchmark_*…) e sai.")
     args = ap.parse_args()
 
     if args.dry_run:
+        print("-- ===== renome D12 =====")
+        for antigo, novo in RENOMES_TABELAS:
+            print(f'ALTER TABLE "{antigo}" RENAME TO "{novo}";')
+        for antigo, novo in RENOMES_VIEWS:
+            print(f'ALTER VIEW "{antigo}" RENAME TO "{novo}";')
         for titulo, sql_txt in PASSOS:
             print(f"-- ===== {titulo} =====\n{sql_txt}")
         return 0
@@ -289,11 +363,20 @@ def main() -> int:
                 status(cur)
                 conn.rollback()
                 return 0
-            cur.execute("SELECT COUNT(*) FROM benchmark_execucao")
+            if args.desfazer_renome:
+                print("\nDesfazendo o renome D12:")
+                n = renomear(cur, inverso=True)
+                conn.commit()
+                print(f"{n} objetos voltaram aos nomes antigos.")
+                return 0
+            print("\nRenomeando para a convenção do ecossistema (D12):")
+            if renomear(cur) == 0:
+                print("  (nada a renomear)")
+            cur.execute("SELECT COUNT(*) FROM tbl_enade_time_benchmark_execucao")
             antes = cur.fetchone()[0]
             print("\nAplicando migração v2 (aditiva):")
             aplicar(cur)
-            cur.execute("SELECT COUNT(*) FROM benchmark_execucao")
+            cur.execute("SELECT COUNT(*) FROM tbl_enade_time_benchmark_execucao")
             depois = cur.fetchone()[0]
             if antes != depois:  # nunca deve acontecer — proteção contra perda
                 raise RuntimeError(f"contagem mudou ({antes} -> {depois}); abortando")

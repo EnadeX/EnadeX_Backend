@@ -136,7 +136,9 @@ if (pequenas.length >= 1) {
   await page.locator('label:has-text("Grupo B") select').selectOption(String(outro.co_uf))
   await idle()
   await page.getByText('Amostra reduzida').waitFor({ timeout: 8000 }).catch(() => {})
-  check('AlertaAmostra aparece para UF pequena', (await texto()).includes('Amostra reduzida'))
+  const tAlerta = await texto()
+  check('AlertaAmostra aparece para UF pequena, contando cursos', tAlerta.includes('Amostra reduzida (menos de 30 cursos)'))
+  check('AlertaAmostra mostra cursos e inscrições', /\d+ cursos \(\d+ inscrições\)/.test(tAlerta))
   await page.screenshot({ path: png('alerta-amostra'), fullPage: true })
 } else {
   check('AlertaAmostra (nenhuma UF com n<30 nos dados)', true, 'sem caso para exibir')

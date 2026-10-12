@@ -2,8 +2,8 @@
 """
 Gera a apresentação acadêmica do projeto ENADE-Time Distribuído.
 
-Todos os números de benchmark vêm do banco (views v_benchmark_resumo /
-v_benchmark_metricas da campanha oficial) via `dados_benchmark.carregar()`.
+Todos os números de benchmark vêm do banco (views v_enade_time_benchmark_resumo /
+v_enade_time_benchmark_metricas da campanha oficial) via `dados_benchmark.carregar()`.
 Nada é digitado; `verificar_numeros.py` confere o .pptx depois.
 
 Saída: docs/geradores/out/apresentacao.pptx
@@ -432,7 +432,7 @@ s = content_slide("Metodologia — desenho do experimento", "Campanha oficial: r
 bullets(s, [
     f"Campanha:: {suites_rotulo}; em cada suíte completa, 1 sequencial + {len(D['workers'])} tamanhos de pool "
     f"({', '.join(str(w) for w in D['workers'])} workers) × 2 ordens de submissão = {MAQ['n_execucoes']} execuções oficiais.",
-    "Pareamento por suíte:: cada paralela é comparada com o sequencial da PRÓPRIA suíte (view v_benchmark_metricas); mediana/mín/máx/IQR por configuração em v_benchmark_resumo.",
+    "Pareamento por suíte:: cada paralela é comparada com o sequencial da PRÓPRIA suíte (view v_enade_time_benchmark_metricas); mediana/mín/máx/IQR por configuração em v_enade_time_benchmark_resumo.",
     "Ordens de submissão:: crescente (2005→2021, ordem histórica) e LPT (maior tempo primeiro, com os tempos do sequencial da suíte).",
     f"Máquina:: {MAQ['cpu_fisicos']} núcleos físicos / {MAQ['cpu_logicos']} lógicos (i5-1135G7), NVMe, 24 GB; "
     f"CPU ociosa antes de medir: {br(MAQ['cpu_ocioso'], 1)} %.",
@@ -611,7 +611,7 @@ notes(s, f"Números da campanha oficial (id {D['campanha_id'][:8]}), {suites_rot
          f"mediana das repetições (n na tabela), com mínimo e máximo. O sequencial mediano é "
          f"{seg(SEQ['tempo_mediana'])}. A melhor configuração foi {MELHOR['rotulo'] if MELHOR else '—'}, "
          f"com speedup mediano {sx(MELHOR['speedup_mediana']) if MELHOR else '—'}. Tudo isto está em "
-         f"v_benchmark_resumo — quem quiser confere com um SELECT.")
+         f"v_enade_time_benchmark_resumo — quem quiser confere com um SELECT.")
 
 # ============================================================================
 # SLIDE 11 — Análise: três perdas

@@ -1,11 +1,11 @@
 """
 Contrato das views de benchmark (schema v2, `scripts/14_migrar_schema_v2.py`):
 
-  * `v_benchmark_metricas` pareia cada execução paralela com o sequencial da
+  * `v_enade_time_benchmark_metricas` pareia cada execução paralela com o sequencial da
     PRÓPRIA suíte; linhas sem `suite_id` (legado) usam o sequencial
     imediatamente anterior no tempo. Sequenciais nunca aparecem na view;
     aquecimento nunca serve de baseline.
-  * `v_benchmark_resumo` agrega por (campanha, workers, ordem) com n, mediana,
+  * `v_enade_time_benchmark_resumo` agrega por (campanha, workers, ordem) com n, mediana,
     mín, máx, IQR — e a mediana bate com numpy (percentile_cont = linear).
 
 Os valores dos ids 1–6 são fatos históricos (rodadas de 21/06 e 21/08) e
@@ -35,8 +35,8 @@ def _rows(cur, sql, params=None):
 
 def test_view_nao_contem_sequenciais(cur):
     rows = _rows(cur, """
-        SELECT COUNT(*) AS n FROM v_benchmark_metricas m
-        JOIN benchmark_execucao e ON e.id = m.execucao_id
+        SELECT COUNT(*) AS n FROM v_enade_time_benchmark_metricas m
+        JOIN tbl_enade_time_benchmark_execucao e ON e.id = m.execucao_id
         WHERE e.modo <> 'paralelo'
     """)
     assert rows[0]["n"] == 0
@@ -45,7 +45,7 @@ def test_view_nao_contem_sequenciais(cur):
 def test_pareamento_temporal_das_linhas_legadas(cur):
     rows = _rows(cur, """
         SELECT execucao_id, baseline_execucao_id, speedup, eficiencia, pareamento, ordem_submissao
-        FROM v_benchmark_metricas WHERE execucao_id = ANY(%(ids)s) ORDER BY execucao_id
+        FROM v_enade_time_benchmark_metricas WHERE execucao_id = ANY(%(ids)s) ORDER BY execucao_id
     """, {"ids": list(LEGADO)})
     if len(rows) != len(LEGADO):
         pytest.skip("banco sem as execuções legadas 2,3,5,6")
@@ -62,8 +62,8 @@ def test_pareamento_por_suite_usa_o_sequencial_da_propria_suite(cur):
     rows = _rows(cur, """
         SELECT m.execucao_id, m.suite_id, m.baseline_execucao_id, m.pareamento,
                b.suite_id AS suite_base, b.modo AS modo_base, b.aquecimento AS aquec_base
-        FROM v_benchmark_metricas m
-        LEFT JOIN benchmark_execucao b ON b.id = m.baseline_execucao_id
+        FROM v_enade_time_benchmark_metricas m
+        LEFT JOIN tbl_enade_time_benchmark_execucao b ON b.id = m.baseline_execucao_id
         WHERE m.suite_id IS NOT NULL
     """)
     if not rows:
@@ -78,8 +78,8 @@ def test_pareamento_por_suite_usa_o_sequencial_da_propria_suite(cur):
 
 def test_aquecimento_nunca_e_baseline(cur):
     rows = _rows(cur, """
-        SELECT COUNT(*) AS n FROM v_benchmark_metricas m
-        JOIN benchmark_execucao b ON b.id = m.baseline_execucao_id
+        SELECT COUNT(*) AS n FROM v_enade_time_benchmark_metricas m
+        JOIN tbl_enade_time_benchmark_execucao b ON b.id = m.baseline_execucao_id
         WHERE b.aquecimento
     """)
     assert rows[0]["n"] == 0
@@ -89,9 +89,9 @@ def test_speedup_e_eficiencia_sao_t_seq_sobre_t_par(cur):
     rows = _rows(cur, """
         SELECT m.execucao_id, m.num_workers, m.speedup, m.eficiencia,
                s.tempo_total_seg AS t_seq, p.tempo_total_seg AS t_par
-        FROM v_benchmark_metricas m
-        JOIN benchmark_execucao p ON p.id = m.execucao_id
-        JOIN benchmark_execucao s ON s.id = m.baseline_execucao_id
+        FROM v_enade_time_benchmark_metricas m
+        JOIN tbl_enade_time_benchmark_execucao p ON p.id = m.execucao_id
+        JOIN tbl_enade_time_benchmark_execucao s ON s.id = m.baseline_execucao_id
     """)
     assert rows, "view vazia"
     for r in rows:
@@ -105,15 +105,15 @@ def test_resumo_n_e_mediana_batem_com_numpy(cur):
     resumo = _rows(cur, """
         SELECT campanha_id::text AS campanha_id, modo, num_workers, ordem_submissao, n,
                tempo_mediana, tempo_min, tempo_max, tempo_iqr, speedup_mediana
-        FROM v_benchmark_resumo
+        FROM v_enade_time_benchmark_resumo
     """)
     if not resumo:
         pytest.skip("sem campanhas no banco")
     for r in resumo:
         execs = _rows(cur, """
             SELECT e.id, e.tempo_total_seg, m.speedup
-            FROM benchmark_execucao e
-            LEFT JOIN v_benchmark_metricas m ON m.execucao_id = e.id
+            FROM tbl_enade_time_benchmark_execucao e
+            LEFT JOIN v_enade_time_benchmark_metricas m ON m.execucao_id = e.id
             WHERE e.campanha_id = %(c)s AND e.modo = %(modo)s AND e.num_workers = %(w)s
               AND e.aquecimento = FALSE
               AND (e.modo = 'sequencial' OR e.ordem_submissao = %(o)s)
@@ -137,7 +137,7 @@ def test_campanha_oficial_estrutura_e_instrumentacao(cur):
     linhas. Tolera suítes PARCIAIS (interrupção real — DESIGN_LOG D13):
     nada é apagado, e o n varia por configuração."""
     camp = _rows(cur, """
-        SELECT campanha_id::text AS c FROM benchmark_execucao
+        SELECT campanha_id::text AS c FROM tbl_enade_time_benchmark_execucao
         WHERE oficial AND NOT aquecimento GROUP BY campanha_id
         ORDER BY MIN(timestamp_inicio) DESC LIMIT 1
     """)
@@ -148,7 +148,7 @@ def test_campanha_oficial_estrutura_e_instrumentacao(cur):
     suites = _rows(cur, """
         SELECT suite_id::text AS s, COUNT(*) AS n,
                COUNT(*) FILTER (WHERE modo = 'sequencial') AS seqs
-        FROM benchmark_execucao WHERE campanha_id = %(c)s AND NOT aquecimento
+        FROM tbl_enade_time_benchmark_execucao WHERE campanha_id = %(c)s AND NOT aquecimento
         GROUP BY suite_id
     """, {"c": c})
     assert suites
@@ -160,7 +160,7 @@ def test_campanha_oficial_estrutura_e_instrumentacao(cur):
 
     for s_ in completas:
         cobertura = _rows(cur, """
-            SELECT num_workers, ordem_submissao FROM benchmark_execucao
+            SELECT num_workers, ordem_submissao FROM tbl_enade_time_benchmark_execucao
             WHERE suite_id = %(s)s AND modo = 'paralelo'
         """, {"s": s_["s"]})
         assert {(x["num_workers"], x["ordem_submissao"]) for x in cobertura} == {
@@ -169,7 +169,7 @@ def test_campanha_oficial_estrutura_e_instrumentacao(cur):
         }
 
     cfg = _rows(cur, "SELECT modo, num_workers, ordem_submissao, n "
-                     "FROM v_benchmark_resumo WHERE campanha_id = %(c)s", {"c": c})
+                     "FROM v_enade_time_benchmark_resumo WHERE campanha_id = %(c)s", {"c": c})
     assert {(x["num_workers"], x["ordem_submissao"]) for x in cfg} == {
         (1, None), (2, "crescente"), (2, "lpt"), (3, "crescente"), (3, "lpt"),
         (4, "crescente"), (4, "lpt"), (6, "crescente"), (6, "lpt"),
@@ -185,7 +185,7 @@ def test_campanha_oficial_estrutura_e_instrumentacao(cur):
                COUNT(*) FILTER (WHERE cpu_percent_medio IS NOT NULL
                                   AND disco_bytes_lidos IS NOT NULL) AS inst,
                COUNT(*) FILTER (WHERE cache_quente) AS quente, COUNT(*) AS n
-        FROM benchmark_execucao WHERE campanha_id = %(c)s AND NOT aquecimento
+        FROM tbl_enade_time_benchmark_execucao WHERE campanha_id = %(c)s AND NOT aquecimento
     """, {"c": c})[0]
     assert instr["maq"] == instr["n"]
     assert instr["inst"] == instr["n"]

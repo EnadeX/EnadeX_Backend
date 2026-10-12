@@ -72,7 +72,7 @@ mais rápido", é **medir e explicar**.
 
 > *"Postgres 16 em Docker. Além da tabela fato e das dimensões, o benchmark
 > grava cada execução e cada etapa. Speedup e eficiência têm **uma única
-> definição**, em SQL: a view `v_benchmark_metricas` pareia cada execução
+> definição**, em SQL: a view `v_enade_time_benchmark_metricas` pareia cada execução
 > paralela com o sequencial da **própria suíte**. A API não recalcula nada;
 > ela só lê a view. Um script em Python recalcula tudo a partir das tabelas
 > para conferir — e falha se um número divergir."*

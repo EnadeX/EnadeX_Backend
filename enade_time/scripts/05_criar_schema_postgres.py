@@ -2,21 +2,21 @@
 Cria o schema do banco ENADE-Time Distribuído no PostgreSQL.
 
 Tabelas criadas:
-  - dim_regiao, dim_uf, dim_grupo, dim_categoria_adm, dim_organizacao_acad,
-    dim_modalidade, dim_ano  (lookup tables)
-  - fato_enade                (tabela fato — 1 linha por aluno-curso-ano)
-  - benchmark_execucao        (1 execução do ETL, sequencial ou paralela)
-  - benchmark_etapa           (tempo de cada ano dentro de uma execução)
-  - view v_benchmark_metricas (speedup, eficiência, throughput)
+  - tbl_enade_time_dim_regiao, tbl_enade_time_dim_uf, tbl_enade_time_dim_grupo, tbl_enade_time_dim_categoria_adm, tbl_enade_time_dim_organizacao_acad,
+    tbl_enade_time_dim_modalidade, tbl_enade_time_dim_ano  (lookup tables)
+  - tbl_enade_time_fato                (tabela fato — 1 linha por aluno-curso-ano)
+  - tbl_enade_time_benchmark_execucao        (1 execução do ETL, sequencial ou paralela)
+  - tbl_enade_time_benchmark_etapa           (tempo de cada ano dentro de uma execução)
+  - view v_enade_time_benchmark_metricas (speedup, eficiência, throughput)
 
 Uso:
   python scripts/05_criar_schema_postgres.py            # cria (erro se já existe)
   python scripts/05_criar_schema_postgres.py --reset    # DROP CASCADE e recria
 
-ATENÇÃO — `--reset` APAGA benchmark_execucao/benchmark_etapa (incidente D9).
+ATENÇÃO — `--reset` APAGA tbl_enade_time_benchmark_execucao/tbl_enade_time_benchmark_etapa (incidente D9).
 Em banco que já tem dados use `scripts/14_migrar_schema_v2.py`, que é aditivo.
 Este script aplica a mesma extensão v2 (campanhas, suítes, ordem de submissão,
-instrumentação, v_benchmark_resumo) logo após criar as tabelas-base, importando
+instrumentação, v_enade_time_benchmark_resumo) logo após criar as tabelas-base, importando
 `aplicar()` do script 14 — a definição vive em um único lugar.
 
 Lê configuração de variáveis de ambiente (com defaults):
@@ -63,57 +63,57 @@ DB_CONFIG = {
 # ---------------------------------------------------------------------------
 
 DDL_DIMENSOES = """
-CREATE TABLE dim_regiao (
+CREATE TABLE tbl_enade_time_dim_regiao (
     co_regiao  SMALLINT PRIMARY KEY,
     nome       VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE dim_uf (
+CREATE TABLE tbl_enade_time_dim_uf (
     co_uf      SMALLINT PRIMARY KEY,
     sigla      CHAR(2)     NOT NULL,
     nome       VARCHAR(40) NOT NULL,
-    co_regiao  SMALLINT    NOT NULL REFERENCES dim_regiao(co_regiao)
+    co_regiao  SMALLINT    NOT NULL REFERENCES tbl_enade_time_dim_regiao(co_regiao)
 );
 
-CREATE TABLE dim_grupo (
+CREATE TABLE tbl_enade_time_dim_grupo (
     co_grupo   SMALLINT PRIMARY KEY,
     nome       VARCHAR(80) NOT NULL
 );
 
-CREATE TABLE dim_categoria_adm (
+CREATE TABLE tbl_enade_time_dim_categoria_adm (
     co_categad SMALLINT PRIMARY KEY,
     nome       VARCHAR(80) NOT NULL
 );
 
-CREATE TABLE dim_organizacao_acad (
+CREATE TABLE tbl_enade_time_dim_organizacao_acad (
     co_orgacad SMALLINT PRIMARY KEY,
     nome       VARCHAR(80) NOT NULL
 );
 
-CREATE TABLE dim_modalidade (
+CREATE TABLE tbl_enade_time_dim_modalidade (
     co_modalidade SMALLINT PRIMARY KEY,
     nome          VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE dim_ano (
+CREATE TABLE tbl_enade_time_dim_ano (
     co_ano  SMALLINT PRIMARY KEY,
     edicao  VARCHAR(60) NULL
 );
 """
 
 DDL_FATO = """
-CREATE TABLE fato_enade (
+CREATE TABLE tbl_enade_time_fato (
     id                BIGSERIAL PRIMARY KEY,
-    nu_ano            SMALLINT  NOT NULL REFERENCES dim_ano(co_ano),
+    nu_ano            SMALLINT  NOT NULL REFERENCES tbl_enade_time_dim_ano(co_ano),
     co_curso          INTEGER   NOT NULL,
     co_ies            INTEGER   NOT NULL,
-    co_categad        SMALLINT  NOT NULL REFERENCES dim_categoria_adm(co_categad),
-    co_orgacad        SMALLINT  NOT NULL REFERENCES dim_organizacao_acad(co_orgacad),
-    co_grupo          SMALLINT  NOT NULL REFERENCES dim_grupo(co_grupo),
-    co_modalidade     SMALLINT  NULL     REFERENCES dim_modalidade(co_modalidade),
+    co_categad        SMALLINT  NOT NULL REFERENCES tbl_enade_time_dim_categoria_adm(co_categad),
+    co_orgacad        SMALLINT  NOT NULL REFERENCES tbl_enade_time_dim_organizacao_acad(co_orgacad),
+    co_grupo          SMALLINT  NOT NULL REFERENCES tbl_enade_time_dim_grupo(co_grupo),
+    co_modalidade     SMALLINT  NULL     REFERENCES tbl_enade_time_dim_modalidade(co_modalidade),
     co_munic_curso    INTEGER   NULL,
-    co_uf_curso       SMALLINT  NOT NULL REFERENCES dim_uf(co_uf),
-    co_regiao_curso   SMALLINT  NOT NULL REFERENCES dim_regiao(co_regiao),
+    co_uf_curso       SMALLINT  NOT NULL REFERENCES tbl_enade_time_dim_uf(co_uf),
+    co_regiao_curso   SMALLINT  NOT NULL REFERENCES tbl_enade_time_dim_regiao(co_regiao),
     media_nt_fg       NUMERIC(7,4) NULL,
     media_nt_ger      NUMERIC(7,4) NULL,
     media_nt_ce       NUMERIC(7,4) NULL,
@@ -122,22 +122,22 @@ CREATE TABLE fato_enade (
     CHECK (media_nt_ce  IS NULL OR (media_nt_ce  >= 0 AND media_nt_ce  <= 100))
 );
 
-CREATE INDEX idx_fato_ano        ON fato_enade(nu_ano);
-CREATE INDEX idx_fato_regiao     ON fato_enade(co_regiao_curso);
-CREATE INDEX idx_fato_uf         ON fato_enade(co_uf_curso);
-CREATE INDEX idx_fato_ies        ON fato_enade(co_ies);
-CREATE INDEX idx_fato_curso      ON fato_enade(co_curso);
-CREATE INDEX idx_fato_modalidade ON fato_enade(co_modalidade);
-CREATE INDEX idx_fato_categad    ON fato_enade(co_categad);
-CREATE INDEX idx_fato_ano_regiao ON fato_enade(nu_ano, co_regiao_curso);
-CREATE INDEX idx_fato_ano_uf     ON fato_enade(nu_ano, co_uf_curso);
+CREATE INDEX idx_fato_ano        ON tbl_enade_time_fato(nu_ano);
+CREATE INDEX idx_fato_regiao     ON tbl_enade_time_fato(co_regiao_curso);
+CREATE INDEX idx_fato_uf         ON tbl_enade_time_fato(co_uf_curso);
+CREATE INDEX idx_fato_ies        ON tbl_enade_time_fato(co_ies);
+CREATE INDEX idx_fato_curso      ON tbl_enade_time_fato(co_curso);
+CREATE INDEX idx_fato_modalidade ON tbl_enade_time_fato(co_modalidade);
+CREATE INDEX idx_fato_categad    ON tbl_enade_time_fato(co_categad);
+CREATE INDEX idx_fato_ano_regiao ON tbl_enade_time_fato(nu_ano, co_regiao_curso);
+CREATE INDEX idx_fato_ano_uf     ON tbl_enade_time_fato(nu_ano, co_uf_curso);
 CREATE INDEX idx_fato_media_valida
-    ON fato_enade(nu_ano, co_regiao_curso)
+    ON tbl_enade_time_fato(nu_ano, co_regiao_curso)
     WHERE media_nt_fg IS NOT NULL;
 """
 
 DDL_BENCHMARK = """
-CREATE TABLE benchmark_execucao (
+CREATE TABLE tbl_enade_time_benchmark_execucao (
     id                 BIGSERIAL PRIMARY KEY,
     timestamp_inicio   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     modo               VARCHAR(20) NOT NULL
@@ -152,10 +152,10 @@ CREATE TABLE benchmark_execucao (
     observacoes        TEXT        NULL
 );
 
-CREATE TABLE benchmark_etapa (
+CREATE TABLE tbl_enade_time_benchmark_etapa (
     id                BIGSERIAL PRIMARY KEY,
     execucao_id       BIGINT NOT NULL
-                      REFERENCES benchmark_execucao(id) ON DELETE CASCADE,
+                      REFERENCES tbl_enade_time_benchmark_execucao(id) ON DELETE CASCADE,
     ano               SMALLINT NOT NULL,
     tempo_seg         NUMERIC(10,4) NOT NULL,
     linhas_arq3       BIGINT   NOT NULL,
@@ -164,11 +164,11 @@ CREATE TABLE benchmark_etapa (
     timestamp_fim     TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_bench_etapa_exec ON benchmark_etapa(execucao_id);
+CREATE INDEX idx_bench_etapa_exec ON tbl_enade_time_benchmark_etapa(execucao_id);
 
 -- View com speedup e eficiência: compara cada execução paralela contra
 -- a execução sequencial imediatamente anterior no tempo.
-CREATE VIEW v_benchmark_metricas AS
+CREATE VIEW v_enade_time_benchmark_metricas AS
 SELECT
     p.id                 AS execucao_id,
     p.timestamp_inicio,
@@ -181,9 +181,9 @@ SELECT
     p.throughput_lps     AS throughput_paralelo,
     s.throughput_lps     AS throughput_sequencial,
     p.cpu_count_maquina
-FROM benchmark_execucao p
+FROM tbl_enade_time_benchmark_execucao p
 LEFT JOIN LATERAL (
-    SELECT * FROM benchmark_execucao
+    SELECT * FROM tbl_enade_time_benchmark_execucao
     WHERE modo = 'sequencial' AND timestamp_inicio < p.timestamp_inicio
     ORDER BY timestamp_inicio DESC LIMIT 1
 ) s ON TRUE
@@ -196,11 +196,11 @@ WHERE p.modo = 'paralelo';
 # ---------------------------------------------------------------------------
 
 SEED = """
-INSERT INTO dim_regiao (co_regiao, nome) VALUES
+INSERT INTO tbl_enade_time_dim_regiao (co_regiao, nome) VALUES
     (1, 'Norte'),
     (2, 'Nordeste');
 
-INSERT INTO dim_uf (co_uf, sigla, nome, co_regiao) VALUES
+INSERT INTO tbl_enade_time_dim_uf (co_uf, sigla, nome, co_regiao) VALUES
     (11, 'RO', 'Rondônia',            1),
     (12, 'AC', 'Acre',                1),
     (13, 'AM', 'Amazonas',            1),
@@ -222,11 +222,11 @@ INSERT INTO dim_uf (co_uf, sigla, nome, co_regiao) VALUES
 -- 2005/2008 e 4004 de 2011 em diante. É o MESMO curso — os dois códigos
 -- nunca coexistem no mesmo ano. Os rótulos trazem o intervalo para o
 -- filtro do dashboard não exibir duas opções indistinguíveis.
-INSERT INTO dim_grupo (co_grupo, nome) VALUES
+INSERT INTO tbl_enade_time_dim_grupo (co_grupo, nome) VALUES
     (40,   'Ciência da Computação (código 2005–2008)'),
     (4004, 'Ciência da Computação (código 2011+)');
 
-INSERT INTO dim_categoria_adm (co_categad, nome) VALUES
+INSERT INTO tbl_enade_time_dim_categoria_adm (co_categad, nome) VALUES
     (1, 'Pública Federal'),
     (2, 'Pública Estadual'),
     (3, 'Pública Municipal'),
@@ -234,7 +234,7 @@ INSERT INTO dim_categoria_adm (co_categad, nome) VALUES
     (5, 'Privada sem fins lucrativos'),
     (7, 'Especial');
 
-INSERT INTO dim_organizacao_acad (co_orgacad, nome) VALUES
+INSERT INTO tbl_enade_time_dim_organizacao_acad (co_orgacad, nome) VALUES
     (10019, 'Universidade'),
     (10020, 'Centro Universitário'),
     (10022, 'Faculdade'),
@@ -242,11 +242,11 @@ INSERT INTO dim_organizacao_acad (co_orgacad, nome) VALUES
     (10027, 'Centro de Educação Tecnológica'),
     (10028, 'Faculdade Integrada');
 
-INSERT INTO dim_modalidade (co_modalidade, nome) VALUES
+INSERT INTO tbl_enade_time_dim_modalidade (co_modalidade, nome) VALUES
     (0, 'EAD'),
     (1, 'Presencial');
 
-INSERT INTO dim_ano (co_ano, edicao) VALUES
+INSERT INTO tbl_enade_time_dim_ano (co_ano, edicao) VALUES
     (2005, NULL),
     (2008, NULL),
     (2011, NULL),
@@ -259,19 +259,19 @@ INSERT INTO dim_ano (co_ano, edicao) VALUES
 TABELAS_NA_ORDEM_DE_DROP = [
     # ordem inversa de dependência; CASCADE cuida do resto, mas listamos
     # explicitamente para o reset ser previsível
-    "v_benchmark_resumo",     # view (depende de v_benchmark_metricas)
-    "v_benchmark_metricas",   # view
+    "v_enade_time_benchmark_resumo",     # view (depende de v_enade_time_benchmark_metricas)
+    "v_enade_time_benchmark_metricas",   # view
     "tbl_enade_time_publicacao",
-    "benchmark_etapa",
-    "benchmark_execucao",
-    "fato_enade",
-    "dim_ano",
-    "dim_modalidade",
-    "dim_organizacao_acad",
-    "dim_categoria_adm",
-    "dim_grupo",
-    "dim_uf",
-    "dim_regiao",
+    "tbl_enade_time_benchmark_etapa",
+    "tbl_enade_time_benchmark_execucao",
+    "tbl_enade_time_fato",
+    "tbl_enade_time_dim_ano",
+    "tbl_enade_time_dim_modalidade",
+    "tbl_enade_time_dim_organizacao_acad",
+    "tbl_enade_time_dim_categoria_adm",
+    "tbl_enade_time_dim_grupo",
+    "tbl_enade_time_dim_uf",
+    "tbl_enade_time_dim_regiao",
 ]
 
 

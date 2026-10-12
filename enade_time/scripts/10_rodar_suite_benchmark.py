@@ -1,7 +1,7 @@
 """
 Campanha de benchmark — roda N repetições (suítes) da mesma bateria e agrupa
 tudo sob um `campanha_id`, para que mediana/mín/máx/IQR existam como linhas
-de `v_benchmark_resumo` (e não como número solto em documento).
+de `v_enade_time_benchmark_resumo` (e não como número solto em documento).
 
 Hierarquia gravada no banco
   campanha (1)  →  suíte = repetição (--reps)  →  execuções por suíte:
@@ -9,7 +9,7 @@ Hierarquia gravada no banco
   Ex.: --workers 2,3,4,6 --ordens crescente,lpt --reps 5  →  5 × 9 = 45 execuções.
 
 Cada suíte roda o sequencial PRIMEIRO; os tempos por ano dele alimentam a
-ordem LPT das paralelas da mesma suíte, e `v_benchmark_metricas` pareia cada
+ordem LPT das paralelas da mesma suíte, e `v_enade_time_benchmark_metricas` pareia cada
 paralela com esse sequencial (nunca com o de outra suíte).
 
 Aquecimento (padrão; desligue com --sem-aquecer): um sequencial extra ANTES
@@ -91,7 +91,7 @@ def _lista_ordens(txt: str) -> list[str]:
 
 def imprimir_resumo(linhas: list[dict]) -> None:
     if not linhas:
-        print("  (v_benchmark_resumo vazia para esta campanha)")
+        print("  (v_enade_time_benchmark_resumo vazia para esta campanha)")
         return
     print(f"{'modo':>10} {'w':>2} {'ordem':>9} {'n':>2} {'t_med(s)':>9} {'t_min':>8} {'t_max':>8} "
           f"{'IQR':>6} {'S_med':>6} {'S_min':>6} {'S_max':>6} {'E_med':>6}")
@@ -227,7 +227,7 @@ def main() -> int:
         manifesto["suites"].append(ids_suite)
 
     # ----- resumo da campanha -----
-    banner("RESUMO DA CAMPANHA (v_benchmark_resumo)")
+    banner("RESUMO DA CAMPANHA (v_enade_time_benchmark_resumo)")
     print("Cada paralela é pareada com o sequencial da PRÓPRIA suíte; "
           "mediana/mín/máx/IQR sobre as suítes.\n")
     conn = conectar()
@@ -250,7 +250,7 @@ def main() -> int:
     print(f"Manifesto: {caminho.relative_to(RAIZ).as_posix()}")
     print("\nPara inspecionar manualmente:")
     print("  psql -h localhost -U enade_user -d enade_db")
-    print(f"  SELECT * FROM v_benchmark_resumo WHERE campanha_id = '{campanha_id}' "
+    print(f"  SELECT * FROM v_enade_time_benchmark_resumo WHERE campanha_id = '{campanha_id}' "
           f"ORDER BY num_workers, ordem_submissao;")
     return 0
 

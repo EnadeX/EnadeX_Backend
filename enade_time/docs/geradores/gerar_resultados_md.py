@@ -2,7 +2,7 @@
 """
 Gera docs/RESULTADOS_BENCHMARK.md a partir do banco (campanha oficial), para que
 o documento de resultados, os slides, o .docx e o dashboard leiam a MESMA fonte
-(v_benchmark_resumo / v_benchmark_metricas). Nenhum número é digitado aqui.
+(v_enade_time_benchmark_resumo / v_enade_time_benchmark_metricas). Nenhum número é digitado aqui.
 
 Uso:
     python docs/geradores/gerar_resultados_md.py [--campanha <uuid>] [--saida docs/RESULTADOS_BENCHMARK.md]
@@ -52,7 +52,7 @@ def main() -> int:
     L.append("# Resultados do benchmark — campanha oficial")
     L.append("")
     L.append(f"> **Gerado automaticamente** por `docs/geradores/gerar_resultados_md.py` em {data_extenso(D['gerado_em'])}, "
-             f"a partir das views `v_benchmark_resumo` e `v_benchmark_metricas` do banco local. "
+             f"a partir das views `v_enade_time_benchmark_resumo` e `v_enade_time_benchmark_metricas` do banco local. "
              f"Não edite números à mão: rode o gerador. Campanha `{D['campanha_id']}`.")
     L.append("")
     L.append("## Desenho do experimento")
@@ -68,8 +68,8 @@ def main() -> int:
              f"oficiais (`oficial = TRUE`), entre {maq['inicio'].strftime('%d/%m/%Y %H:%M')} e "
              f"{maq['fim'].strftime('%d/%m/%Y %H:%M')} UTC. O n de cada configuração está na tabela.")
     L.append("- **Pareamento:** cada paralela é comparada com o sequencial da **própria suíte** "
-             "(`v_benchmark_metricas`, `pareamento = 'suite'`); mediana, mínimo, máximo e IQR por "
-             "configuração em `v_benchmark_resumo`.")
+             "(`v_enade_time_benchmark_metricas`, `pareamento = 'suite'`); mediana, mínimo, máximo e IQR por "
+             "configuração em `v_enade_time_benchmark_resumo`.")
     L.append("- **Ordens de submissão:** `crescente` (2005 → 2021, comportamento histórico do script 09) e "
              "`lpt` (maior tempo primeiro — Graham, 1969 — com os tempos por ano do sequencial da mesma suíte). "
              "O `ProcessPoolExecutor` entrega cada ano ao primeiro worker livre na ordem de submissão; "
@@ -85,7 +85,7 @@ def main() -> int:
              f"{br(maq['cpu_percent_medio'], 1)} %. Sem API nem frontend rodando. Diretório fora do OneDrive.")
     L.append("- **Pipeline por execução:** leitura dos TXT (arq1 + arq3 dos 6 anos, 5.340.372 linhas), filtro e "
              "agregação com pandas; workers puros (sem I/O em disco, sem banco); só o processo principal grava "
-             "(1 linha em `benchmark_execucao` + 6 em `benchmark_etapa`). p = 8 fica fora da campanha: com 6 "
+             "(1 linha em `tbl_enade_time_benchmark_execucao` + 6 em `tbl_enade_time_benchmark_etapa`). p = 8 fica fora da campanha: com 6 "
              "unidades de trabalho, dois workers ficariam ociosos por construção.")
     L.append("")
 
@@ -219,9 +219,9 @@ def main() -> int:
     L.append("Auditoria direta no banco:")
     L.append("")
     L.append("```sql")
-    L.append(f"SELECT * FROM v_benchmark_resumo WHERE campanha_id = '{D['campanha_id']}' ORDER BY num_workers, ordem_submissao;")
+    L.append(f"SELECT * FROM v_enade_time_benchmark_resumo WHERE campanha_id = '{D['campanha_id']}' ORDER BY num_workers, ordem_submissao;")
     L.append(f"SELECT execucao_id, num_workers, ordem_submissao, speedup, eficiencia, baseline_execucao_id, pareamento")
-    L.append(f"  FROM v_benchmark_metricas WHERE campanha_id = '{D['campanha_id']}' ORDER BY suite_id, num_workers, ordem_submissao;")
+    L.append(f"  FROM v_enade_time_benchmark_metricas WHERE campanha_id = '{D['campanha_id']}' ORDER BY suite_id, num_workers, ordem_submissao;")
     L.append("```")
     L.append("")
     L.append("Lições registradas: clientes de sincronização em nuvem contaminam I/O (2026-06); um baseline escolhido por "

@@ -71,7 +71,7 @@ def test_comparativo_tem_itens_e_resumo_e_e_retrocompativel(client):
 
 def test_comparativo_itens_iguais_a_view(client, cur):
     d = client.get(PREFIXO + "/benchmark/comparativo", params={"apenas_validas": "false"}).json()
-    cur.execute("SELECT execucao_id, speedup::float AS s, eficiencia::float AS e FROM v_benchmark_metricas")
+    cur.execute("SELECT execucao_id, speedup::float AS s, eficiencia::float AS e FROM v_enade_time_benchmark_metricas")
     view = {r["execucao_id"]: (r["s"], r["e"]) for r in cur.fetchall()}
     paralelos = [i for i in d["itens"] if i["modo"] == "paralelo"]
     assert paralelos
