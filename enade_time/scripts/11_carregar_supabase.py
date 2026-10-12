@@ -1,9 +1,13 @@
 """
-Carrega o consolidado validado para a tabela enade_time_distribuido no Supabase.
+Carrega o consolidado validado (CSV) para tbl_enade_time_fato no Supabase.
 
-Atenção ao nome: no Postgres local a mesma tabela se chama `fato_enade`
-(scripts 05/06/07). No Supabase ela leva o nome do projeto. Mesmo conteúdo,
-mesmas colunas — só o nome difere. Override por SUPABASE_TABELA.
+LEGADO: para publicar o ENADE-Time use o `12_publicar_supabase.py`, que copia do banco
+local (dimensões, fato e benchmark), preserva os ids, confere md5 linha a linha e é
+atômico. Este script segue válido como a estratégia "COPY via Session Pooler a partir do
+CSV" e como referência da conexão. Ele não preserva os ids do fato (a identity gera novos).
+
+Desde o D12 a tabela tem o mesmo nome nos dois bancos (tbl_enade_time_fato); o nome antigo
+no Supabase (enade_time_distribuido) foi renomeado pelo script 12. Override: SUPABASE_TABELA.
 
 Entrada (NÃO modificada):
   dados_processados/microdados_enade_2005_2021_filtrado_consolidado.csv
@@ -85,10 +89,8 @@ ARQ_CONS = RAIZ / "dados_processados" / "microdados_enade_2005_2021_filtrado_con
 
 PROJECT_REF = os.environ.get("SUPABASE_PROJECT_REF", "yghryywuxfwzvfjknpgk")
 
-# No Supabase a tabela leva o nome do projeto; no Postgres local ela se chama
-# `fato_enade` (scripts 05/06/07). Mesmo conteúdo, nomes diferentes — quem
-# consultar os dois bancos precisa saber disso.
-TABELA_DESTINO = os.environ.get("SUPABASE_TABELA", "enade_time_distribuido")
+# Mesmo nome nos dois bancos (D12). Antes do renome o Supabase usava enade_time_distribuido.
+TABELA_DESTINO = os.environ.get("SUPABASE_TABELA", "tbl_enade_time_fato")
 
 
 REGIAO = os.environ.get("SUPABASE_REGION", "us-east-2")

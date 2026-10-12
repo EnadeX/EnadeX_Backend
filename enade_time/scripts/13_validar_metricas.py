@@ -18,7 +18,8 @@ Checagens
      com numpy sobre as execuções (aquecimento excluído; sequencial = 1,0).
   C. (--api URL) GET /api/benchmark/comparativo e /metricas: os valores
      servidos são exatamente os das views.
-  D. (--cruzado) local × Supabase — implementado na Fase 4 (publicação).
+  D. (--cruzado) local × Supabase: schema coluna a coluna, md5 linha a linha das tabelas e
+     views publicadas, e as garantias de segurança do que o ENADE-Time publica.
 
 Uso
   python scripts/13_validar_metricas.py                       # campanha oficial mais recente
@@ -288,6 +289,105 @@ def checar_api(base: str, view: dict[int, dict], conn, campanha: str | None, pre
               f"comparativo.resumo diverge de v_enade_time_benchmark_resumo ({difs} dif., {len(comp['resumo'])} × {len(vr)})")
 
 
+def checar_cruzado() -> None:
+    """D. Banco local × Supabase: o que foi publicado é exatamente o que está no instrumento."""
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "publicar_supabase", Path(__file__).resolve().parent / "12_publicar_supabase.py")
+    pub = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pub)
+    from psycopg2 import sql
+
+    print("\n" + "-" * 78 + "\nD) Local × Supabase\n" + "-" * 78)
+    local, remoto = pub.conectar_local(), pub.conectar_remoto()
+    try:
+        lc, rc = local.cursor(), remoto.cursor()
+
+        # 1. schema: mesmas colunas, tipos e anulabilidade em cada tabela
+        sql_cols = """SELECT column_name, data_type, coalesce(character_maximum_length, 0),
+                             coalesce(numeric_precision, 0), coalesce(numeric_scale, 0), is_nullable
+                      FROM information_schema.columns
+                      WHERE table_schema = 'public' AND table_name = %s ORDER BY ordinal_position"""
+        for tabela, _ in pub.PUBLICADAS + [(pub.TABELA_LOG, [])]:
+            lc.execute(sql_cols, (tabela,))
+            rc.execute(sql_cols, (tabela,))
+            a, b = lc.fetchall(), rc.fetchall()
+            check(a == b and len(a) > 0, f"schema de {tabela}: {len(a)} colunas iguais",
+                  f"schema de {tabela} diverge: local {[c[0] for c in a if c not in b]} × nuvem {[c[0] for c in b if c not in a]}")
+
+        # 2. conteúdo: contagem e md5 linha a linha
+        for tabela, _ in pub.PUBLICADAS:
+            n_l, h_l = pub._md5_tabela(lc, tabela)
+            n_r, h_r = pub._md5_tabela(rc, tabela)
+            check((n_l, h_l) == (n_r, h_r), f"{tabela}: {n_l} linhas, md5 {h_l[:10]} igual nos dois bancos",
+                  f"{tabela} diverge: local {n_l} linhas md5 {h_l[:10]} × nuvem {n_r} linhas md5 {h_r[:10]}")
+
+        # 3. views: mesmo resultado, linha a linha
+        ordem_views = {
+            "v_enade_time_benchmark_metricas": "execucao_id",
+            "v_enade_time_benchmark_resumo": "campanha_id, modo, num_workers, ordem_submissao NULLS FIRST",
+            "v_enade_time_curso_ano": '"NU_ANO", "CO_CURSO"',
+        }
+        for view, ordem in ordem_views.items():
+            # subselect ordenado: a ordem dos resultados é a das colunas da view, igual nos dois bancos
+            consulta = sql.SQL(
+                "SELECT count(*), coalesce(md5(string_agg(x::text, '|')), '') "
+                "FROM (SELECT * FROM {} ORDER BY " + ordem + ") x"
+            ).format(sql.Identifier("public", view))
+            lc.execute(consulta)
+            rc.execute(consulta)
+            a, b = lc.fetchone(), rc.fetchone()
+            check(a == b, f"{view}: {a[0]} linhas, resultado idêntico nos dois bancos",
+                  f"{view} diverge: local {a} × nuvem {b}")
+
+        # 4. a unidade analítica
+        rc.execute('SELECT count(*) FROM public.v_enade_time_curso_ano')
+        check(rc.fetchone()[0] == 582, "v_enade_time_curso_ano na nuvem tem 582 linhas (curso-ano)",
+              "v_enade_time_curso_ano na nuvem não tem 582 linhas")
+
+        # 5. segurança do que o ENADE-Time publica
+        todas = [t for t, _ in pub.PUBLICADAS] + [pub.TABELA_LOG]
+        rc.execute("SELECT relname FROM pg_class WHERE relnamespace = 'public'::regnamespace "
+                   "AND relname = ANY(%s) AND NOT relrowsecurity", (todas,))
+        sem_rls = [r[0] for r in rc.fetchall()]
+        check(not sem_rls, "RLS ligada em todas as tabelas do ENADE-Time", f"sem RLS: {sem_rls}")
+        rc.execute("""SELECT t, p FROM unnest(%s::text[]) t, unnest(ARRAY['INSERT','UPDATE','DELETE','TRUNCATE']) p
+                      WHERE has_table_privilege('anon', 'public.' || t, p)
+                         OR has_table_privilege('authenticated', 'public.' || t, p)""", (todas,))
+        escrita = rc.fetchall()
+        check(not escrita, "anon/authenticated sem permissão de escrita nas tabelas do ENADE-Time",
+              f"permissões de escrita abertas: {escrita}")
+        rc.execute("""SELECT c.relname FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace
+                      AND c.relname = ANY(%s)
+                      AND NOT coalesce(c.reloptions @> ARRAY['security_invoker=true'], false)""",
+                   ([v for v in ordem_views],))
+        sem_invoker = [r[0] for r in rc.fetchall()]
+        check(not sem_invoker, "views com security_invoker = true", f"sem security_invoker: {sem_invoker}")
+        rc.execute("""SELECT rolsuper OR rolbypassrls OR rolcreaterole OR rolcreatedb
+                      FROM pg_roles WHERE rolname = %s""", (pub.PAPEL_LEITOR,))
+        linha = rc.fetchone()
+        check(linha is not None and not linha[0], f"papel {pub.PAPEL_LEITOR} existe e não tem privilégios extras",
+              f"papel {pub.PAPEL_LEITOR} ausente ou com privilégios demais")
+
+        # 6. aviso, fora do escopo do ENADE-Time (não falha): a RPC aberta do projeto
+        rc.execute("""SELECT bool_or(has_function_privilege('anon', p.oid, 'EXECUTE'))
+                      FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace AND p.proname = 'truncar_tabela'""")
+        aberta = rc.fetchone()[0]
+        if aberta:
+            print("  AVISO (fora do escopo do ENADE-Time, não reprova): a RPC public.truncar_tabela ainda é "
+                  "executável por anon/authenticated e esvazia qualquer tabela do projeto, inclusive as do "
+                  "ENADE-Time. Correção a cargo do líder — ver docs/COMUNICADO_SEGURANCA.md.")
+        elif aberta is False:
+            print("  OK   RPC truncar_tabela não é executável por anon/authenticated")
+    finally:
+        local.rollback()
+        remoto.rollback()
+        local.close()
+        remoto.close()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--campanha", default="oficial",
@@ -295,12 +395,9 @@ def main() -> int:
     ap.add_argument("--api", default=None, help="Base URL da API para a checagem C (ex.: http://127.0.0.1:8000).")
     ap.add_argument("--prefixo", default="/api",
                     help="Prefixo das rotas: /api (API legada) ou /api/enade-time (router do ecossistema).")
-    ap.add_argument("--cruzado", action="store_true", help="local × Supabase (Fase 4).")
+    ap.add_argument("--cruzado", action="store_true",
+                    help="Checagem D: banco local × Supabase (precisa de SUPABASE_DB_PASSWORD).")
     args = ap.parse_args()
-
-    if args.cruzado:
-        print("--cruzado ainda não implementado (Fase 4 — publicação no Supabase).", file=sys.stderr)
-        return 2
 
     conn = conectar()
     try:
@@ -322,6 +419,8 @@ def main() -> int:
             print("\n(B) pulada: não há campanhas no banco.")
         if args.api:
             checar_api(args.api.rstrip("/"), view, conn, campanha, args.prefixo.rstrip("/"))
+        if args.cruzado:
+            checar_cruzado()
     finally:
         conn.close()
 
@@ -331,7 +430,8 @@ def main() -> int:
         for p in problemas:
             print("  -", p)
         return 1
-    print("MÉTRICAS VALIDADAS: Python, views" + (" e API" if args.api else "") + " concordam.")
+    print("MÉTRICAS VALIDADAS: Python, views" + (" e API" if args.api else "")
+          + (" e Supabase" if args.cruzado else "") + " concordam.")
     return 0
 
 

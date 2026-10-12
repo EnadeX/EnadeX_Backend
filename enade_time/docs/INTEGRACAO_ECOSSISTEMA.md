@@ -88,26 +88,45 @@ co_modalidade, co_categad, co_orgacad`. A API é **somente leitura** (sem
 POST/PUT/DELETE). Contrato detalhado: Swagger em `http://localhost:8002/docs`. O consumidor de
 referência é o módulo `/enade-time` do `EnadeX_Frontend`.
 
-### 2.4 Supabase — contrato do ecossistema EnadeX (em implantação, DESIGN_LOG D11/D15)
+### 2.4 Supabase — contrato do ecossistema EnadeX (publicado em 12/10/2026, DESIGN_LOG D11/D15)
 
-Ponto de integração canônico do ecossistema. A base já está publicada como
-`enade_time_distribuido` + `dim_*` (24.967 linhas, 06/08/2026) e será
-renomeada para a convenção do grupo, com leitura por
-`util.util_db.consultar_dados(...)`:
+Ponto de integração canônico do ecossistema. A base está publicada com os nomes da
+convenção do grupo (os mesmos do banco local) e se lê por
+`util.util_db.consultar_dados(...)` ou pelo PostgREST:
 
 | Relação | Grão | Linhas | Observação |
 |---|---|---:|---|
 | `tbl_enade_time_fato` | inscrição (linha do arq1) × ano | 24.967 | mesmo schema do CSV v1.1 |
 | `tbl_enade_time_dim_*` (7) | lookup | 40 | FKs para joins no PostgREST |
 | `v_enade_time_curso_ano` | **curso × ano** | **582** | colunas com os nomes do `load_raw()` do E-XplainENADE: `"NU_ANO", "CO_CURSO", "NT_GER", "NT_FG", "NT_CE", "QT_ALUNOS", "CO_GRUPO", "CO_REGIAO", "TP_CATEGAD_BIN"`; `QT_ALUNOS` = inscritos (não `TP_PRES == 555`) — documentado em `COMMENT ON COLUMN` |
-| `tbl_enade_time_benchmark_*`, `v_enade_time_benchmark_*` | execução / etapa / agregados | — | resultados do experimento de SPD |
+| `tbl_enade_time_benchmark_execucao` / `_etapa` | execução / etapa | 59 / 354 | resultados do experimento de SPD |
+| `v_enade_time_benchmark_metricas` / `_resumo` | execução / configuração | — | definição única de speedup e eficiência (pareada por suíte) |
+
+Tudo isso é **somente leitura** para quem consulta (RLS ligada, só `SELECT` para
+`anon`/`authenticated`; views com `security_invoker`). Quem publica é o script
+`scripts/12_publicar_supabase.py`, que copia do banco local numa transação única e confere
+o md5 linha a linha; ele nunca usa a chave de serviço do grupo nem a RPC `truncar_tabela`.
+Cada publicação fica em `tbl_enade_time_publicacao` (versão do dataset, md5, quando), e o
+`GET /api/enade-time/health` informa a `fonte` dos dados e a última publicação.
+
+**Verificado (12/10/2026):** `v_enade_time_curso_ano` tem 582 linhas e os 82 cursos de 2021
+batem 82 de 82 com `tbl_arq1_2021` (753 cursos); as 13 colunas do consolidado são constantes
+dentro de cada (ano, curso), então o `MIN()` da view não perde informação; a API lendo do
+Supabase pelo papel somente-leitura passa nas 30 rotas do golden sem regressão, e as métricas
+da nuvem coincidem com as do banco local.
+
+**Como a API lê da nuvem:** o papel `enade_time_reader` (LOGIN, só `SELECT`, transação
+somente leitura) tem o DSN em `enade_time/.env` como `ENADE_TIME_DB_URL_SUPABASE` (o script 12
+grava; não vai para o git). Ligue com `python enade_time/enade_time_rotas.py --fonte supabase`
+ou defina `ENADE_TIME_DB_URL` (tem precedência sobre `POSTGRES_*`). Alcance real desse papel:
+protege o caminho por DSN; o PostgREST segue pelas chaves do projeto.
 
 O swap point registrado em `e_xplainenade/modules/etl.py` ("quando o
 ENADE-Time (Lucas) entregar uma base normalizada equivalente…") é atendido
 como **extensão longitudinal** (2005–2017 para os 82 cursos do recorte), não
 como substituição: o recorte do E-XplainENADE (753 cursos, CC+SI, Brasil,
-2021) continua vindo de `tbl_arq*_2021`. A formalização com o responsável
-(JP) segue pendente — ver seção 4.
+2021) continua vindo de `tbl_arq*_2021`. A view já existe e casa com a base nacional (82 de
+82); a formalização do contrato com o responsável (JP) segue pendente — ver seção 4.
 
 ### 2.3 Parquet (opcional, sob demanda)
 A base está disponível em CSV (atende ao requisito "Parquet **ou** CSV

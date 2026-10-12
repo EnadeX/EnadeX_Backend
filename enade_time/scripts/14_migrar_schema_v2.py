@@ -33,6 +33,8 @@ v_enade_time_benchmark_resumo    (nova) mediana / mín / máx / IQR / n por
                       (campanha, workers, ordem de submissão); o sequencial
                       entra como configuração (1, NULL) com speedup 1.
 tbl_enade_time_publicacao (nova) log das publicações no Supabase (script 12).
+v_enade_time_curso_ano (nova) 582 linhas, uma por curso e ano, com os MESMOS nomes de
+                      coluna do `load_raw()` do E-XplainENADE (contrato D15).
 
 Backfill — fatos, não suposições
 --------------------------------
@@ -271,12 +273,44 @@ CREATE TABLE IF NOT EXISTS tbl_enade_time_publicacao (
 );
 """
 
+# Contrato com o E-XplainENADE (D15): nomes de coluna idênticos ao `load_raw()` do JP, entre
+# aspas porque são maiúsculos. As 13 colunas do consolidado são função de (ano, curso), então
+# MIN() só escolhe o valor único do grupo. TP_CATEGAD_BIN replica o `map` dele: categorias
+# 1, 2 e 3 (públicas) = 0; 4 e 5 (privadas) = 1; 7 ("Especial") = NULL.
+SQL_VIEW_CURSO_ANO = """
+CREATE OR REPLACE VIEW v_enade_time_curso_ano AS
+SELECT
+    nu_ano                                   AS "NU_ANO",
+    co_curso                                 AS "CO_CURSO",
+    MIN(media_nt_ger)::DOUBLE PRECISION      AS "NT_GER",
+    MIN(media_nt_fg)::DOUBLE PRECISION       AS "NT_FG",
+    MIN(media_nt_ce)::DOUBLE PRECISION       AS "NT_CE",
+    COUNT(*)::INT                            AS "QT_ALUNOS",
+    MIN(co_grupo)::INT                       AS "CO_GRUPO",
+    MIN(co_regiao_curso)::INT                AS "CO_REGIAO",
+    CASE MIN(co_categad)
+        WHEN 1 THEN 0 WHEN 2 THEN 0 WHEN 3 THEN 0
+        WHEN 4 THEN 1 WHEN 5 THEN 1
+        ELSE NULL
+    END                                      AS "TP_CATEGAD_BIN"
+FROM tbl_enade_time_fato
+GROUP BY nu_ano, co_curso;
+
+COMMENT ON VIEW v_enade_time_curso_ano IS
+    'Uma linha por curso e ano (582): a unidade analítica do ENADE-Time. Nomes de coluna do load_raw() do E-XplainENADE.';
+COMMENT ON COLUMN v_enade_time_curso_ano."QT_ALUNOS" IS
+    'Inscritos (linhas do arq1), não TP_PRES = 555 como no E-XplainENADE.';
+COMMENT ON COLUMN v_enade_time_curso_ano."NT_GER" IS
+    'Média da Nota Geral do curso no ano (constante dentro do grupo).';
+"""
+
 PASSOS = [
     ("colunas e índices (aditivo)", SQL_COLUNAS),
     ("backfill factual das linhas antigas", SQL_BACKFILL),
     ("v_enade_time_benchmark_metricas (pareamento por suíte)", SQL_VIEW_METRICAS),
     ("v_enade_time_benchmark_resumo (agregados por campanha)", SQL_VIEW_RESUMO),
     ("tbl_enade_time_publicacao", SQL_PUBLICACAO),
+    ("v_enade_time_curso_ano (contrato com o E-XplainENADE)", SQL_VIEW_CURSO_ANO),
 ]
 
 
