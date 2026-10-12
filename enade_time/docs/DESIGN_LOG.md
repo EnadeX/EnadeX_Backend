@@ -223,12 +223,48 @@ registros" rotulado como inscrições; `AlertaAmostra` passa a contar cursos
   rastreados às views em modo estrito.
 
 ## D17 — Eixo de carga local × nuvem como medição situada (essencial)
-**Decisão:** medir, com o mesmo instrumental, a etapa de carga das 24.967 linhas em
-três estratégias — `COPY` local, `COPY` via Session Pooler e `upsert` PostgREST em
-lotes — n = 10, sempre em **tabela vazia** (destino dedicado `*_fato_bench`, truncado
-por DSN antes de cada repetição), com RTT medido no canal testado, bytes de payload,
-host e rede logados. Reportado como **custo de publicação** (mediana/IQR), nunca como
-speedup. Execução na Fase 7 do plano.
+**Decisão:** medir, com o mesmo instrumental, a etapa de carga das 24.967 linhas por
+estratégia, n = 10, sempre em **tabela vazia** e dedicada (`tbl_enade_time_fato_bench`,
+truncada por conexão direta fora do tempo medido), com RTT medido no canal testado, bytes
+de payload (1.767.079), host e rede registrados e o md5 do destino conferido contra a
+fato em cada repetição. Reportado como **custo de publicação** (mediana, mín–máx e IQR),
+nunca como speedup. Repetições intercaladas entre as estratégias para que a deriva da
+rede não se concentre numa delas. Script `15_benchmark_carga.py`; tabela
+`tbl_enade_time_benchmark_carga`; view `v_enade_time_benchmark_carga_resumo`; rota
+`GET /api/enade-time/benchmark/carga`; página `/enade-time/spd/carga`.
+
+**Medido (rodada `0d2c38f2`, Wi-Fi, RTT local ≈ 0,6 ms e RTT da nuvem ≈ 176 ms):**
+
+| Estratégia | Mediana | Mín–máx | IQR |
+|---|---|---|---|
+| COPY local, sem índices nem FKs (controle) | 0,09 s | 0,07–0,14 s | 0,02 s |
+| COPY local, só PK e índices (controle) | 0,70 s | 0,55–0,91 s | 0,20 s |
+| COPY local, só PK e FKs (controle) | 5,38 s | 4,76–5,84 s | 0,42 s |
+| COPY local, estrutura completa | 5,89 s | 5,39–6,67 s | 0,63 s |
+| COPY pelo Session Pooler, sem estrutura (controle) | 4,31 s | 3,50–11,25 s | 1,20 s |
+| COPY pelo Session Pooler, estrutura completa | 7,54 s | 5,78–12,47 s | 1,16 s |
+
+**Leitura (e o que ela NÃO diz):**
+- Uma primeira rodada, só com `copy_local` e `copy_pooler` (n = 10 cada, sem controles),
+  deu 5,62 s e 5,59 s: praticamente empatadas. Na segunda a nuvem ficou 1,65 s acima.
+  A distância entre local e nuvem **não é estável entre rodadas**, o que reforça o caráter
+  de medição situada; não há uma constante "a nuvem custa X".
+- Os controles foram acrescentados depois da primeira rodada, porque o empate pedia
+  explicação. Eles mostram que o custo, no local, é quase todo **manutenção de estrutura do
+  destino**: sem índices nem FKs o mesmo COPY leva 0,09 s; as FKs respondem por quase todo o
+  resto (5,38 s) e os índices por pouco (0,70 s). Pelo pooler, mesmo sem estrutura a carga
+  leva 4,31 s: esse é o custo de transporte (conexão, TLS e envio) nas condições da medição.
+- As duas repetições mais lentas do pooler **não** coincidem com os maiores RTT medidos antes
+  de cada carga (a primeira rodada coincidia). O RTT sozinho não explica a cauda; a vazão
+  do enlace durante o envio não foi medida.
+- **Não medido:** o upsert em lotes pelo PostgREST (`util_db` do grupo). Exige
+  `SUPABASE_URL` e `SUPABASE_KEY` públicas, que não estão nesta máquina. O mecanismo está
+  pronto: `--preparar` cria a política temporária de escrita para `anon` na tabela de
+  teste e `--limpar-permissoes` a remove.
+- **Hipótese a testar, não afirmada:** carregar sem as FKs e criá-las depois, com validação
+  em bloco, reduziria o custo de republicar. Não foi feito: a publicação mantém a
+  estrutura completa e a conferência por md5.
+- Limites: uma máquina, uma rede, um horário, n = 10. Os números descrevem estas condições.
 
 ---
 

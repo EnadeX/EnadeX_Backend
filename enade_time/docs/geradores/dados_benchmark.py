@@ -91,6 +91,136 @@ def _f(v):
     return None if v is None else float(v)
 
 
+ROTULO_ESTRATEGIA = {
+    "copy_local": "COPY no Postgres local",
+    "copy_pooler": "COPY pelo Session Pooler (Supabase)",
+    "upsert_postgrest": "Upsert em lotes pelo PostgREST (Supabase)",
+    "controle_local_sem_estrutura": "Controle: COPY local, sem índices nem FKs",
+    "controle_pooler_sem_estrutura": "Controle: COPY pelo pooler, sem índices nem FKs",
+    "controle_local_so_indices": "Controle: COPY local, só PK e índices",
+    "controle_local_so_fks": "Controle: COPY local, só PK e FKs",
+}
+ORDEM_ESTRATEGIA = list(ROTULO_ESTRATEGIA)
+
+
+def carregar_carga(conn) -> dict | None:
+    """Eixo de carga (D17): a medição mais recente, lida da view/tabela. None se não houver."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass('public.v_enade_time_benchmark_carga_resumo') IS NOT NULL")
+        if not cur.fetchone()[0]:
+            return None
+        cur.execute("""SELECT carga_id::text FROM v_enade_time_benchmark_carga_resumo
+                       GROUP BY carga_id ORDER BY MAX(fim) DESC LIMIT 1""")
+        linha = cur.fetchone()
+        if linha is None:
+            return None
+        cid = linha[0]
+        cur.execute("""SELECT estrategia, n, tempo_mediana, tempo_min, tempo_max, tempo_iqr,
+                              throughput_mediana, rtt_mediana_ms, bytes_payload, linhas_destino,
+                              md5_confere, host_destino, rede, inicio, fim
+                       FROM v_enade_time_benchmark_carga_resumo WHERE carga_id = %s""", (cid,))
+        resumo = {}
+        for r in _dicts(cur):
+            for k in ("tempo_mediana", "tempo_min", "tempo_max", "tempo_iqr", "throughput_mediana", "rtt_mediana_ms"):
+                r[k] = _f(r[k])
+            resumo[r["estrategia"]] = r
+        cur.execute("""SELECT estrategia, repeticao, tempo_seg, rtt_ms
+                       FROM tbl_enade_time_benchmark_carga WHERE carga_id = %s
+                       ORDER BY estrategia, repeticao""", (cid,))
+        reps = [{"estrategia": r["estrategia"], "repeticao": r["repeticao"],
+                 "tempo": _f(r["tempo_seg"]), "rtt": _f(r["rtt_ms"])} for r in _dicts(cur)]
+        # a rodada imediatamente anterior (se houver): mostra o quanto a medição varia com a rede
+        cur.execute("""SELECT carga_id::text FROM v_enade_time_benchmark_carga_resumo WHERE carga_id::text <> %s
+                       GROUP BY carga_id ORDER BY MAX(fim) DESC LIMIT 1""", (cid,))
+        ant = cur.fetchone()
+        anterior = {}
+        if ant:
+            cur.execute("""SELECT estrategia, tempo_mediana FROM v_enade_time_benchmark_carga_resumo
+                           WHERE carga_id::text = %s""", (ant[0],))
+            anterior = {r["estrategia"]: _f(r["tempo_mediana"]) for r in _dicts(cur)}
+    return {"carga_id": cid, "resumo": resumo, "reps": reps, "anterior": anterior}
+
+
+def tabela_carga(c: dict) -> list[tuple]:
+    """Linhas da tabela de resultados, na ordem fixa das estratégias."""
+    linhas = []
+    for est in ORDEM_ESTRATEGIA:
+        r = c["resumo"].get(est)
+        if r is None:
+            continue
+        linhas.append((ROTULO_ESTRATEGIA[est], r["n"], seg(r["tempo_mediana"]),
+                       f"{seg(r['tempo_min'])} – {seg(r['tempo_max'])}", seg(r["tempo_iqr"]),
+                       f"{inteiro(r['throughput_mediana'])} linhas/s", f"{br(r['rtt_mediana_ms'], 1)} ms"))
+    return linhas
+
+
+def leitura_carga(c: dict) -> list[str]:
+    """Parágrafos do eixo de carga, calculados dos dados. Só usam números que existem na tabela
+    (medianas, extremos, IQR, repetições individuais), para o verificar_numeros conseguir conferir.
+    Não falam em ganho de paralelismo: é custo de publicação."""
+    r = c["resumo"]
+    ant = c.get("anterior") or {}
+    ref = next(iter(r.values()))
+    paragrafos = [
+        f"Cada repetição carrega as {inteiro(ref['linhas_destino'])} linhas numa tabela vazia e dedicada "
+        f"({inteiro(ref['bytes_payload'])} bytes), com o TRUNCATE por conexão direta fora do tempo medido e o md5 do "
+        f"destino conferido contra a tabela fato; {ref['n']} repetições por estratégia, intercaladas, com a rede em "
+        f"{ref['rede']}. É custo de publicação, não ganho de paralelismo, e vale para estas condições (rede, RTT e host): "
+        f"uma medição situada, não uma propriedade do Supabase."
+    ]
+    lo, po = r.get("copy_local"), r.get("copy_pooler")
+    if lo and po:
+        razao = round(po["rtt_mediana_ms"] / lo["rtt_mediana_ms"]) if lo["rtt_mediana_ms"] else None
+        texto = (
+            f"A mediana do COPY no Postgres local foi {seg(lo['tempo_mediana'])} e a do COPY pelo Session Pooler do "
+            f"Supabase, {seg(po['tempo_mediana'])}, com RTT mediano de {br(lo['rtt_mediana_ms'], 1)} ms e "
+            f"{br(po['rtt_mediana_ms'], 1)} ms" + (f" (cerca de {razao} vezes maior na nuvem)" if razao else "") + ". "
+            f"O IQR foi de {seg(lo['tempo_iqr'])} no local e de {seg(po['tempo_iqr'])} na nuvem.")
+        if ant.get("copy_local") is not None and ant.get("copy_pooler") is not None:
+            texto += (
+                f" Em outra rodada, feita antes com o mesmo protocolo, as medianas foram {seg(ant['copy_local'])} e "
+                f"{seg(ant['copy_pooler'])}: a distância entre o local e a nuvem varia de uma rodada para a outra com a "
+                f"rede, e é por isso que o resultado vale como medição situada.")
+        paragrafos.append(texto)
+        reps_po = sorted((x for x in c["reps"] if x["estrategia"] == "copy_pooler"), key=lambda x: -x["tempo"])
+        maiores_rtt = sorted((x for x in c["reps"] if x["estrategia"] == "copy_pooler"), key=lambda x: -x["rtt"])
+        if len(reps_po) >= 2 and reps_po[0]["tempo"] > 1.5 * po["tempo_mediana"]:
+            if {x["repeticao"] for x in reps_po[:2]} == {x["repeticao"] for x in maiores_rtt[:2]}:
+                paragrafos.append(
+                    f"A cauda da nuvem vem da rede: as duas repetições mais lentas ({seg(reps_po[0]['tempo'])} e "
+                    f"{seg(reps_po[1]['tempo'])}) foram também as de maior RTT ({br(reps_po[0]['rtt'], 1)} ms e "
+                    f"{br(reps_po[1]['rtt'], 1)} ms).")
+            else:
+                paragrafos.append(
+                    f"A cauda da nuvem (a repetição mais lenta levou {seg(reps_po[0]['tempo'])}) não acompanhou o RTT "
+                    f"medido antes de cada carga: o RTT não a explica. Pode ser a vazão do enlace durante o envio, que "
+                    f"não foi medida.")
+    cl, cp = r.get("controle_local_sem_estrutura"), r.get("controle_pooler_sem_estrutura")
+    ci, cf = r.get("controle_local_so_indices"), r.get("controle_local_so_fks")
+    if cl and lo:
+        partes = [f"Os controles localizam o custo. No Postgres local, sem índices nem chaves estrangeiras o mesmo COPY "
+                  f"leva {seg(cl['tempo_mediana'])}"]
+        if ci and cf:
+            partes.append(f"; só com a PK e os índices secundários, {seg(ci['tempo_mediana'])}; só com a PK e as FKs, "
+                          f"{seg(cf['tempo_mediana'])}; com tudo, como na tabela fato, {seg(lo['tempo_mediana'])}. "
+                          f"Quase todo o tempo é manutenção de estrutura, e dentro dela as chaves estrangeiras pesam "
+                          f"muito mais do que os índices.")
+        else:
+            partes.append(f"; com tudo, como na tabela fato, {seg(lo['tempo_mediana'])}.")
+        texto = "".join(partes)
+        if cp and po:
+            texto += (f" Pelo Session Pooler, mesmo sem estrutura a carga leva {seg(cp['tempo_mediana'])}: esse é o "
+                      f"custo de transporte (conexão, TLS e envio do payload) nas condições da medição, e responde por "
+                      f"boa parte dos {seg(po['tempo_mediana'])} da carga completa na nuvem.")
+        texto += (" Hipótese a testar, não medida aqui: carregar sem as chaves estrangeiras e criá-las depois (a "
+                  "validação em bloco evita um gatilho por linha) reduziria o custo de uma republicação.")
+        paragrafos.append(texto)
+    if "upsert_postgrest" not in r:
+        paragrafos.append("O upsert em lotes pelo PostgREST (util_db do grupo) não foi medido nesta rodada: exige "
+                          "SUPABASE_URL e SUPABASE_KEY públicas na máquina da medição.")
+    return paragrafos
+
+
 def carregar(campanha: str = "oficial") -> dict:
     conn = conectar()
     try:
@@ -223,6 +353,7 @@ def carregar(campanha: str = "oficial") -> dict:
 
         execs, etapas = analise.carregar(conn, cid, None)
         esc = analise.analisar(execs, etapas)
+        carga = carregar_carga(conn)
     finally:
         conn.close()
 
@@ -256,6 +387,7 @@ def carregar(campanha: str = "oficial") -> dict:
         "historico": historico,
         "bug_baseline": bug,
         "outras_campanhas": outras,
+        "carga": carga,
         "gerado_em": datetime.now(),
     }
 

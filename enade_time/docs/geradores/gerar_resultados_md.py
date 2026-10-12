@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dados_benchmark import RAIZ, br, carregar, data_extenso, pct, seg, sx  # noqa: E402
+from dados_benchmark import RAIZ, br, carregar, data_extenso, leitura_carga, pct, seg, sx, tabela_carga  # noqa: E402
 
 
 def linha(*cols) -> str:
@@ -204,6 +204,21 @@ def main() -> int:
             f"{(c['observacoes'] or '').split('|')[0].strip()})" for c in D["outras_campanhas"]) + ".")
         L.append("")
 
+    if D.get("carga"):
+        L.append("## Custo de publicação (eixo de carga)")
+        L.append("")
+        L.append("Medição à parte do experimento de SPD (DESIGN_LOG D17): quanto custa publicar a base num destino. "
+                 f"Fonte: `v_enade_time_benchmark_carga_resumo` (carga `{D['carga']['carga_id'][:8]}`).")
+        L.append("")
+        L.append(linha("Estratégia", "n", "Mediana", "Mín – máx", "IQR", "Throughput", "RTT mediano"))
+        L.append(linha("---", "--:", "--:", "--:", "--:", "--:", "--:"))
+        for row in tabela_carga(D["carga"]):
+            L.append(linha(*row))
+        L.append("")
+        for paragrafo in leitura_carga(D["carga"]):
+            L.append(paragrafo)
+            L.append("")
+
     L.append("## Reprodução")
     L.append("")
     L.append("```powershell")
@@ -212,7 +227,8 @@ def main() -> int:
     L.append("docker compose up -d postgres")
     L.append("python scripts\\14_migrar_schema_v2.py --status        # schema v2 (aditivo)")
     L.append("python scripts\\10_rodar_suite_benchmark.py --oficial --obs \"nova campanha\"   # ~45 min")
-    L.append("python scripts\\13_validar_metricas.py --api http://localhost:8000")
+    L.append("python scripts\\13_validar_metricas.py --api http://localhost:8002 --prefixo /api/enade-time")
+    L.append("python scripts\\15_benchmark_carga.py --reps 10   # eixo de carga (local x nuvem)")
     L.append("python docs\\geradores\\gerar_resultados_md.py          # regenera este arquivo")
     L.append("```")
     L.append("")

@@ -130,6 +130,18 @@ def valores_permitidos(conn, escalonamento: dict | None) -> dict[str, set[str]]:
         for (t,) in cur.fetchall():
             add_tempo(t)
 
+        # eixo de carga (D17): repetições individuais e agregados da view
+        cur.execute("SELECT to_regclass('public.tbl_enade_time_benchmark_carga') IS NOT NULL")
+        if cur.fetchone()[0]:
+            cur.execute("SELECT tempo_seg, throughput_lps FROM tbl_enade_time_benchmark_carga")
+            for t, thr in cur.fetchall():
+                add_tempo(t); add_lps(thr)
+            cur.execute("""SELECT tempo_mediana, tempo_min, tempo_max, tempo_iqr, throughput_mediana
+                           FROM v_enade_time_benchmark_carga_resumo""")
+            for row in cur.fetchall():
+                for v in row[:4]: add_tempo(v)
+                add_lps(row[4])
+
         # valores citados na EXPLICAÇÃO do bug do baseline (speedup contra o
         # sequencial mais recente) — calculados do banco, como em dados_benchmark
         cur.execute("""SELECT tempo_total_seg FROM tbl_enade_time_benchmark_execucao

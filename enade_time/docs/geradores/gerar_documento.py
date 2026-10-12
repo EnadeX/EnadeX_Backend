@@ -1059,6 +1059,27 @@ def secao_8_3_resultados(doc):
         "citado aqui existe nas views do banco.")
 
 
+def secao_8_4_carga(doc):
+    """Custo de publicação, local × nuvem (eixo de carga, D17) — tudo vem de D['carga']."""
+    c = D.get("carga")
+    if not c:
+        return
+    from dados_benchmark import leitura_carga, tabela_carga
+
+    h2(doc, "8.4 Custo de publicação: local × nuvem (eixo de carga)")
+    par(doc,
+        "Além do experimento de paralelismo, mediu-se quanto custa publicar a base num destino. A medição é "
+        "separada da campanha porque responde a outra pergunta: trocar o Postgres local, que o experimento controla, "
+        "por um serviço de rede mudaria uma variável que ele não controla. O resultado é custo de publicação, "
+        "com mediana e IQR, e não é comparado com os speedups da seção 8.3.")
+    for paragrafo in leitura_carga(c):
+        par(doc, paragrafo)
+    tabela(doc, ["Estratégia", "n", "Mediana", "Mín – máx", "IQR", "Throughput", "RTT mediano"],
+           tabela_carga(c), widths_cm=[5.6, 0.8, 1.9, 3.4, 1.6, 2.6, 1.8],
+           legenda_texto="Custo de publicação por estratégia, em tabela vazia (fonte: v_enade_time_benchmark_carga_resumo).",
+           font_size=9)
+
+
 def secao_9_capturas(doc):
     h1(doc, "9. Capturas de tela das principais interfaces e funcionalidades")
 
@@ -1521,6 +1542,7 @@ def main():
     secao_7_arquitetura_geral(doc)
     secao_8_integracao_subprojeto(doc)
     secao_8_3_resultados(doc)
+    secao_8_4_carga(doc)
     secao_9_capturas(doc)
     secao_10_codigo(doc)
     secao_fontes(doc)

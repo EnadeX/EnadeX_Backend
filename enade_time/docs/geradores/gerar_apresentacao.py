@@ -461,7 +461,7 @@ rbox(s, xs[2], y1, bw, bh, "dados_processados/", "CSV consolidado — 24.967 lin
 flow_arrow(s, 10.66, y1 + bh + 0.18, w=0.42, h=0.34, rotation=90)
 rbox(s, xs[2], y2, bw, bh, "PostgreSQL 16 (Docker)", "modelo dimensional + benchmark + views de métricas", fill=NAVY)
 flow_arrow(s, 8.57, y2 + 0.45, rotation=180)
-rbox(s, xs[1], y2, bw, bh, "API FastAPI", "read-only · 19 endpoints · Swagger", fill=BLUE)
+rbox(s, xs[1], y2, bw, bh, "API FastAPI", "read-only · 20 endpoints · Swagger", fill=BLUE)
 flow_arrow(s, 4.42, y2 + 0.45, rotation=180)
 rbox(s, xs[0], y2, bw, bh, "Dashboard React", "análises ENADE + métricas SPD", fill=TEAL)
 ann = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(9.15), Inches(6.0), Inches(3.45), Inches(0.78))
@@ -508,7 +508,7 @@ s = content_slide("Desenvolvimento — fases do projeto")
 bullets(s, [
     "Fase 1:: schema dimensional no PostgreSQL + carga do CSV consolidado (COPY) — 24.967 registros validados.",
     "Fase 2:: experimento de benchmark — sequencial × paralelo, com instrumentação por etapa.",
-    "Fase 3:: API FastAPI read-only — 19 endpoints (dimensões, análises, benchmark, campanhas).",
+    "Fase 3:: API FastAPI read-only — 20 endpoints (dimensões, análises, benchmark, campanhas).",
     "Fase 4:: dashboard React — 11 páginas, KPIs em tempo real, comparativo SPD e drill-down por worker.",
     "Fase 5:: documentação — guia de execução, arquitetura, resultados e roteiro de apresentação.",
     "Fase 6 (v2):: correção do baseline do comparativo, campanha oficial com repetições e duas ordens, integração ao ecossistema EnadeX.",

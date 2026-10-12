@@ -83,6 +83,29 @@ Esse card entrou no documento acadêmico de 21/08/2026. **Correção (DESIGN_LOG
 
 Outras campanhas no banco (não oficiais): `6e6c1ccc` em 01/09/2026 (2 exec., [campanha 6e6c1ccc] smoke pos-migracao v2).
 
+## Custo de publicação (eixo de carga)
+
+Medição à parte do experimento de SPD (DESIGN_LOG D17): quanto custa publicar a base num destino. Fonte: `v_enade_time_benchmark_carga_resumo` (carga `0d2c38f2`).
+
+| Estratégia | n | Mediana | Mín – máx | IQR | Throughput | RTT mediano |
+| --- | --: | --: | --: | --: | --: | --: |
+| COPY no Postgres local | 10 | 5,89 s | 5,39 s – 6,67 s | 0,63 s | 4.240 linhas/s | 0,6 ms |
+| COPY pelo Session Pooler (Supabase) | 10 | 7,54 s | 5,78 s – 12,47 s | 1,16 s | 3.313 linhas/s | 176,3 ms |
+| Controle: COPY local, sem índices nem FKs | 10 | 0,09 s | 0,07 s – 0,14 s | 0,02 s | 276.120 linhas/s | 0,6 ms |
+| Controle: COPY pelo pooler, sem índices nem FKs | 10 | 4,31 s | 3,50 s – 11,25 s | 1,20 s | 5.796 linhas/s | 174,0 ms |
+| Controle: COPY local, só PK e índices | 10 | 0,70 s | 0,55 s – 0,91 s | 0,20 s | 35.520 linhas/s | 0,6 ms |
+| Controle: COPY local, só PK e FKs | 10 | 5,38 s | 4,76 s – 5,84 s | 0,42 s | 4.642 linhas/s | 0,5 ms |
+
+Cada repetição carrega as 24.967 linhas numa tabela vazia e dedicada (1.767.079 bytes), com o TRUNCATE por conexão direta fora do tempo medido e o md5 do destino conferido contra a tabela fato; 10 repetições por estratégia, intercaladas, com a rede em wifi. É custo de publicação, não ganho de paralelismo, e vale para estas condições (rede, RTT e host): uma medição situada, não uma propriedade do Supabase.
+
+A mediana do COPY no Postgres local foi 5,89 s e a do COPY pelo Session Pooler do Supabase, 7,54 s, com RTT mediano de 0,6 ms e 176,3 ms (cerca de 284 vezes maior na nuvem). O IQR foi de 0,63 s no local e de 1,16 s na nuvem. Em outra rodada, feita antes com o mesmo protocolo, as medianas foram 5,62 s e 5,59 s: a distância entre o local e a nuvem varia de uma rodada para a outra com a rede, e é por isso que o resultado vale como medição situada.
+
+A cauda da nuvem (a repetição mais lenta levou 12,47 s) não acompanhou o RTT medido antes de cada carga: o RTT não a explica. Pode ser a vazão do enlace durante o envio, que não foi medida.
+
+Os controles localizam o custo. No Postgres local, sem índices nem chaves estrangeiras o mesmo COPY leva 0,09 s; só com a PK e os índices secundários, 0,70 s; só com a PK e as FKs, 5,38 s; com tudo, como na tabela fato, 5,89 s. Quase todo o tempo é manutenção de estrutura, e dentro dela as chaves estrangeiras pesam muito mais do que os índices. Pelo Session Pooler, mesmo sem estrutura a carga leva 4,31 s: esse é o custo de transporte (conexão, TLS e envio do payload) nas condições da medição, e responde por boa parte dos 7,54 s da carga completa na nuvem. Hipótese a testar, não medida aqui: carregar sem as chaves estrangeiras e criá-las depois (a validação em bloco evita um gatilho por linha) reduziria o custo de uma republicação.
+
+O upsert em lotes pelo PostgREST (util_db do grupo) não foi medido nesta rodada: exige SUPABASE_URL e SUPABASE_KEY públicas na máquina da medição.
+
 ## Reprodução
 
 ```powershell
@@ -91,7 +114,8 @@ cd C:\Projetos\ENADE
 docker compose up -d postgres
 python scripts\14_migrar_schema_v2.py --status        # schema v2 (aditivo)
 python scripts\10_rodar_suite_benchmark.py --oficial --obs "nova campanha"   # ~45 min
-python scripts\13_validar_metricas.py --api http://localhost:8000
+python scripts\13_validar_metricas.py --api http://localhost:8002 --prefixo /api/enade-time
+python scripts\15_benchmark_carga.py --reps 10   # eixo de carga (local x nuvem)
 python docs\geradores\gerar_resultados_md.py          # regenera este arquivo
 ```
 
