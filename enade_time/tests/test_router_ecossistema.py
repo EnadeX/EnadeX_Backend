@@ -1,7 +1,7 @@
 """
 Modo ecossistema: o router do ENADE-Time incluído num `FastAPI()` sem lifespan,
 como o `api_main.py` central faria. Cobre o contrato com o frontend do grupo
-(`EnadeX_Frontend/app/enade-time`): prefixo `/api/enade-time`, 19 rotas GET, e
+(`EnadeX_Frontend/app/enade-time`): prefixo `/api/enade-time`, 20 rotas GET, e
 falhas de banco devolvidas como 503/500 **com cabeçalhos CORS** — um 500 sem
 CORS aparece no navegador como erro de rede e o dashboard não sabe o que houve.
 """
@@ -50,7 +50,7 @@ def client_central():
 
 def test_inventario_19_rotas_get_sob_o_prefixo():
     rotas = [r for r in _app_central().routes if isinstance(r, APIRoute) and r.path.startswith(PREFIXO)]
-    assert len(rotas) == 19
+    assert len(rotas) == 20
     assert all(r.methods == {"GET"} for r in rotas)
     grupos = {r.path.split("/")[3] for r in rotas}
     assert grupos == {"health", "dim", "analises", "benchmark"}

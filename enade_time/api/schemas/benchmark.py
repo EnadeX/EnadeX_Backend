@@ -143,3 +143,44 @@ class BenchmarkComparativo(BaseModel):
     maquina: MaquinaCampanha | None = None
     itens: list[ComparativoItem]
     resumo: list[ResumoConfiguracao] = []
+
+
+class ResumoCarga(BaseModel):
+    """Custo de publicação de uma estratégia de carga (v_enade_time_benchmark_carga_resumo)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    estrategia: str
+    n: int
+    tempo_mediana: float
+    tempo_min: float
+    tempo_max: float
+    tempo_iqr: float
+    throughput_mediana: float
+    rtt_mediana_ms: float | None = None
+    bytes_payload: int | None = None
+    linhas_destino: int
+    md5_confere: bool
+    host_destino: str | None = None
+    rede: str | None = None
+    inicio: datetime
+    fim: datetime
+
+
+class RepeticaoCarga(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    estrategia: str
+    repeticao: int
+    tempo_seg: float
+    rtt_ms: float | None = None
+
+
+class CargaResposta(BaseModel):
+    """Eixo de carga (D17): custo de PUBLICAR a base, local × nuvem. Não é speedup."""
+
+    carga_id: str | None = None
+    resumo: list[ResumoCarga] = []
+    repeticoes: list[RepeticaoCarga] = []
+    # medianas da rodada imediatamente anterior (estratégia -> segundos): mostra o quanto a rede faz variar
+    anterior: dict[str, float] = {}

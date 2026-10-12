@@ -10,6 +10,7 @@ from enade_time.api.schemas.benchmark import (
     BenchmarkEtapa,
     BenchmarkExecucao,
     BenchmarkMetrica,
+    CargaResposta,
     Campanha,
 )
 from enade_time.api.settings import Settings, get_settings
@@ -109,3 +110,13 @@ def comparativo(
         campanha_id=_uuid_str(campanha_id),
         suite_id=_uuid_str(suite_id),
     )
+
+
+@router.get("/carga", response_model=CargaResposta)
+def carga(
+    carga_id: UUID | None = Query(None, description="Medição do eixo de carga (padrão: a mais recente)"),
+    cursor: PgCursor = Depends(get_db_cursor),
+) -> dict:
+    """Custo de publicar a base (COPY local, COPY pelo pooler, upsert pelo PostgREST e controles).
+    Custo de publicação com mediana e IQR — nunca speedup (DESIGN_LOG D17)."""
+    return benchmark_repo.carga(cursor, _uuid_str(carga_id))

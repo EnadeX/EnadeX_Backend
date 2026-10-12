@@ -20,7 +20,7 @@ ROTAS_200 = [
     "/benchmark/execucoes", "/benchmark/execucoes?apenas_validas=false",
     "/benchmark/execucoes/1", "/benchmark/etapas/1",
     "/benchmark/metricas", "/benchmark/campanhas", "/benchmark/comparativo",
-    "/benchmark/comparativo?apenas_validas=false",
+    "/benchmark/comparativo?apenas_validas=false", "/benchmark/carga",
 ]
 
 
@@ -94,3 +94,16 @@ def test_campanhas_listam_oficial_e_smoke(client):
     for r in rows:
         assert set(r) >= {"campanha_id", "n_execucoes", "n_suites", "oficial"}
         assert r["n_execucoes"] >= 1
+
+
+def test_carga_expoe_custo_de_publicacao_com_md5_conferido(client):
+    d = client.get(PREFIXO + "/benchmark/carga").json()
+    assert set(d) >= {"carga_id", "resumo", "repeticoes", "anterior"}
+    if not d["resumo"]:
+        pytest.skip("nenhuma campanha de carga registrada (rodar 15_benchmark_carga.py)")
+    for r in d["resumo"]:
+        assert r["md5_confere"] is True
+        assert r["n"] >= 1 and r["tempo_min"] <= r["tempo_mediana"] <= r["tempo_max"]
+        assert r["linhas_destino"] > 0
+    estrategias = {r["estrategia"] for r in d["resumo"]}
+    assert {x["estrategia"] for x in d["repeticoes"]} == estrategias

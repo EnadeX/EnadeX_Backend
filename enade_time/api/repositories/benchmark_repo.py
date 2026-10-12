@@ -393,3 +393,53 @@ def comparativo(
         "itens": itens,
         "resumo": resumo,
     }
+
+
+def carga(cursor: PgCursor, carga_id: str | None = None) -> dict:
+    """Eixo de carga: a medição pedida (ou a mais recente). Bancos antigos, sem a tabela,
+    devolvem uma resposta vazia em vez de erro."""
+    vazio = {"carga_id": None, "resumo": [], "repeticoes": []}
+    cursor.execute("SELECT to_regclass('public.v_enade_time_benchmark_carga_resumo') IS NOT NULL AS existe")
+    if not cursor.fetchone()["existe"]:
+        return vazio
+    if carga_id is None:
+        cursor.execute(
+            """SELECT carga_id::text AS carga_id FROM v_enade_time_benchmark_carga_resumo
+               GROUP BY carga_id ORDER BY MAX(fim) DESC LIMIT 1"""
+        )
+        linha = cursor.fetchone()
+        if linha is None:
+            return vazio
+        carga_id = linha["carga_id"]
+    cursor.execute(
+        """
+        SELECT estrategia, n, tempo_mediana::float AS tempo_mediana, tempo_min::float AS tempo_min,
+               tempo_max::float AS tempo_max, tempo_iqr::float AS tempo_iqr,
+               throughput_mediana::float AS throughput_mediana, rtt_mediana_ms::float AS rtt_mediana_ms,
+               bytes_payload, linhas_destino, md5_confere, host_destino, rede, inicio, fim
+        FROM v_enade_time_benchmark_carga_resumo WHERE carga_id = %(c)s ORDER BY tempo_mediana
+        """,
+        {"c": carga_id},
+    )
+    resumo = list(cursor.fetchall())
+    cursor.execute(
+        """SELECT estrategia, repeticao::int AS repeticao, tempo_seg::float AS tempo_seg, rtt_ms::float AS rtt_ms
+           FROM tbl_enade_time_benchmark_carga WHERE carga_id = %(c)s ORDER BY estrategia, repeticao""",
+        {"c": carga_id},
+    )
+    repeticoes = list(cursor.fetchall())
+    cursor.execute(
+        """SELECT carga_id::text AS carga_id FROM v_enade_time_benchmark_carga_resumo WHERE carga_id::text <> %(c)s
+           GROUP BY carga_id ORDER BY MAX(fim) DESC LIMIT 1""",
+        {"c": carga_id},
+    )
+    anterior_linha = cursor.fetchone()
+    anterior: dict[str, float] = {}
+    if anterior_linha:
+        cursor.execute(
+            """SELECT estrategia, tempo_mediana::float AS tempo_mediana FROM v_enade_time_benchmark_carga_resumo
+               WHERE carga_id::text = %(c)s""",
+            {"c": anterior_linha["carga_id"]},
+        )
+        anterior = {r["estrategia"]: r["tempo_mediana"] for r in cursor.fetchall()}
+    return {"carga_id": carga_id if resumo else None, "resumo": resumo, "repeticoes": repeticoes, "anterior": anterior}

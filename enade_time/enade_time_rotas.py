@@ -2,7 +2,7 @@
 Rotas do ENADE-Time no padrão do ecossistema EnadeX.
 
 Expõe `router` — um único `APIRouter(prefix="/api/enade-time")` agregando os
-quatro grupos do subprojeto (health, dim, analises, benchmark; 19 endpoints,
+quatro grupos do subprojeto (health, dim, analises, benchmark; 20 endpoints,
 todos read-only) — pronto para ser incluído pelo `api_main.py` central:
 
     from enade_time.enade_time_rotas import router as enade_time_router
