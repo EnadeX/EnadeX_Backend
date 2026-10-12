@@ -10,6 +10,7 @@ def resumo_anual(cursor: PgCursor, filtros: FiltrosAnalise) -> list[dict]:
         SELECT
             nu_ano,
             COUNT(*)::int AS total_registros,
+            COUNT(DISTINCT co_curso)::int AS total_cursos,
             AVG(media_nt_fg)::float AS media_geral,
             MIN(media_nt_fg)::float AS media_min,
             MAX(media_nt_fg)::float AS media_max,
@@ -34,6 +35,7 @@ def resumo_regiao(cursor: PgCursor, filtros: FiltrosAnalise) -> list[dict]:
             r.co_regiao,
             r.nome,
             COUNT(*)::int AS total_registros,
+            COUNT(DISTINCT f.co_curso)::int AS total_cursos,
             AVG(f.media_nt_fg)::float AS media_geral,
             MIN(f.media_nt_fg)::float AS media_min,
             MAX(f.media_nt_fg)::float AS media_max,
@@ -61,6 +63,7 @@ def resumo_uf(cursor: PgCursor, filtros: FiltrosAnalise) -> list[dict]:
             u.nome,
             u.co_regiao,
             COUNT(*)::int AS total_registros,
+            COUNT(DISTINCT f.co_curso)::int AS total_cursos,
             AVG(f.media_nt_fg)::float AS media_geral,
             MIN(f.media_nt_fg)::float AS media_min,
             MAX(f.media_nt_fg)::float AS media_max,
@@ -94,13 +97,14 @@ def resumo_ies(
             MIN(co_orgacad)::int AS co_orgacad,
             MIN(co_uf_curso)::int AS co_uf_curso,
             COUNT(*)::int AS total_registros,
+            COUNT(DISTINCT co_curso)::int AS total_cursos,
             AVG(media_nt_fg)::float AS media_geral,
             AVG(media_nt_ger)::float AS media_geral_ger,
             AVG(media_nt_ce)::float  AS media_geral_ce
         FROM fato_enade
         WHERE 1=1 {where}
         GROUP BY co_ies
-        HAVING COUNT(*) >= %(min_cursos)s
+        HAVING COUNT(DISTINCT co_curso) >= %(min_cursos)s
         ORDER BY media_geral_ger DESC NULLS LAST, total_registros DESC
         LIMIT %(limit)s
         """,

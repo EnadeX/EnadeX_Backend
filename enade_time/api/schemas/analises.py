@@ -10,6 +10,7 @@ class ResumoAnual(BaseModel):
 
     nu_ano: int
     total_registros: int
+    total_cursos: int  # cursos distintos: a unidade analítica é o curso-ano (D16)
     media_geral: float | None = None
     media_min: float | None = None
     media_max: float | None = None
@@ -24,6 +25,7 @@ class ResumoRegiao(BaseModel):
     co_regiao: int
     nome: str
     total_registros: int
+    total_cursos: int  # cursos distintos: a unidade analítica é o curso-ano (D16)
     media_geral: float | None = None
     media_min: float | None = None
     media_max: float | None = None
@@ -40,6 +42,7 @@ class ResumoUF(BaseModel):
     nome: str
     co_regiao: int
     total_registros: int
+    total_cursos: int  # cursos distintos: a unidade analítica é o curso-ano (D16)
     media_geral: float | None = None
     media_min: float | None = None
     media_max: float | None = None
@@ -56,6 +59,7 @@ class ResumoIES(BaseModel):
     co_orgacad: int
     co_uf_curso: int
     total_registros: int
+    total_cursos: int  # cursos distintos: a unidade analítica é o curso-ano (D16)
     media_geral: float | None = None
     media_geral_ger: float | None = None
     media_geral_ce: float | None = None

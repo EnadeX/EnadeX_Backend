@@ -12,6 +12,7 @@ from enade_time.api.repositories import analises_repo, benchmark_repo, dimensoes
 
 TOTAL = 24_967
 POR_ANO = {2005: 5748, 2008: 8740, 2011: 2463, 2014: 2388, 2017: 2537, 2021: 3091}
+CURSOS_ANO = 582
 
 
 def test_dimensoes_contagens(cur):
@@ -27,6 +28,18 @@ def test_resumo_anual_total_e_por_ano(cur):
     rows = analises_repo.resumo_anual(cur, FiltrosAnalise())
     assert {r["nu_ano"]: r["total_registros"] for r in rows} == POR_ANO
     assert sum(r["total_registros"] for r in rows) == TOTAL
+
+
+def test_total_cursos_e_a_unidade_analitica_curso_ano(cur):
+    # 24.967 inscrições, mas só 582 cursos-ano (D16): somar os cursos distintos de cada ano dá 582.
+    anual = analises_repo.resumo_anual(cur, FiltrosAnalise())
+    assert sum(r["total_cursos"] for r in anual) == CURSOS_ANO
+    assert all(0 < r["total_cursos"] <= r["total_registros"] for r in anual)
+    # por região, os cursos de cada ano também fecham os 582 (um curso pertence a uma região)
+    for ano in POR_ANO:
+        regioes = analises_repo.resumo_regiao(cur, FiltrosAnalise(nu_ano=ano))
+        ano_total = next(r for r in anual if r["nu_ano"] == ano)["total_cursos"]
+        assert sum(r["total_cursos"] for r in regioes) == ano_total
 
 
 @pytest.mark.parametrize("filtro,esperado", [
@@ -53,7 +66,7 @@ def test_resumo_regiao_e_uf_fecham_o_total(cur):
 def test_resumo_ies_respeita_limit_e_min_cursos(cur):
     rows = analises_repo.resumo_ies(cur, FiltrosAnalise(nu_ano=2021), limit=5, min_cursos=2)
     assert len(rows) <= 5
-    assert all(r["total_registros"] >= 2 for r in rows)
+    assert all(r["total_cursos"] >= 2 for r in rows)  # "mín. cursos" conta cursos, não inscrições
     gers = [r["media_geral_ger"] for r in rows if r["media_geral_ger"] is not None]
     assert gers == sorted(gers, reverse=True)
 

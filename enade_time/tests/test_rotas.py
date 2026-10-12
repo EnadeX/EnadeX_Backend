@@ -30,6 +30,17 @@ def test_rota_responde_200(client, rota):
     assert r.status_code == 200, r.text
 
 
+@pytest.mark.parametrize("rota", [
+    "/analises/resumo-anual", "/analises/resumo-regiao", "/analises/resumo-uf",
+    "/analises/resumo-ies?limit=5",
+])
+def test_resumos_expoem_total_cursos(client, rota):
+    linhas = client.get(PREFIXO + rota).json()
+    assert linhas
+    for r in linhas:
+        assert 0 < r["total_cursos"] <= r["total_registros"]
+
+
 def test_execucao_inexistente_404(client):
     assert client.get(PREFIXO + "/benchmark/execucoes/999999").status_code == 404
     assert client.get(PREFIXO + "/benchmark/etapas/999999").status_code == 404
