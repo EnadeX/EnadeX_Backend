@@ -1,25 +1,68 @@
 from dataclasses import dataclass
 from typing import Iterator
 
-from fastapi import Query
+import psycopg2
+from fastapi import HTTPException, Query
 from psycopg2.extensions import cursor as PgCursor
 from psycopg2.extras import RealDictCursor
+from psycopg2.pool import PoolError
 
-from enade_time.api.database import get_pool
+from enade_time.api.database import get_pool, registrar_falha
+
+DETAIL_BANCO_INDISPONIVEL = "Banco do ENADE-Time indisponível"
+DETAIL_ERRO_BANCO = "Erro de banco no ENADE-Time"
+
+# Falhas de conexão/rede: o banco está fora ou a conexão do pool morreu.
+_ERROS_DE_CONEXAO = (psycopg2.OperationalError, psycopg2.InterfaceError)
 
 
 def get_db_cursor() -> Iterator[PgCursor]:
-    pool = get_pool()
-    conn = pool.getconn()
+    """Entrega um cursor do pool e traduz falhas de banco em respostas HTTP.
+
+    Falha de conexão vira 503 e demais erros do psycopg2 viram 500, sempre como
+    `HTTPException`: assim passam pelo CORS e o navegador enxerga o status, em
+    vez de um 500 sem cabeçalhos que parece erro de rede.
+    """
+    try:
+        pool = get_pool()
+        conn = pool.getconn()
+    except _ERROS_DE_CONEXAO as exc:
+        registrar_falha()
+        raise HTTPException(status_code=503, detail=DETAIL_BANCO_INDISPONIVEL) from exc
+    except PoolError as exc:  # pool esgotado: sobrecarga momentânea, não queda do banco
+        raise HTTPException(status_code=503, detail=DETAIL_BANCO_INDISPONIVEL) from exc
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             yield cur
         conn.commit()
+    except _ERROS_DE_CONEXAO as exc:
+        if conn.closed:
+            registrar_falha()
+        else:
+            _desfazer(conn)
+        raise HTTPException(status_code=503, detail=DETAIL_BANCO_INDISPONIVEL) from exc
+    except psycopg2.Error as exc:
+        _desfazer(conn)
+        raise HTTPException(status_code=500, detail=DETAIL_ERRO_BANCO) from exc
     except Exception:
-        conn.rollback()
+        _desfazer(conn)
         raise
     finally:
-        pool.putconn(conn)
+        devolver_conexao(pool, conn)
+
+
+def devolver_conexao(pool, conn) -> None:
+    """Devolve a conexão ao pool; conexão morta é descartada. Se o pool já foi
+    fechado por `registrar_falha`, não há mais nada a devolver."""
+    try:
+        pool.putconn(conn, close=bool(conn.closed))
+    except PoolError:
+        pass
+
+
+def _desfazer(conn) -> None:
+    if not conn.closed:
+        conn.rollback()
 
 
 @dataclass

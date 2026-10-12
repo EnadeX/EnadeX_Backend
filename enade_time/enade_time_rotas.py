@@ -8,11 +8,11 @@ todos read-only) — pronto para ser incluído pelo `api_main.py` central:
     from enade_time.enade_time_rotas import router as enade_time_router
     app.include_router(enade_time_router)
 
-Atenção para a composição central: os endpoints usam um pool psycopg2
-inicializado no ciclo de vida da aplicação. `criar_app()` abaixo mostra o
-lifespan necessário (init_pool/close_pool); um `api_main.py` central precisa
-fazer o mesmo — ou aguardar a Fase 5 da migração, que torna o pool preguiçoso
-(inicializado na primeira requisição) para o router ser 100% autocontido.
+Composição central: o router é autocontido. O pool psycopg2 é criado na
+primeira requisição (sem lifespan) e, se o Postgres do ENADE-Time estiver fora,
+as rotas respondem 503 com os cabeçalhos CORS — a API central continua de pé e
+as demais rotas dela não são afetadas. Basta o import + `include_router` acima
+(e `psycopg2-binary` + `pydantic-settings` no requirements da raiz).
 
 Banco: PostgreSQL local do subprojeto (docker compose up -d postgres, dentro
 de enade_time/) — configuração via enade_time/.env ou EnadeX/.env
@@ -40,7 +40,7 @@ from fastapi import APIRouter  # noqa: E402
 
 from enade_time.api.routers import analises, benchmark, dimensoes, health  # noqa: E402
 
-PORTA_STANDALONE = 8002  # 8000 = multi_enade · 8001 = educluster/E-XplainENADE
+PORTA_STANDALONE = 8002  # 8000 = api_main · 8001 = educluster · 8002 = enade_time · 8003 = e_xplainenade
 
 router = APIRouter(prefix="/api/enade-time", tags=["ENADE-Time"])
 for _sub in (health.router, dimensoes.router, analises.router, benchmark.router):
@@ -48,20 +48,19 @@ for _sub in (health.router, dimensoes.router, analises.router, benchmark.router)
 
 
 def criar_app():
-    """FastAPI standalone com o lifespan do pool — referência para o api_main central."""
+    """FastAPI standalone (porta 8002). O pool é preguiçoso; o lifespan só o fecha."""
     from contextlib import asynccontextmanager
 
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
 
-    from enade_time.api.database import close_pool, init_pool
+    from enade_time.api.database import close_pool
     from enade_time.api.settings import get_settings
 
     settings = get_settings()
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
-        init_pool(settings)
         yield
         close_pool()
 

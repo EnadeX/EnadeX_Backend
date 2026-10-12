@@ -1,6 +1,5 @@
 from functools import lru_cache
 from pathlib import Path
-from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -31,6 +30,7 @@ class Settings(BaseSettings):
 
     pool_minconn: int = 1
     pool_maxconn: int = 10
+    db_connect_timeout: int = 5
 
     model_config = SettingsConfigDict(
         # enade_time/.env (local do subprojeto) e depois EnadeX/.env (raiz do
