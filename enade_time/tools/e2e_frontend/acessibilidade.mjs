@@ -24,6 +24,7 @@ const rotas = [
   '/enade-time/spd/comparativo',
   '/enade-time/spd/execucoes',
   '/enade-time/spd/metricas',
+  '/enade-time/spd/carga',
   '/enade-time/spd/etapas/1',
 ]
 

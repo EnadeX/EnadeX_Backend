@@ -185,6 +185,15 @@ await page.goto(`${BASE}/enade-time/spd/metricas`)
 await page.locator('table tbody tr').first().waitFor({ timeout: 15000 })
 check('Métricas: tabela carregada', (await page.locator('table tbody tr').count()) > 0)
 
+await page.goto(`${BASE}/enade-time/spd/carga`)
+await page.getByText('Como ler').waitFor({ timeout: 15000 })
+await page.waitForTimeout(1500) // animação do gráfico
+t = await texto()
+check('Custo de publicação: tabela por estratégia com os controles', (await page.locator('table tbody tr').count()) >= 2 && t.includes('Controle: COPY local, sem índices nem FKs'))
+check('Custo de publicação: gráfico e conferência de md5', (await page.locator('.recharts-surface').count()) >= 1 && t.includes('md5 confere') && !t.includes('md5 diverge'))
+check('Custo de publicação: diz que não é speedup', t.includes('não é speedup'))
+await page.screenshot({ path: png('custo-publicacao'), fullPage: true })
+
 // 10) Sobre e 404 do módulo (o conteúdo do 404 chega por streaming: esperar o texto)
 await page.goto(`${BASE}/enade-time/sobre`)
 check('Sobre: conteúdo', (await texto()).includes('Metodologia do benchmark'))
