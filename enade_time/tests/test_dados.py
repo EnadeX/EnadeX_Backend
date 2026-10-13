@@ -123,3 +123,22 @@ def test_leitura_real_da_fato_publicada():
     assert int(df["media_nt_ger"].isna().sum()) == 192
     cursos = dados.ler_tabela("v_enade_time_curso_ano")
     assert len(cursos) == 582
+
+
+def test_decimais_vao_com_o_mesmo_arredondamento_do_copy():
+    """43.53125 é empate exato em binário: o "%.4f" do COPY (etapa 06) dá 43.5312, mas se o número
+    for como float no JSON o NUMERIC(7,4) do PostgreSQL arredonda para 43.5313. Como texto já
+    arredondado, o PostgREST grava o mesmo que o COPY."""
+    import json
+
+    empate = 43.53125
+    assert f"{empate:.4f}" == "43.5312"  # o que o COPY da etapa 06 grava
+    df = pd.DataFrame({"id": [1, 2], "media_nt_fg": [empate, float("nan")]})
+
+    padrao = json.loads(df.to_json(orient="records"))
+    assert padrao[0]["media_nt_fg"] == 43.53125  # chega como número; o PostgreSQL arredondaria para 43.5313
+
+    texto = json.loads(dados.normalizar_decimais(df, ["media_nt_fg"]).to_json(orient="records"))
+    assert texto[0]["media_nt_fg"] == "43.5312"
+    assert texto[1]["media_nt_fg"] is None  # falta de valor continua sendo null
+    assert texto[0]["id"] == 1  # as demais colunas não mudam

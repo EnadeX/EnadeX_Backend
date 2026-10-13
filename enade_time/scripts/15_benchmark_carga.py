@@ -219,10 +219,18 @@ def carregar_upsert_postgrest(ctl, df_up: pd.DataFrame, url: str, chave: str) ->
 
     truncar(ctl)
     rtt = rtt_http(url, chave)
-    payload = len(df_up.to_json(orient="records"))
+    envio = dados.normalizar_decimais(
+        dados.normalizar_inteiros(df_up, dados.COLUNAS_INTEIRAS_FATO), dados.COLUNAS_DECIMAIS_FATO
+    )
+    payload = len(envio.to_json(orient="records"))
     t0 = time.perf_counter()
     with contextlib.redirect_stdout(io.StringIO()):  # o util_db imprime uma linha por lote
-        dados.upsert_lotes(df_up, TABELA_BENCH, colunas_inteiras=dados.COLUNAS_INTEIRAS_FATO)
+        dados.upsert_lotes(
+            df_up,
+            TABELA_BENCH,
+            colunas_inteiras=dados.COLUNAS_INTEIRAS_FATO,
+            colunas_decimais=dados.COLUNAS_DECIMAIS_FATO,
+        )
     dt = time.perf_counter() - t0
     return dt, rtt, payload, url.replace("https://", "")
 

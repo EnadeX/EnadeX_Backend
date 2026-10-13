@@ -41,6 +41,11 @@ COLUNAS_INTEIRAS_FATO = [
     "id", "nu_ano", "co_curso", "co_ies", "co_categad", "co_orgacad", "co_grupo",
     "co_modalidade", "co_munic_curso", "co_uf_curso", "co_regiao_curso",
 ]
+# NUMERIC(7,4) na fato. A etapa 06 formata com "%.4f" (Python: empate exato em binário vai para o par,
+# 43.53125 -> 43.5312) e o PostgreSQL arredonda 43.53125 para 43.5313. Se o float for para o PostgREST
+# como número, 12 médias da base (de 582 curso-ano) sairiam 0,0001 acima do que o COPY grava.
+# Estas colunas vão, portanto, como o MESMO texto do COPY (normalizar_decimais).
+COLUNAS_DECIMAIS_FATO = ["media_nt_fg", "media_nt_ger", "media_nt_ce"]
 
 
 class CredenciaisInvalidas(RuntimeError):
@@ -124,10 +129,26 @@ def normalizar_inteiros(df: pd.DataFrame, colunas: list[str]) -> pd.DataFrame:
     return saida
 
 
+def normalizar_decimais(df: pd.DataFrame, colunas: list[str], casas: int = 4) -> pd.DataFrame:
+    """Envia colunas decimais como texto já arredondado (`%.{casas}f`, o mesmo do COPY da etapa 06),
+    nulo onde faltar valor. O PostgREST converte o texto para NUMERIC sem arredondar de novo, e a
+    tabela fica igual à carregada por COPY."""
+    saida = df.copy()
+    for coluna in colunas:
+        if coluna in saida.columns:
+            saida[coluna] = pd.Series(
+                [None if pd.isna(v) else f"{float(v):.{casas}f}" for v in saida[coluna]],
+                index=saida.index,
+                dtype=object,
+            )
+    return saida
+
+
 def upsert_lotes(
     df: pd.DataFrame,
     tabela: str,
     colunas_inteiras: list[str] | None = None,
+    colunas_decimais: list[str] | None = None,
     tamanho_lote: int = TAMANHO_LOTE,
     tentativas: int = TENTATIVAS,
     espera: float = 1.0,
@@ -143,7 +164,7 @@ def upsert_lotes(
     from util.util_db import upsert_supabase
 
     url, chave = credenciais()
-    dados = normalizar_inteiros(df, colunas_inteiras or [])
+    dados = normalizar_decimais(normalizar_inteiros(df, colunas_inteiras or []), colunas_decimais or [])
     enviadas = 0
     for inicio in range(0, len(dados), tamanho_lote):
         lote = dados.iloc[inicio:inicio + tamanho_lote]
