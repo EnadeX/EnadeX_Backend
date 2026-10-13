@@ -81,8 +81,8 @@ Detalhes e verificação: `enade_time/docs/FRONTEND_ECOSSISTEMA.md`.
   Resultado-chave: melhor configuração **6 workers·crescente, 2,701× mediana**;
   a perda é decomposta em granularidade+escalonamento / contenção de CPU /
   overhead (`docs/RESULTADOS_BENCHMARK.md`, gerado do banco).
-- **Qualidade:** 120 testes pytest (`enade_time/tests`, os que dependem do banco
-  são pulados sem o Postgres local), regressão "golden" das rotas, e `docs/geradores/verificar_numeros.py`
+- **Qualidade:** 122 testes pytest (`enade_time/tests`; os que dependem do banco são pulados sem o
+  Postgres local, e a leitura real do Supabase, sem a chave pública), regressão "golden" das rotas, e `docs/geradores/verificar_numeros.py`
   garante que **nenhum número** do documento/slides existe sem linha no banco.
 - Correção documentada de um bug real: o comparativo antigo usava "o sequencial
   mais recente" como baseline e misturou rodadas (`docs/DESIGN_LOG.md`, D13).
@@ -101,15 +101,16 @@ linha conferido contra o banco local:
   de definição de `QT_ALUNOS` (inscritos × presentes) está documentada na view.
 - O **custo de publicar** a base (COPY local × COPY pelo pooler, com controles que isolam
   índices e chaves estrangeiras) foi medido e aparece em `/enade-time/spd/carga`. É uma
-  medição situada (uma rede, uma máquina, n = 10), não um speedup. O upsert pelo PostgREST
-  ainda não foi medido: precisa da `SUPABASE_URL` e da chave pública na máquina da medição.
+  medição situada (uma rede, uma máquina, n = 10), não um speedup. Inclui o upsert em
+  lotes pelo PostgREST (`util_db`, com a chave pública): cerca de 4 vezes o COPY pelo pooler.
+  Achado para o grupo: `util_db` envia decimais como número JSON; no `NUMERIC(7,4)` isso
+  arredonda empates exatos de outro modo que o `%.4f` do Python (12 médias da base, 0,0001).
 
 **Falta:**
 1. Contrato do swap point confirmado pelo JP (ver pedidos abaixo).
-2. Medir o upsert pelo PostgREST (`util_db` do grupo).
-3. PR da branch para a `main`, com as propostas em `enade_time/docs/PROPOSTAS_COMPARTILHADAS.md`
+2. PR da branch para a `main`, com as propostas em `enade_time/docs/PROPOSTAS_COMPARTILHADAS.md`
    (arquivos fora de `enade_time/` que o líder pode adotar; nenhum foi alterado por mim).
-4. Router no `api_main` central: 2 linhas, acima. Falta a decisão do líder.
+3. Router no `api_main` central: 2 linhas, acima. Falta a decisão do líder.
 
 ## Pedidos ao grupo
 

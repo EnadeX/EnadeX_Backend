@@ -85,26 +85,29 @@ Outras campanhas no banco (não oficiais): `6e6c1ccc` em 01/09/2026 (2 exec., [c
 
 ## Custo de publicação (eixo de carga)
 
-Medição à parte do experimento de SPD (DESIGN_LOG D17): quanto custa publicar a base num destino. Fonte: `v_enade_time_benchmark_carga_resumo` (carga `0d2c38f2`).
+Medição à parte do experimento de SPD (DESIGN_LOG D17): quanto custa publicar a base num destino. Fonte: `v_enade_time_benchmark_carga_resumo` (carga `f67370bf`).
 
 | Estratégia | n | Mediana | Mín – máx | IQR | Throughput | RTT mediano |
 | --- | --: | --: | --: | --: | --: | --: |
-| COPY no Postgres local | 10 | 5,89 s | 5,39 s – 6,67 s | 0,63 s | 4.240 linhas/s | 0,6 ms |
-| COPY pelo Session Pooler (Supabase) | 10 | 7,54 s | 5,78 s – 12,47 s | 1,16 s | 3.313 linhas/s | 176,3 ms |
-| Controle: COPY local, sem índices nem FKs | 10 | 0,09 s | 0,07 s – 0,14 s | 0,02 s | 276.120 linhas/s | 0,6 ms |
-| Controle: COPY pelo pooler, sem índices nem FKs | 10 | 4,31 s | 3,50 s – 11,25 s | 1,20 s | 5.796 linhas/s | 174,0 ms |
-| Controle: COPY local, só PK e índices | 10 | 0,70 s | 0,55 s – 0,91 s | 0,20 s | 35.520 linhas/s | 0,6 ms |
-| Controle: COPY local, só PK e FKs | 10 | 5,38 s | 4,76 s – 5,84 s | 0,42 s | 4.642 linhas/s | 0,5 ms |
+| COPY no Postgres local | 10 | 3,73 s | 3,55 s – 4,16 s | 0,15 s | 6.698 linhas/s | 0,6 ms |
+| COPY pelo Session Pooler (Supabase) | 10 | 5,35 s | 5,14 s – 10,69 s | 0,57 s | 4.663 linhas/s | 174,6 ms |
+| Upsert em lotes pelo PostgREST (Supabase) | 10 | 22,34 s | 21,21 s – 25,43 s | 1,41 s | 1.117 linhas/s | 302,8 ms |
+| Controle: COPY local, sem índices nem FKs | 10 | 0,09 s | 0,06 s – 0,10 s | 0,02 s | 283.749 linhas/s | 0,6 ms |
+| Controle: COPY pelo pooler, sem índices nem FKs | 10 | 3,42 s | 3,09 s – 4,68 s | 0,23 s | 7.300 linhas/s | 174,2 ms |
+| Controle: COPY local, só PK e índices | 10 | 0,51 s | 0,38 s – 0,75 s | 0,08 s | 48.595 linhas/s | 0,6 ms |
+| Controle: COPY local, só PK e FKs | 10 | 3,42 s | 3,28 s – 4,09 s | 0,20 s | 7.292 linhas/s | 0,4 ms |
 
 Cada repetição carrega as 24.967 linhas numa tabela vazia e dedicada (1.767.079 bytes), com o TRUNCATE por conexão direta fora do tempo medido e o md5 do destino conferido contra a tabela fato; 10 repetições por estratégia, intercaladas, com a rede em wifi. É custo de publicação, não ganho de paralelismo, e vale para estas condições (rede, RTT e host): uma medição situada, não uma propriedade do Supabase.
 
-A mediana do COPY no Postgres local foi 5,89 s e a do COPY pelo Session Pooler do Supabase, 7,54 s, com RTT mediano de 0,6 ms e 176,3 ms (cerca de 284 vezes maior na nuvem). O IQR foi de 0,63 s no local e de 1,16 s na nuvem. Em outra rodada, feita antes com o mesmo protocolo, as medianas foram 5,62 s e 5,59 s: a distância entre o local e a nuvem varia de uma rodada para a outra com a rede, e é por isso que o resultado vale como medição situada.
+A mediana do COPY no Postgres local foi 3,73 s e a do COPY pelo Session Pooler do Supabase, 5,35 s, com RTT mediano de 0,6 ms e 174,6 ms (cerca de 304 vezes maior na nuvem). O IQR foi de 0,15 s no local e de 0,57 s na nuvem. Em 2 rodadas anteriores, com o mesmo protocolo para estas duas estratégias, as medianas do COPY local e do COPY pelo pooler foram 5,89 s e 7,54 s; 5,62 s e 5,59 s: o nível dos tempos e a distância entre o local e a nuvem mudam de uma rodada para a outra com a rede e a carga da máquina, e é por isso que o resultado vale como medição situada.
 
-A cauda da nuvem (a repetição mais lenta levou 12,47 s) não acompanhou o RTT medido antes de cada carga: o RTT não a explica. Pode ser a vazão do enlace durante o envio, que não foi medida.
+A cauda da nuvem (a repetição mais lenta levou 10,69 s) não acompanhou o RTT medido antes de cada carga: o RTT não a explica. Pode ser a vazão do enlace durante o envio, que não foi medida.
 
-Os controles localizam o custo. No Postgres local, sem índices nem chaves estrangeiras o mesmo COPY leva 0,09 s; só com a PK e os índices secundários, 0,70 s; só com a PK e as FKs, 5,38 s; com tudo, como na tabela fato, 5,89 s. Quase todo o tempo é manutenção de estrutura, e dentro dela as chaves estrangeiras pesam muito mais do que os índices. Pelo Session Pooler, mesmo sem estrutura a carga leva 4,31 s: esse é o custo de transporte (conexão, TLS e envio do payload) nas condições da medição, e responde por boa parte dos 7,54 s da carga completa na nuvem. Hipótese a testar, não medida aqui: carregar sem as chaves estrangeiras e criá-las depois (a validação em bloco evita um gatilho por linha) reduziria o custo de uma republicação.
+Os controles localizam o custo. No Postgres local, sem índices nem chaves estrangeiras o mesmo COPY leva 0,09 s; só com a PK e os índices secundários, 0,51 s; só com a PK e as FKs, 3,42 s; com tudo, como na tabela fato, 3,73 s. Quase todo o tempo é manutenção de estrutura, e dentro dela as chaves estrangeiras pesam muito mais do que os índices. Pelo Session Pooler, mesmo sem estrutura a carga leva 3,42 s: esse é o custo de transporte (conexão, TLS e envio do payload) nas condições da medição, e responde por boa parte dos 5,35 s da carga completa na nuvem. Hipótese a testar, não medida aqui: carregar sem as chaves estrangeiras e criá-las depois (a validação em bloco evita um gatilho por linha) reduziria o custo de uma republicação.
 
-O upsert em lotes pelo PostgREST (util_db do grupo) não foi medido nesta rodada: exige SUPABASE_URL e SUPABASE_KEY públicas na máquina da medição.
+O upsert em lotes de 2.000 linhas pelo PostgREST (util_db do grupo, com a chave pública) levou 22,34 s de mediana, com IQR de 1,41 s e RTT mediano de 302,8 ms, cerca de 4,2 vezes o COPY pelo pooler. São 13 requisições HTTP em sequência, cada uma com a ida e volta da rede e a manutenção da estrutura no servidor; como não há controle sem estrutura para o upsert, estas medições não separam uma coisa da outra.
+
+Para o md5 bater, as três colunas decimais da fato vão como texto já arredondado a 4 casas. Como número, os valores que são empate exato na 5ª casa (12 na base atual) seriam arredondados para cima pelo PostgreSQL, enquanto o COPY da etapa 06 (`%.4f` do Python) vai para o par: a tabela sairia 0,0001 acima do COPY nessas médias.
 
 ## Reprodução
 

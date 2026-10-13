@@ -97,7 +97,7 @@ Rodada sobre o build de produção, com a campanha oficial `899faa82` no banco.
 | Acessibilidade (`acessibilidade.mjs`) | axe-core (WCAG 2.0/2.1 A e AA e boas práticas): 0 violações em 13 páginas; 24 paradas de foco por teclado, todas com indicador visível |
 | Modo central simulado | mesma bateria (então com 55 verificações, antes da página de custo de publicação) com o router incluído num `FastAPI()` sem lifespan, CORS idêntico ao do `api_main.py`, na porta 8000 |
 | Clone limpo | `pnpm install --frozen-lockfile` e `pnpm build` a partir dos commits |
-| Backend | 120 testes, 1 pulado sem a chave pública do Supabase (`tests/test_router_ecossistema.py` cobre as 20 rotas, o 503 com CORS, a conexão morta e a recuperação) |
+| Backend | 122 testes, 1 deles pulado sem a chave pública do Supabase (`tests/test_router_ecossistema.py` cobre as 20 rotas, o 503 com CORS, a conexão morta e a recuperação) |
 
 Ruído esperado no console, vindo do layout raiz do grupo e não do módulo: os
 ícones `/icon*.png` e `/icon.svg` (a pasta `public/` não existe) e o script

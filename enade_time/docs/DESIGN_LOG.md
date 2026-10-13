@@ -226,45 +226,62 @@ registros" rotulado como inscrições; `AlertaAmostra` passa a contar cursos
 **Decisão:** medir, com o mesmo instrumental, a etapa de carga das 24.967 linhas por
 estratégia, n = 10, sempre em **tabela vazia** e dedicada (`tbl_enade_time_fato_bench`,
 truncada por conexão direta fora do tempo medido), com RTT medido no canal testado, bytes
-de payload (1.767.079), host e rede registrados e o md5 do destino conferido contra a
+de payload (1.767.079 no COPY), host e rede registrados e o md5 do destino conferido contra a
 fato em cada repetição. Reportado como **custo de publicação** (mediana, mín–máx e IQR),
 nunca como speedup. Repetições intercaladas entre as estratégias para que a deriva da
 rede não se concentre numa delas. Script `15_benchmark_carga.py`; tabela
 `tbl_enade_time_benchmark_carga`; view `v_enade_time_benchmark_carga_resumo`; rota
 `GET /api/enade-time/benchmark/carga`; página `/enade-time/spd/carga`.
 
-**Medido (rodada `0d2c38f2`, Wi-Fi, RTT local ≈ 0,6 ms e RTT da nuvem ≈ 176 ms):**
+**Medido** (rodada 3, a mais recente; Wi-Fi, RTT local ≈ 0,6 ms e da nuvem ≈ 175 ms):
 
 | Estratégia | Mediana | Mín–máx | IQR |
 |---|---|---|---|
-| COPY local, sem índices nem FKs (controle) | 0,09 s | 0,07–0,14 s | 0,02 s |
-| COPY local, só PK e índices (controle) | 0,70 s | 0,55–0,91 s | 0,20 s |
-| COPY local, só PK e FKs (controle) | 5,38 s | 4,76–5,84 s | 0,42 s |
-| COPY local, estrutura completa | 5,89 s | 5,39–6,67 s | 0,63 s |
-| COPY pelo Session Pooler, sem estrutura (controle) | 4,31 s | 3,50–11,25 s | 1,20 s |
-| COPY pelo Session Pooler, estrutura completa | 7,54 s | 5,78–12,47 s | 1,16 s |
+| COPY local, sem índices nem FKs (controle) | 0,09 s | 0,06–0,10 s | 0,02 s |
+| COPY local, só PK e índices (controle) | 0,51 s | 0,38–0,75 s | 0,08 s |
+| COPY local, só PK e FKs (controle) | 3,42 s | 3,28–4,09 s | 0,20 s |
+| COPY local, estrutura completa | 3,73 s | 3,55–4,16 s | 0,15 s |
+| COPY pelo Session Pooler, sem estrutura (controle) | 3,42 s | 3,09–4,68 s | 0,23 s |
+| COPY pelo Session Pooler, estrutura completa | 5,35 s | 5,14–10,69 s | 0,57 s |
+| Upsert em lotes de 2.000 pelo PostgREST (`util_db`) | 22,34 s | 21,21–25,43 s | 1,41 s |
 
 **Leitura (e o que ela NÃO diz):**
-- Uma primeira rodada, só com `copy_local` e `copy_pooler` (n = 10 cada, sem controles),
-  deu 5,62 s e 5,59 s: praticamente empatadas. Na segunda a nuvem ficou 1,65 s acima.
-  A distância entre local e nuvem **não é estável entre rodadas**, o que reforça o caráter
-  de medição situada; não há uma constante "a nuvem custa X".
-- Os controles foram acrescentados depois da primeira rodada, porque o empate pedia
-  explicação. Eles mostram que o custo, no local, é quase todo **manutenção de estrutura do
-  destino**: sem índices nem FKs o mesmo COPY leva 0,09 s; as FKs respondem por quase todo o
-  resto (5,38 s) e os índices por pouco (0,70 s). Pelo pooler, mesmo sem estrutura a carga
-  leva 4,31 s: esse é o custo de transporte (conexão, TLS e envio) nas condições da medição.
-- As duas repetições mais lentas do pooler **não** coincidem com os maiores RTT medidos antes
-  de cada carga (a primeira rodada coincidia). O RTT sozinho não explica a cauda; a vazão
-  do enlace durante o envio não foi medida.
-- **Não medido:** o upsert em lotes pelo PostgREST (`util_db` do grupo). Exige
-  `SUPABASE_URL` e `SUPABASE_KEY` públicas, que não estão nesta máquina. O mecanismo está
-  pronto: `--preparar` cria a política temporária de escrita para `anon` na tabela de
-  teste e `--limpar-permissoes` a remove.
-- **Hipótese a testar, não afirmada:** carregar sem as FKs e criá-las depois, com validação
-  em bloco, reduziria o custo de republicar. Não foi feito: a publicação mantém a
-  estrutura completa e a conferência por md5.
-- Limites: uma máquina, uma rede, um horário, n = 10. Os números descrevem estas condições.
+- **O nível absoluto dos tempos muda de uma rodada para a outra.** O COPY local deu 5,62 s, 5,89 s
+  e 3,73 s nas três rodadas; o COPY pelo pooler, 5,59 s, 7,54 s e 5,35 s. Na primeira rodada
+  (só essas duas estratégias, sem controles) local e nuvem praticamente empataram; nas outras
+  duas a nuvem ficou cerca de 1,6 s acima. A variação entre rodadas é maior do que o IQR dentro
+  de cada uma. Não há uma constante "a nuvem custa X": só medições situadas.
+- Os controles mostram que, no local, o custo é quase todo **manutenção de estrutura do destino**:
+  sem índices nem FKs o mesmo COPY leva 0,09 s; as FKs respondem por quase todo o resto
+  (3,42 s) e os índices por pouco (0,51 s). Pelo pooler, mesmo sem estrutura a carga leva
+  3,42 s: custo de transporte (conexão, TLS e envio) nas condições da medição.
+- As repetições mais lentas do pooler não coincidem com os maiores RTT medidos antes de cada
+  carga (na primeira rodada coincidiam). O RTT sozinho não explica a cauda; a vazão do enlace
+  durante o envio não foi medida.
+- **Upsert pelo PostgREST:** 22,34 s de mediana, cerca de 4,2 vezes o COPY pelo pooler e 6 vezes
+  o local; são 13 requisições HTTP em sequência. O RTT registrado nesse canal (≈ 303 ms) é de um
+  GET pequeno ao PostgREST e não é comparável ao do `SELECT 1` pelo pooler. Como não há controle
+  sem estrutura para o upsert, a medição não separa rede de manutenção de estrutura. Foi
+  feito como `anon`, com uma política temporária `USING (true)` só na tabela de teste (aberta
+  durante a medição e fechada no `finally`; conferido depois: sem privilégio nem política). Não
+  usei a chave de serviço, que é a que o `util_db` usa em escritas reais e que ignora a RLS: os
+  tempos com ela podem ser um pouco menores.
+- **Achado de integridade (arredondamento):** o primeiro upsert não passou na conferência de md5
+  (276, 88 e 190 linhas diferiam em `media_nt_fg/ger/ce`, sempre 0,0001 acima do COPY). Causa:
+  43,53125 é empate exato em binário. O COPY da etapa 06 formata com `%.4f` do Python, que vai
+  para o par (43,5312); como número no JSON, o `NUMERIC(7,4)` do PostgreSQL arredonda para cima
+  (43,5313). São 12 valores distintos de média na base (de 582 curso-ano). A fato publicada
+  mantém os valores do COPY (nada foi alterado); o upsert passou a enviar as três colunas como o
+  mesmo texto do COPY (`enade_time_dados.normalizar_decimais`), com teste. Fica o aviso para
+  quem gravar `NUMERIC` pelo `util_db`: arredondar no cliente com a mesma regra do ETL, ou
+  conferir por md5 depois.
+- **Hipótese a testar, não afirmada:** carregar sem as FKs e criá-las depois, com validação em
+  bloco, reduziria o custo de republicar. Não foi feito: a publicação mantém a estrutura
+  completa e a conferência por md5.
+- Limites: uma máquina, uma rede, um horário, n = 10 por rodada.
+- Três registros de teste (uma repetição de upsert cada; os dois primeiros com md5 divergente, pelo
+  arredondamento acima) foram apagados da tabela de carga local antes da rodada oficial; nada foi
+  publicado a partir deles.
 
 ---
 

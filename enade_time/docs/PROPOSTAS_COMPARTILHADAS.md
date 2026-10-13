@@ -19,6 +19,7 @@ aplicada; a decisão é do líder.
 | 7 | `util/` não tem `__init__.py` (funciona como pacote de namespace) e o `.env_example` está em `util/`, não na raiz como pede o documento | Criar `util/__init__.py` vazio e mover o `.env_example` para a raiz | 5 min |
 | 8 | Cada subprojeto tem porta e variável de ambiente próprias no frontend (`NEXT_PUBLIC_API_URL` :8000, `NEXT_PUBLIC_EXPLAIN_API_URL` :8003, `NEXT_PUBLIC_ENADE_TIME_API_URL` :8002) | Quando todos os routers estiverem no `api_main`, padronizar em uma variável; o ENADE-Time passa a apontar para :8000 só trocando o valor, sem mudar código | — |
 | 9 | O projeto Supabase é do plano gratuito: pausa após 7 dias sem uso | Acordar o projeto um dia antes de qualquer demonstração (Dashboard → Restore) | 2 min |
+| 10 | `util_db.upsert_supabase` envia os decimais como número JSON (`DataFrame.to_json`). Em colunas `NUMERIC(p,s)` o PostgreSQL arredonda empates exatos para cima; quem formatou com `%.4f`/`round` do Python vai para o par. No ENADE-Time isso mudou 12 médias em 0,0001 (medido por md5) | Ao gravar `NUMERIC` por upsert, arredondar no cliente com a mesma regra do ETL e enviar como texto (`enade_time_dados.normalizar_decimais`), ou conferir por md5 depois | 10 min |
 
 ## Frontend (EnadeX_Frontend)
 
