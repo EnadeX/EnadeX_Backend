@@ -429,17 +429,11 @@ def carga(cursor: PgCursor, carga_id: str | None = None) -> dict:
     )
     repeticoes = list(cursor.fetchall())
     cursor.execute(
-        """SELECT carga_id::text AS carga_id FROM v_enade_time_benchmark_carga_resumo WHERE carga_id::text <> %(c)s
-           GROUP BY carga_id ORDER BY MAX(fim) DESC LIMIT 1""",
+        """SELECT carga_id::text AS carga_id, estrategia, tempo_mediana::float AS tempo_mediana
+           FROM v_enade_time_benchmark_carga_resumo WHERE carga_id::text <> %(c)s ORDER BY fim DESC""",
         {"c": carga_id},
     )
-    anterior_linha = cursor.fetchone()
-    anterior: dict[str, float] = {}
-    if anterior_linha:
-        cursor.execute(
-            """SELECT estrategia, tempo_mediana::float AS tempo_mediana FROM v_enade_time_benchmark_carga_resumo
-               WHERE carga_id::text = %(c)s""",
-            {"c": anterior_linha["carga_id"]},
-        )
-        anterior = {r["estrategia"]: r["tempo_mediana"] for r in cursor.fetchall()}
-    return {"carga_id": carga_id if resumo else None, "resumo": resumo, "repeticoes": repeticoes, "anterior": anterior}
+    por_rodada: dict[str, dict[str, float]] = {}
+    for r in cursor.fetchall():
+        por_rodada.setdefault(r["carga_id"], {})[r["estrategia"]] = r["tempo_mediana"]
+    return {"carga_id": carga_id if resumo else None, "resumo": resumo, "repeticoes": repeticoes, "anteriores": list(por_rodada.values())}

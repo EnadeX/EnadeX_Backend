@@ -98,7 +98,7 @@ def test_campanhas_listam_oficial_e_smoke(client):
 
 def test_carga_expoe_custo_de_publicacao_com_md5_conferido(client):
     d = client.get(PREFIXO + "/benchmark/carga").json()
-    assert set(d) >= {"carga_id", "resumo", "repeticoes", "anterior"}
+    assert set(d) >= {"carga_id", "resumo", "repeticoes", "anteriores"}
     if not d["resumo"]:
         pytest.skip("nenhuma campanha de carga registrada (rodar 15_benchmark_carga.py)")
     for r in d["resumo"]:

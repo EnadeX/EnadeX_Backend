@@ -182,5 +182,6 @@ class CargaResposta(BaseModel):
     carga_id: str | None = None
     resumo: list[ResumoCarga] = []
     repeticoes: list[RepeticaoCarga] = []
-    # medianas da rodada imediatamente anterior (estratégia -> segundos): mostra o quanto a rede faz variar
-    anterior: dict[str, float] = {}
+    # medianas das rodadas anteriores, mais recente primeiro (estratégia -> segundos): mostram o quanto o
+    # resultado varia de uma rodada para a outra
+    anteriores: list[dict[str, float]] = []
