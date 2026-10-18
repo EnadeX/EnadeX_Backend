@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from multi_enade.multi_enade_endpoints import router as multi_enade_router
 from educluster.educluster_endpoints import router as edu_cluster_router
 from e_xplainenade.e_xplainenade_rotas import router as explain_enade_router
+from enade_time.enade_time_rotas import router as enade_time_router
 
 app = FastAPI(title="EnadeX API")
 
@@ -20,7 +21,7 @@ app.add_middleware(
 app.include_router(multi_enade_router)
 app.include_router(explain_enade_router)
 app.include_router(edu_cluster_router)
-# app.include_router(enade_time_router)
+app.include_router(enade_time_router)
 
 @app.get("/api/health")
 def health():
