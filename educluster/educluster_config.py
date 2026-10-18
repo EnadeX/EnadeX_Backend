@@ -9,6 +9,7 @@ DIR_CACHE = RAIZ_PROJETO / "educluster" / ".cache"
 ANO_EDICAO = 2021
 
 ORIGEM_PADRAO = os.getenv("EDUCLUSTER_ORIGEM", "supabase")
+CORS_ORIGENS = [o.strip() for o in os.getenv("EDUCLUSTER_CORS_ORIGENS", "http://localhost:3000").split(",") if o.strip()]
 
 RANDOM_STATE = 42
 N_INIT = 10
