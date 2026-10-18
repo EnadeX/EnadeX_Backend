@@ -45,6 +45,8 @@ from educluster.modelos.mdl_perfil_desempenho.modelo_perfil_desempenho import (
     amostrar_para_plotagem,
     aplicar_perfil,
     avaliar_perfil,
+    clusterizar_perfil_em_memoria,
+    modelo_treinado_para,
     perfilar_desempenho,
     preparar_dados_perfil_desempenho,
 )
@@ -100,7 +102,10 @@ def obter_estudantes(origem: str, espaco: str):
     chave = (origem, espaco)
     if chave not in _cache_estudantes:
         base = preparar_dados_perfil_desempenho(origem, espaco)
-        _cache_estudantes[chave] = aplicar_perfil(base, espaco)
+        if modelo_treinado_para(espaco):
+            _cache_estudantes[chave] = aplicar_perfil(base, espaco)
+        else:
+            _cache_estudantes[chave] = clusterizar_perfil_em_memoria(base, espaco)
     return _cache_estudantes[chave]
 
 

@@ -30,7 +30,7 @@ educluster/
 
 **A6, perfis de curso (analise central).** Cruza arq3 e arq4 agregados por `CO_CURSO`, unico join permitido pela versao LGPD dos microdados. Features: `NT_FG`, `NT_CE`, taxa de presenca, e as tres dimensoes percebidas do arq4 (ODP, OPORT, INFRA). Base de 3.832 cursos com no minimo 20 respondentes em cada arquivo, representando 316.232 estudantes em 30 areas.
 
-**A1, perfis de desempenho.** Nivel do estudante, apenas arq3. Espaco padrao `objetivo_discursivo` (`NT_OBJ_FG`, `NT_DIS_FG`, `NT_OBJ_CE`, `NT_DIS_CE`), que substitui o trio colinear usado no TCC 1. Os espacos `trio` e `par` seguem disponiveis para comparacao.
+**A1, perfis de desempenho.** Nivel do estudante, apenas arq3. Espaco padrao `objetivo_discursivo` (`NT_OBJ_FG`, `NT_DIS_FG`, `NT_OBJ_CE`, `NT_DIS_CE`), que substitui o trio colinear usado no TCC 1. Os espacos `trio` e `par` seguem disponiveis para comparacao: so o `objetivo_discursivo` tem modelo treinado e versionado, e os outros dois sao reagrupados em memoria na primeira chamada (k por silhouette, `random_state=42`), sem gravar joblib.
 
 ## Decisoes de tratamento
 
