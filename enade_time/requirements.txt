@@ -1,0 +1,20 @@
+# ENADE-Time Distribuído — dependências de execução (API + ETL + benchmark +
+# publicação). Instale da raiz do EnadeX:
+#     pip install -r enade_time/requirements.txt
+# Dev/testes/geradores: enade_time/requirements-dev.txt
+
+# API read-only
+fastapi>=0.115
+uvicorn[standard]>=0.30
+psycopg2-binary>=2.9
+pydantic>=2.7
+pydantic-settings>=2.4
+python-dotenv>=1.0
+
+# ETL, benchmark e análise
+pandas>=2.2
+numpy>=1.26
+psutil>=5.9
+
+# Integração com o Supabase do ecossistema (via util/util_db.py do EnadeX)
+supabase>=2.4

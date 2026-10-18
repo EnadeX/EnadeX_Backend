@@ -1,0 +1,18 @@
+.git/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Microdados brutos (~7 GB) e derivados — a API só lê do Postgres.
+microdados_enade_*/
+dados_processados/
+apresentacao/
+
+frontend/node_modules/
+frontend/dist/
+
+.env
+.env.local
+.env.production
+*.log

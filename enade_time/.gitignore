@@ -1,0 +1,25 @@
+# Segredos — nunca versionar
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Node / frontend (regeráveis)
+node_modules/
+dist/
+*.tsbuildinfo
+*.local
+.vite
+
+# Dados que não pertencem ao repositório do grupo
+microdados_enade_*/
+dados_processados/*.backup_*.csv
+
+# Rede de segurança e saídas regeráveis
+backups/
+docs/geradores/out/
+docs/evidencias/

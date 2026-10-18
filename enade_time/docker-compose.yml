@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: enade_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-enade_db}
+      POSTGRES_USER: ${POSTGRES_USER:-enade_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enade_password}
+      # Locale brasileiro pra ordenação de UF/regiões ficar correta
+      LANG: pt_BR.UTF-8
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - enade_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-enade_user} -d ${POSTGRES_DB:-enade_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Serviço OPCIONAL — só sobe com `docker compose --profile api up -d`.
+  # Sem o profile, `docker compose up -d postgres` continua funcionando
+  # exatamente como antes e a API roda no host via uvicorn --reload.
+  api:
+    profiles: ["api"]
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: enade-api:local
+    container_name: enade_api
+    restart: unless-stopped
+    environment:
+      # Dentro da rede do compose o banco atende pelo nome do serviço.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-enade_db}
+      POSTGRES_USER: ${POSTGRES_USER:-enade_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enade_password}
+      BENCHMARK_IDS_EXCLUIR: ${BENCHMARK_IDS_EXCLUIR:-[]}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  enade_pgdata:
+    name: enade_pgdata

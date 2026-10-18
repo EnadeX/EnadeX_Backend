@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cronômetro ENADE-Time Distribuído">
+  <!-- crown / loop superior -->
+  <rect x="25" y="2" width="14" height="9" rx="4.5" fill="none" stroke="#1e2a3a" stroke-width="3"/>
+  <rect x="29" y="9" width="6" height="4" fill="#4a6a86"/>
+  <!-- botão lateral (start/stop) -->
+  <rect x="9.5" y="11.5" width="9" height="5" rx="2.5" transform="rotate(-40 14 14)" fill="#1e2a3a"/>
+
+  <!-- anel base (azul-aço) -->
+  <circle cx="32" cy="37" r="24" fill="none" stroke="#4a6a86" stroke-width="6"/>
+  <!-- segmento teal (inferior-esquerdo) -->
+  <path d="M 16.6 55.4 A 24 24 0 0 1 16.6 18.6" fill="none" stroke="#3a9d8f" stroke-width="6"/>
+  <!-- segmento azul-marinho (inferior-direito) -->
+  <path d="M 54.6 45.2 A 24 24 0 0 1 32 61" fill="none" stroke="#1e2a3a" stroke-width="6"/>
+
+  <!-- mostrador branco -->
+  <circle cx="32" cy="37" r="18" fill="#ffffff"/>
+
+  <!-- marcas das horas -->
+  <g stroke="#1a2332" stroke-width="1.6" stroke-linecap="round">
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(0 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(30 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(60 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(90 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(120 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(150 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(180 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(210 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(240 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(270 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(300 32 37)"/>
+    <line x1="32" y1="21" x2="32" y2="24" transform="rotate(330 32 37)"/>
+  </g>
+
+  <!-- ponteiros -->
+  <line x1="32" y1="37" x2="32" y2="25" stroke="#1a2332" stroke-width="2.8" stroke-linecap="round"/>
+  <line x1="32" y1="37" x2="41" y2="46" stroke="#1a2332" stroke-width="2.8" stroke-linecap="round"/>
+  <circle cx="32" cy="37" r="2.3" fill="#1a2332"/>
+</svg>
