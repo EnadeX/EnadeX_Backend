@@ -40,7 +40,8 @@ sys.path.insert(0, str(_RAIZ_PROJETO))
 from modules.etl import ARQUIVOS_USADOS, _colunas_por_arquivo, table_name  # noqa: E402
 from modules.supabase_client import _client  # noqa: E402
 
-DADOS_BRUTOS = _RAIZ_PROJETO / "dados" / "microdados_Enade_2021_LGPD" / "2.DADOS"
+# local/ é a pasta não versionada (ver local/LEIA-ME.md); os microdados brutos (~500 MB) ficam lá.
+DADOS_BRUTOS = _RAIZ_PROJETO / "local" / "dados" / "microdados_Enade_2021_LGPD" / "2.DADOS"
 SQL_SAIDA = _PASTA / "criar_tabelas_e_xplainenade.sql"
 GRUPOS = ["4004", "4006"]  # CC + SI — recorte fixo do E-XplainENADE
 LOTE = 1000

@@ -1,0 +1,4367 @@
+{
+ "01_principal": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.4386,
+    "r2_adj": 0.4361,
+    "aic": 4601.09,
+    "bic": 4619.33,
+    "n_obs": 705,
+    "f_stat": 182.5194,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -3.9619855561736004,
+     "erro_padrao": 2.4283951891504216,
+     "t_stat": -1.63152421561159,
+     "p_valor": 0.1032288870798606,
+     "ic_inf_95": -8.729784624839326,
+     "ic_sup_95": 0.8058135124921253,
+     "erro_padrao_robusto": 2.990999284592849,
+     "p_valor_robusto": 0.1852918843526038
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 3.433676566283997,
+     "erro_padrao": 0.3482005922780803,
+     "t_stat": 9.861202543681461,
+     "p_valor": 1.4370272223031635e-21,
+     "ic_inf_95": 2.7500355893171915,
+     "ic_sup_95": 4.117317543250803,
+     "erro_padrao_robusto": 0.4040177817997344,
+     "p_valor_robusto": 1.9151879738265015e-17
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 1.193094121948461,
+     "erro_padrao": 0.6652996792258222,
+     "t_stat": 1.7933183484122646,
+     "p_valor": 0.07335298400190869,
+     "ic_inf_95": -0.11312457143736165,
+     "ic_sup_95": 2.4993128153342834,
+     "erro_padrao_robusto": 0.7684185649679857,
+     "p_valor_robusto": 0.12050396239325599
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 8.901792380384043,
+     "erro_padrao": 0.6024493558707158,
+     "t_stat": 14.776001158667263,
+     "p_valor": 3.2850123641062353e-43,
+     "ic_inf_95": 7.718971111971151,
+     "ic_sup_95": 10.084613648796934,
+     "erro_padrao_robusto": 0.6839319494657817,
+     "p_valor_robusto": 9.97409548249698e-39
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -3.9619855561736004,
+     "ep_wls": 2.4283951891504216,
+     "p_wls": 0.1032288870798606,
+     "coef_wls_robust": -3.9619855561736004,
+     "ep_wls_robust": 2.990999284592849,
+     "p_wls_robust": 0.1852918843526038,
+     "coef_ols": 6.94540664057786,
+     "ep_ols": 2.408808599573683,
+     "p_ols": 0.00405542050227661,
+     "coef_ols_robust": 6.94540664057786,
+     "ep_ols_robust": 2.4121834971270535,
+     "p_ols_robust": 0.0039855549409488055,
+     "sinal_diverge": true,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 3.433676566283997,
+     "ep_wls": 0.3482005922780803,
+     "p_wls": 1.4370272223031635e-21,
+     "coef_wls_robust": 3.433676566283997,
+     "ep_wls_robust": 0.4040177817997344,
+     "p_wls_robust": 1.9151879738265015e-17,
+     "coef_ols": 2.878823512898468,
+     "ep_ols": 0.3321004668016385,
+     "p_ols": 3.019004969750063e-17,
+     "coef_ols_robust": 2.878823512898468,
+     "ep_ols_robust": 0.34595429390277604,
+     "p_ols_robust": 8.693150482925431e-17,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 1.193094121948461,
+     "ep_wls": 0.6652996792258222,
+     "p_wls": 0.07335298400190869,
+     "coef_wls_robust": 1.193094121948461,
+     "ep_wls_robust": 0.7684185649679857,
+     "p_wls_robust": 0.12050396239325599,
+     "coef_ols": 0.9751260553270469,
+     "ep_ols": 0.5603899391225905,
+     "p_ols": 0.0822829673075348,
+     "coef_ols_robust": 0.9751260553270469,
+     "ep_ols_robust": 0.5974386182024817,
+     "p_ols_robust": 0.10264203397676099,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 8.901792380384043,
+     "ep_wls": 0.6024493558707158,
+     "p_wls": 3.2850123641062353e-43,
+     "coef_wls_robust": 8.901792380384043,
+     "ep_wls_robust": 0.6839319494657817,
+     "p_wls_robust": 9.97409548249698e-39,
+     "coef_ols": 5.994463955201995,
+     "ep_ols": 0.5727448526987742,
+     "p_ols": 6.428544674214078e-24,
+     "coef_ols_robust": 5.994463955201995,
+     "ep_ols_robust": 0.5809426014234017,
+     "p_ols_robust": 5.811604973858724e-25,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.287,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.287,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.018,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.993659,
+    "shapiro_pvalue": 0.004567,
+    "shapiro_normal": false,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 9.446987,
+    "bp_pvalue": 0.023902,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 2.977276,
+    "bp_pvalue": 0.395142,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.062533,
+    "spearman_pvalue": 0.097109,
+    "erro_cai_com_tamanho": false
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 2.691256031654697
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.0610535314778526
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.41049896839755906
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "f61f0d1f7e43678d85f85e6070a648a0073e8f8a72a0fdf379e68b007cf99943",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "02_interacao_renda_horas": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO"
+   ],
+   "interactions": [
+    [
+     "QE_RENDA",
+     "QE_HORAS_ESTUDO"
+    ]
+   ],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + QE_RENDA:QE_HORAS_ESTUDO",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.4477,
+    "r2_adj": 0.4445,
+    "aic": 4591.53,
+    "bic": 4614.32,
+    "n_obs": 705,
+    "f_stat": 141.8475,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": 33.05506918485122,
+     "erro_padrao": 2.6941485485747787,
+     "t_stat": 12.26920809631583,
+     "p_valor": 1.756935392173309e-31,
+     "ic_inf_95": 27.765489163009995,
+     "ic_sup_95": 38.344649206692445,
+     "erro_padrao_robusto": 3.159166525555477,
+     "p_valor_robusto": 1.2744305080343005e-25
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 3.332401083579864,
+     "erro_padrao": 0.3468837948166195,
+     "t_stat": 9.606678470931573,
+     "p_valor": 1.3083277826523214e-20,
+     "ic_inf_95": 2.651343763287292,
+     "ic_sup_95": 4.013458403872436,
+     "erro_padrao_robusto": 0.40138270300804363,
+     "p_valor_robusto": 1.0211181390197524e-16
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 0.8525733436565041,
+     "erro_padrao": 0.6678817760076362,
+     "t_stat": 1.2765333241354322,
+     "p_valor": 0.20219038474821388,
+     "ic_inf_95": -0.45871815925290604,
+     "ic_sup_95": 2.163864846565914,
+     "erro_padrao_robusto": 0.7881371073606026,
+     "p_valor_robusto": 0.27936022997941834
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 8.32163578801406,
+     "erro_padrao": 0.6218000437859487,
+     "t_stat": 13.383137989740538,
+     "p_valor": 1.5551797796193487e-36,
+     "ic_inf_95": 7.100819255484669,
+     "ic_sup_95": 9.54245232054345,
+     "erro_padrao_robusto": 0.6770828363548915,
+     "p_valor_robusto": 1.0196858123076042e-34
+    },
+    {
+     "variavel": "QE_RENDA:QE_HORAS_ESTUDO",
+     "coeficiente": 2.6305383948284216,
+     "erro_padrao": 0.7732484620194542,
+     "t_stat": 3.40193162228655,
+     "p_valor": 0.0007071628006932344,
+     "ic_inf_95": 1.1123742910779892,
+     "ic_sup_95": 4.148702498578854,
+     "erro_padrao_robusto": 0.9646243995189245,
+     "p_valor_robusto": 0.006391150151940289
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": 33.05506918485122,
+     "ep_wls": 2.6941485485747787,
+     "p_wls": 1.756935392173309e-31,
+     "coef_wls_robust": 33.05506918485122,
+     "ep_wls_robust": 3.159166525555477,
+     "p_wls_robust": 1.2744305080343005e-25,
+     "coef_ols": 33.153090608506425,
+     "ep_ols": 2.269115858339592,
+     "p_ols": 2.15972630247404e-42,
+     "coef_ols_robust": 33.153090608506425,
+     "ep_ols_robust": 2.470499187488716,
+     "p_ols_robust": 4.642634594465649e-41,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 3.332401083579864,
+     "ep_wls": 0.3468837948166195,
+     "p_wls": 1.3083277826523214e-20,
+     "coef_wls_robust": 3.332401083579864,
+     "ep_wls_robust": 0.40138270300804363,
+     "p_wls_robust": 1.0211181390197524e-16,
+     "coef_ols": 2.8526697427327647,
+     "ep_ols": 0.3324151300546069,
+     "p_ols": 6.01193419610221e-17,
+     "coef_ols_robust": 2.8526697427327647,
+     "ep_ols_robust": 0.3464494909201058,
+     "p_ols_robust": 1.810434615156807e-16,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 0.8525733436565041,
+     "ep_wls": 0.6678817760076362,
+     "p_wls": 0.20219038474821388,
+     "coef_wls_robust": 0.8525733436565041,
+     "ep_wls_robust": 0.7881371073606026,
+     "p_wls_robust": 0.27936022997941834,
+     "coef_ols": 0.9012971634082908,
+     "ep_ols": 0.562538494243912,
+     "p_ols": 0.10956330813393746,
+     "coef_ols_robust": 0.9012971634082908,
+     "ep_ols_robust": 0.6142020534420769,
+     "p_ols_robust": 0.1422597186531714,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 8.32163578801406,
+     "ep_wls": 0.6218000437859487,
+     "p_wls": 1.5551797796193487e-36,
+     "coef_wls_robust": 8.32163578801406,
+     "ep_wls_robust": 0.6770828363548915,
+     "p_wls_robust": 1.0196858123076042e-34,
+     "coef_ols": 5.937649498128378,
+     "ep_ols": 0.5738272353776033,
+     "p_ols": 1.9025773698322514e-23,
+     "coef_ols_robust": 5.937649498128378,
+     "ep_ols_robust": 0.5804784509356606,
+     "p_ols_robust": 1.4719869740031344e-24,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA:QE_HORAS_ESTUDO",
+     "coef_wls": 2.6305383948284216,
+     "ep_wls": 0.7732484620194542,
+     "p_wls": 0.0007071628006932344,
+     "coef_wls_robust": 2.6305383948284216,
+     "ep_wls_robust": 0.9646243995189245,
+     "p_wls_robust": 0.006391150151940289,
+     "coef_ols": 1.0231373443549923,
+     "ep_ols": 0.7369245787711085,
+     "p_ols": 0.16546053651577983,
+     "coef_ols_robust": 1.0231373443549923,
+     "ep_ols_robust": 0.77329297253857,
+     "p_ols_robust": 0.1858049573547773,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.291,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.298,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.023,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_RENDA:QE_HORAS_ESTUDO",
+     "vif": 1.03,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.992081,
+    "shapiro_pvalue": 0.000819,
+    "shapiro_normal": false,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 16.068421,
+    "bp_pvalue": 0.002929,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 3.753209,
+    "bp_pvalue": 0.440434,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.068067,
+    "spearman_pvalue": 0.070889,
+    "erro_cai_com_tamanho": false
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 2.515858778854178
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.00026324233732
+    },
+    {
+     "variavel": "QE_RENDA:QE_HORAS_ESTUDO",
+     "shap_mean_abs": 0.5054503947973557
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.2933385318190101
+    }
+   ],
+   "medias_centragem": {
+    "QE_HORAS_ESTUDO": 2.7510140886696304,
+    "QE_RENDA": 3.283459917784706
+   }
+  },
+  "hash_base_sha256": "836e3ad4b61b581f53e70c4f00a465f175609451bf9588f64bf8f8fe9cbd5d3b",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "03_completo": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO",
+    "QE_ESC_PAI",
+    "QE_FAM_SUPERIOR",
+    "QE_TRABALHO",
+    "QE_ACAO_AFIRM_BIN",
+    "QE_TIPO_EM_BIN",
+    "TP_SEXO",
+    "TP_CATEGAD_BIN",
+    "CO_TURNO_V",
+    "CO_TURNO_N",
+    "CO_TURNO_I"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + QE_ESC_PAI + QE_FAM_SUPERIOR + QE_TRABALHO + QE_ACAO_AFIRM_BIN + QE_TIPO_EM_BIN + TP_SEXO + TP_CATEGAD_BIN + CO_TURNO_V + CO_TURNO_N + CO_TURNO_I",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.6051,
+    "r2_adj": 0.5977,
+    "aic": 4373.0,
+    "bic": 4436.82,
+    "n_obs": 705,
+    "f_stat": 81.4486,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": 2.170307509891422,
+     "erro_padrao": 3.995156934290826,
+     "t_stat": 0.5432346076980002,
+     "p_valor": 0.5871434723807678,
+     "ic_inf_95": -5.673795609402699,
+     "ic_sup_95": 10.014410629185544,
+     "erro_padrao_robusto": 4.312912347749606,
+     "p_valor_robusto": 0.6148155121877505
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 2.9389630406422964,
+     "erro_padrao": 0.4488818933321404,
+     "t_stat": 6.547296926649867,
+     "p_valor": 1.1430478027264142e-10,
+     "ic_inf_95": 2.0576269836129586,
+     "ic_sup_95": 3.8202990976716342,
+     "erro_padrao_robusto": 0.5294492860902305,
+     "p_valor_robusto": 2.8407061551708495e-08
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 0.557299772925332,
+     "erro_padrao": 0.8216508819271852,
+     "t_stat": 0.6782683317009084,
+     "p_valor": 0.49782864203050786,
+     "ic_inf_95": -1.0559320354616548,
+     "ic_sup_95": 2.1705315813123187,
+     "erro_padrao_robusto": 0.850493938115081,
+     "p_valor_robusto": 0.5122964982005718
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 4.635936621769707,
+     "erro_padrao": 0.6071219630452662,
+     "t_stat": 7.6359230993988225,
+     "p_valor": 7.482070059227162e-14,
+     "ic_inf_95": 3.443911536787483,
+     "ic_sup_95": 5.827961706751931,
+     "erro_padrao_robusto": 0.6656203289853989,
+     "p_valor_robusto": 3.2878586038675784e-12
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coeficiente": 0.3014928508941447,
+     "erro_padrao": 0.8115108684238317,
+     "t_stat": 0.37152041041634276,
+     "p_valor": 0.7103638445317714,
+     "ic_inf_95": -1.2918300245373815,
+     "ic_sup_95": 1.894815726325671,
+     "erro_padrao_robusto": 0.8464431212825617,
+     "p_valor_robusto": 0.7216998059826021
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coeficiente": -0.7110136749477896,
+     "erro_padrao": 2.060840410166677,
+     "t_stat": -0.3450115163892211,
+     "p_valor": 0.7301907020212713,
+     "ic_inf_95": -4.757273923451722,
+     "ic_sup_95": 3.3352465735561427,
+     "erro_padrao_robusto": 2.097523180492357,
+     "p_valor_robusto": 0.7346264966138476
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coeficiente": 1.401056487114272,
+     "erro_padrao": 0.4081410278006604,
+     "t_stat": 3.4327754175171044,
+     "p_valor": 0.0006330617576251054,
+     "ic_inf_95": 0.5997111677841911,
+     "ic_sup_95": 2.202401806444353,
+     "erro_padrao_robusto": 0.4584933091387589,
+     "p_valor_robusto": 0.0022447295433996738
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coeficiente": 11.588060122005652,
+     "erro_padrao": 1.4709573206271607,
+     "t_stat": 7.877903702239941,
+     "p_valor": 1.2945041903562771e-14,
+     "ic_inf_95": 8.69997810248714,
+     "ic_sup_95": 14.476142141524164,
+     "erro_padrao_robusto": 1.6464903743529986,
+     "p_valor_robusto": 1.949669686476048e-12
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coeficiente": 4.202192148893552,
+     "erro_padrao": 1.3447242543211484,
+     "t_stat": 3.124947092602957,
+     "p_valor": 0.001852806370211883,
+     "ic_inf_95": 1.5619565107449924,
+     "ic_sup_95": 6.842427787042111,
+     "erro_padrao_robusto": 1.581207786029908,
+     "p_valor_robusto": 0.00787030281877886
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coeficiente": 1.1690416477966143,
+     "erro_padrao": 2.509165767664933,
+     "t_stat": 0.4659084955094625,
+     "p_valor": 0.6414278207257309,
+     "ic_inf_95": -3.757461953609541,
+     "ic_sup_95": 6.09554524920277,
+     "erro_padrao_robusto": 2.8065825723217097,
+     "p_valor_robusto": 0.6770180987653163
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "coeficiente": -3.8139984410020236,
+     "erro_padrao": 0.5209415496922895,
+     "t_stat": -7.321355809024798,
+     "p_valor": 6.846745452191847e-13,
+     "ic_inf_95": -4.83681664367084,
+     "ic_sup_95": -2.791180238333207,
+     "erro_padrao_robusto": 0.6088530844116625,
+     "p_valor_robusto": 3.7466152791479965e-10
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coeficiente": 0.8285613776053543,
+     "erro_padrao": 1.2120188623988246,
+     "t_stat": 0.6836208604587785,
+     "p_valor": 0.4944437740494351,
+     "ic_inf_95": -1.5511200956265707,
+     "ic_sup_95": 3.208242850837279,
+     "erro_padrao_robusto": 1.5202225950582682,
+     "p_valor_robusto": 0.5857353925995537
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coeficiente": 1.772572091140064,
+     "erro_padrao": 0.7643405414984996,
+     "t_stat": 2.319086840094748,
+     "p_valor": 0.020681077533668834,
+     "ic_inf_95": 0.27186357721141086,
+     "ic_sup_95": 3.273280605068717,
+     "erro_padrao_robusto": 0.9112515889454529,
+     "p_valor_robusto": 0.05175018567213999
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coeficiente": 0.6522024888058109,
+     "erro_padrao": 0.8016105700917712,
+     "t_stat": 0.8136151307624904,
+     "p_valor": 0.41614572968153973,
+     "ic_inf_95": -0.9216821111572591,
+     "ic_sup_95": 2.226087088768881,
+     "erro_padrao_robusto": 0.9161355683598821,
+     "p_valor_robusto": 0.47652293180068284
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": 2.170307509891422,
+     "ep_wls": 3.995156934290826,
+     "p_wls": 0.5871434723807678,
+     "coef_wls_robust": 2.170307509891422,
+     "ep_wls_robust": 4.312912347749606,
+     "p_wls_robust": 0.6148155121877505,
+     "coef_ols": 11.546174682431662,
+     "ep_ols": 3.690550574694383,
+     "p_ols": 0.0018303863842380182,
+     "coef_ols_robust": 11.546174682431662,
+     "ep_ols_robust": 3.92631208725862,
+     "p_ols_robust": 0.0032745301803791343,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 2.9389630406422964,
+     "ep_wls": 0.4488818933321404,
+     "p_wls": 1.1430478027264142e-10,
+     "coef_wls_robust": 2.9389630406422964,
+     "ep_wls_robust": 0.5294492860902305,
+     "p_wls_robust": 2.8407061551708495e-08,
+     "coef_ols": 2.7552938654673214,
+     "ep_ols": 0.41832419887872097,
+     "p_ols": 8.922445089522466e-11,
+     "coef_ols_robust": 2.7552938654673214,
+     "ep_ols_robust": 0.4509426956829915,
+     "p_ols_robust": 9.958408904434995e-10,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 0.557299772925332,
+     "ep_wls": 0.8216508819271852,
+     "p_wls": 0.49782864203050786,
+     "coef_wls_robust": 0.557299772925332,
+     "ep_wls_robust": 0.850493938115081,
+     "p_wls_robust": 0.5122964982005718,
+     "coef_ols": -0.0967331038227729,
+     "ep_ols": 0.6842620998997783,
+     "p_ols": 0.8876200439816018,
+     "coef_ols_robust": -0.0967331038227729,
+     "ep_ols_robust": 0.7745864664019512,
+     "p_ols_robust": 0.9006157455770263,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 4.635936621769707,
+     "ep_wls": 0.6071219630452662,
+     "p_wls": 7.482070059227162e-14,
+     "coef_wls_robust": 4.635936621769707,
+     "ep_wls_robust": 0.6656203289853989,
+     "p_wls_robust": 3.2878586038675784e-12,
+     "coef_ols": 3.6211519304789657,
+     "ep_ols": 0.5715424475665406,
+     "p_ols": 4.2576587918063197e-10,
+     "coef_ols_robust": 3.6211519304789657,
+     "ep_ols_robust": 0.6026014464470045,
+     "p_ols_robust": 1.864423139923534e-09,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coef_wls": 0.3014928508941447,
+     "ep_wls": 0.8115108684238317,
+     "p_wls": 0.7103638445317714,
+     "coef_wls_robust": 0.3014928508941447,
+     "ep_wls_robust": 0.8464431212825617,
+     "p_wls_robust": 0.7216998059826021,
+     "coef_ols": -0.021998396548424583,
+     "ep_ols": 0.6708132966437681,
+     "p_ols": 0.9738486356448718,
+     "coef_ols_robust": -0.021998396548424583,
+     "ep_ols_robust": 0.7808537005176849,
+     "p_ols_robust": 0.9775247790395948,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coef_wls": -0.7110136749477896,
+     "ep_wls": 2.060840410166677,
+     "p_wls": 0.7301907020212713,
+     "coef_wls_robust": -0.7110136749477896,
+     "ep_wls_robust": 2.097523180492357,
+     "p_wls_robust": 0.7346264966138476,
+     "coef_ols": -0.3416982656324716,
+     "ep_ols": 1.6726028469902825,
+     "p_ols": 0.8381859963482465,
+     "coef_ols_robust": -0.3416982656324716,
+     "ep_ols_robust": 1.7627857369377726,
+     "p_ols_robust": 0.846301219526516,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coef_wls": 1.401056487114272,
+     "ep_wls": 0.4081410278006604,
+     "p_wls": 0.0006330617576251054,
+     "coef_wls_robust": 1.401056487114272,
+     "ep_wls_robust": 0.4584933091387589,
+     "p_wls_robust": 0.0022447295433996738,
+     "coef_ols": 0.5416765042267755,
+     "ep_ols": 0.3845692046277975,
+     "p_ols": 0.1594245528273447,
+     "coef_ols_robust": 0.5416765042267755,
+     "ep_ols_robust": 0.4187210415525704,
+     "p_ols_robust": 0.19578797017712912,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coef_wls": 11.588060122005652,
+     "ep_wls": 1.4709573206271607,
+     "p_wls": 1.2945041903562771e-14,
+     "coef_wls_robust": 11.588060122005652,
+     "ep_wls_robust": 1.6464903743529986,
+     "p_wls_robust": 1.949669686476048e-12,
+     "coef_ols": 8.207603467276316,
+     "ep_ols": 1.3856695351833472,
+     "p_ols": 4.977840487522775e-09,
+     "coef_ols_robust": 8.207603467276316,
+     "ep_ols_robust": 1.6778687608504348,
+     "p_ols_robust": 9.997696039847653e-07,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coef_wls": 4.202192148893552,
+     "ep_wls": 1.3447242543211484,
+     "p_wls": 0.001852806370211883,
+     "coef_wls_robust": 4.202192148893552,
+     "ep_wls_robust": 1.581207786029908,
+     "p_wls_robust": 0.00787030281877886,
+     "coef_ols": 5.302553788318251,
+     "ep_ols": 1.354451269723387,
+     "p_ols": 9.939991009853726e-05,
+     "coef_ols_robust": 5.302553788318251,
+     "ep_ols_robust": 1.502359567112007,
+     "p_ols_robust": 0.000416371159322707,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coef_wls": 1.1690416477966143,
+     "ep_wls": 2.509165767664933,
+     "p_wls": 0.6414278207257309,
+     "coef_wls_robust": 1.1690416477966143,
+     "ep_wls_robust": 2.8065825723217097,
+     "p_wls_robust": 0.6770180987653163,
+     "coef_ols": 2.944818381730221,
+     "ep_ols": 2.3697084940998616,
+     "p_ols": 0.21440278794206402,
+     "coef_ols_robust": 2.944818381730221,
+     "ep_ols_robust": 2.572197424322112,
+     "p_ols_robust": 0.25226515247556014,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "coef_wls": -3.8139984410020236,
+     "ep_wls": 0.5209415496922895,
+     "p_wls": 6.846745452191847e-13,
+     "coef_wls_robust": -3.8139984410020236,
+     "ep_wls_robust": 0.6088530844116625,
+     "p_wls_robust": 3.7466152791479965e-10,
+     "coef_ols": -3.3812433335638987,
+     "ep_ols": 0.5627599520437144,
+     "p_ols": 3.0319645936341253e-09,
+     "coef_ols_robust": -3.3812433335638987,
+     "ep_ols_robust": 0.6235477783462,
+     "p_ols_robust": 5.8741945300871744e-08,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coef_wls": 0.8285613776053543,
+     "ep_wls": 1.2120188623988246,
+     "p_wls": 0.4944437740494351,
+     "coef_wls_robust": 0.8285613776053543,
+     "ep_wls_robust": 1.5202225950582682,
+     "p_wls_robust": 0.5857353925995537,
+     "coef_ols": 2.218188103942707,
+     "ep_ols": 1.7056483371962123,
+     "p_ols": 0.19386473227344458,
+     "coef_ols_robust": 2.218188103942707,
+     "ep_ols_robust": 1.7200677713330355,
+     "p_ols_robust": 0.19719185666258887,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coef_wls": 1.772572091140064,
+     "ep_wls": 0.7643405414984996,
+     "p_wls": 0.020681077533668834,
+     "coef_wls_robust": 1.772572091140064,
+     "ep_wls_robust": 0.9112515889454529,
+     "p_wls_robust": 0.05175018567213999,
+     "coef_ols": 1.6245716313417025,
+     "ep_ols": 0.9375783562878782,
+     "p_ols": 0.0835895527254033,
+     "coef_ols_robust": 1.6245716313417025,
+     "ep_ols_robust": 0.9270541867226245,
+     "p_ols_robust": 0.07970470400644694,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coef_wls": 0.6522024888058109,
+     "ep_wls": 0.8016105700917712,
+     "p_wls": 0.41614572968153973,
+     "coef_wls_robust": 0.6522024888058109,
+     "ep_wls_robust": 0.9161355683598821,
+     "p_wls_robust": 0.47652293180068284,
+     "coef_ols": 0.8922845100202527,
+     "ep_ols": 0.9225589638615702,
+     "p_ols": 0.33379031207400656,
+     "coef_ols_robust": 0.8922845100202527,
+     "ep_ols_robust": 0.9296991041103968,
+     "p_ols_robust": 0.33717791444156375,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 2.445,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 2.297,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.214,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "vif": 2.618,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "vif": 1.652,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "vif": 1.664,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "vif": 1.402,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "vif": 2.189,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_SEXO",
+     "vif": 1.125,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "vif": 1.847,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "vif": 1.321,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "vif": 3.367,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "vif": 4.081,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.997823,
+    "shapiro_pvalue": 0.500812,
+    "shapiro_normal": true,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 20.013913,
+    "bp_pvalue": 0.094864,
+    "bp_homocedastic": true
+   },
+   "diagnostics_ols": {
+    "bp_stat": 11.952221,
+    "bp_pvalue": 0.531566,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.155713,
+    "spearman_pvalue": 3.3e-05,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "shap_mean_abs": 1.7904106722811275
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 1.7641032976947237
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "shap_mean_abs": 1.6139229517289464
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 1.4015708143451846
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "shap_mean_abs": 0.7685269810545714
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "shap_mean_abs": 0.7551508169505546
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "shap_mean_abs": 0.6009596645958555
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "shap_mean_abs": 0.2743275478877174
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.1917459634286297
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "shap_mean_abs": 0.11398593591881082
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "shap_mean_abs": 0.08409524311692909
+    },
+    {
+     "variavel": "TP_SEXO",
+     "shap_mean_abs": 0.07836122035081905
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "shap_mean_abs": 0.04618292233246759
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "5149e3114ebed4298edc92ed523db7c33b933a15fc7b02f979a6024c52b5c6c1",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "04_completo_min10": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO",
+    "QE_ESC_PAI",
+    "QE_FAM_SUPERIOR",
+    "QE_TRABALHO",
+    "QE_ACAO_AFIRM_BIN",
+    "QE_TIPO_EM_BIN",
+    "TP_SEXO",
+    "TP_CATEGAD_BIN",
+    "CO_TURNO_V",
+    "CO_TURNO_N",
+    "CO_TURNO_I"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": "10"
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + QE_ESC_PAI + QE_FAM_SUPERIOR + QE_TRABALHO + QE_ACAO_AFIRM_BIN + QE_TIPO_EM_BIN + TP_SEXO + TP_CATEGAD_BIN + CO_TURNO_V + CO_TURNO_N + CO_TURNO_I",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.6285,
+    "r2_adj": 0.6198,
+    "aic": 3408.37,
+    "bic": 3469.11,
+    "n_obs": 566,
+    "f_stat": 71.8385,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -0.6629850935549753,
+     "erro_padrao": 4.548862997040434,
+     "t_stat": -0.14574743050875008,
+     "p_valor": 0.8841739826642049,
+     "ic_inf_95": -9.598184104962908,
+     "ic_sup_95": 8.272213917852959,
+     "erro_padrao_robusto": 4.786356702105276,
+     "p_valor_robusto": 0.8898329376183567
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 2.7487450683853356,
+     "erro_padrao": 0.513340541844781,
+     "t_stat": 5.3546229925796025,
+     "p_valor": 1.259816588781702e-07,
+     "ic_inf_95": 1.740405203018683,
+     "ic_sup_95": 3.7570849337519885,
+     "erro_padrao_robusto": 0.5957842210379684,
+     "p_valor_robusto": 3.956418678028103e-06
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 1.0593855655890405,
+     "erro_padrao": 0.9524651945812652,
+     "t_stat": 1.1122564599904157,
+     "p_valor": 0.26651205943497325,
+     "ic_inf_95": -0.8115140571430657,
+     "ic_sup_95": 2.9302851883211467,
+     "erro_padrao_robusto": 0.9772568664896484,
+     "p_valor_robusto": 0.2783470493339425
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 4.746954711274642,
+     "erro_padrao": 0.6792178460849211,
+     "t_stat": 6.988854516465607,
+     "p_valor": 8.021040575124874e-12,
+     "ic_inf_95": 3.412786891576144,
+     "ic_sup_95": 6.081122530973141,
+     "erro_padrao_robusto": 0.7244712174758919,
+     "p_valor_robusto": 5.665655035133035e-11
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coeficiente": 0.4488090145658251,
+     "erro_padrao": 0.9575456428444701,
+     "t_stat": 0.4687076986039016,
+     "p_valor": 0.6394636245386139,
+     "ic_inf_95": -1.4320699846233063,
+     "ic_sup_95": 2.3296880137549563,
+     "erro_padrao_robusto": 1.0102441200463386,
+     "p_valor_robusto": 0.6568560757557247
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coeficiente": -0.2221349674370674,
+     "erro_padrao": 2.43117449836029,
+     "t_stat": -0.09136940502908646,
+     "p_valor": 0.9272322179968099,
+     "ic_inf_95": -4.997620179553239,
+     "ic_sup_95": 4.553350244679104,
+     "erro_padrao_robusto": 2.5087794110031063,
+     "p_valor_robusto": 0.9294450739687337
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coeficiente": 1.6658340505105604,
+     "erro_padrao": 0.4647424462890249,
+     "t_stat": 3.584424155383846,
+     "p_valor": 0.0003677388468225018,
+     "ic_inf_95": 0.7529540078839242,
+     "ic_sup_95": 2.578714093137197,
+     "erro_padrao_robusto": 0.5122641267429575,
+     "p_valor_robusto": 0.001146345066289864
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coeficiente": 12.528614262518676,
+     "erro_padrao": 1.6643466215968554,
+     "t_stat": 7.527647246039477,
+     "p_valor": 2.1166516091541637e-13,
+     "ic_inf_95": 9.25938670002496,
+     "ic_sup_95": 15.797841825012393,
+     "erro_padrao_robusto": 1.8056487373854315,
+     "p_valor_robusto": 3.960978757354658e-12
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coeficiente": 3.850032273307873,
+     "erro_padrao": 1.4866578273633497,
+     "t_stat": 2.5897232049260905,
+     "p_valor": 0.009858865131969775,
+     "ic_inf_95": 0.9298336307017121,
+     "ic_sup_95": 6.770230915914034,
+     "erro_padrao_robusto": 1.6874108520552606,
+     "p_valor_robusto": 0.0225117174761759
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coeficiente": 0.04745121727108881,
+     "erro_padrao": 2.7971854347720044,
+     "t_stat": 0.01696391547060823,
+     "p_valor": 0.9864715324936694,
+     "ic_inf_95": -5.446978610085904,
+     "ic_sup_95": 5.541881044628082,
+     "erro_padrao_robusto": 3.01954798246773,
+     "p_valor_robusto": 0.9874620189366095
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "coeficiente": -3.5600663691682106,
+     "erro_padrao": 0.5784358940885166,
+     "t_stat": -6.154642900883711,
+     "p_valor": 1.447713530148276e-09,
+     "ic_inf_95": -4.696271137785171,
+     "ic_sup_95": -2.4238616005512506,
+     "erro_padrao_robusto": 0.6559484583164454,
+     "p_valor_robusto": 5.719470013086762e-08
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coeficiente": 0.6134349516418955,
+     "erro_padrao": 1.297827891279536,
+     "t_stat": 0.4726627896994158,
+     "p_valor": 0.636640601909743,
+     "ic_inf_95": -1.9358505508415453,
+     "ic_sup_95": 3.1627204541253366,
+     "erro_padrao_robusto": 1.5179385201829894,
+     "p_valor_robusto": 0.6861217478766859
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coeficiente": 1.7379882638875914,
+     "erro_padrao": 0.8237110484112973,
+     "t_stat": 2.109948952657213,
+     "p_valor": 0.03531216735320964,
+     "ic_inf_95": 0.11999665802059378,
+     "ic_sup_95": 3.355979869754589,
+     "erro_padrao_robusto": 0.9237837085665583,
+     "p_valor_robusto": 0.05992023516181814
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coeficiente": 0.43520052479318383,
+     "erro_padrao": 0.8676571564904572,
+     "t_stat": 0.501581208127764,
+     "p_valor": 0.6161621220983236,
+     "ic_inf_95": -1.2691131403927276,
+     "ic_sup_95": 2.1395141899790953,
+     "erro_padrao_robusto": 0.9372883581212412,
+     "p_valor_robusto": 0.6424194183955221
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -0.6629850935549753,
+     "ep_wls": 4.548862997040434,
+     "p_wls": 0.8841739826642049,
+     "coef_wls_robust": -0.6629850935549753,
+     "ep_wls_robust": 4.786356702105276,
+     "p_wls_robust": 0.8898329376183567,
+     "coef_ols": 5.3964432153220665,
+     "ep_ols": 4.280665797738309,
+     "p_ols": 0.20796573202155488,
+     "coef_ols_robust": 5.3964432153220665,
+     "ep_ols_robust": 4.524961079650312,
+     "p_ols_robust": 0.23302826255793685,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 2.7487450683853356,
+     "ep_wls": 0.513340541844781,
+     "p_wls": 1.259816588781702e-07,
+     "coef_wls_robust": 2.7487450683853356,
+     "ep_wls_robust": 0.5957842210379684,
+     "p_wls_robust": 3.956418678028103e-06,
+     "coef_ols": 2.675614071917629,
+     "ep_ols": 0.495339327495598,
+     "p_ols": 9.833722575305389e-08,
+     "coef_ols_robust": 2.675614071917629,
+     "ep_ols_robust": 0.5218277783294825,
+     "p_ols_robust": 2.9378790318928407e-07,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 1.0593855655890405,
+     "ep_wls": 0.9524651945812652,
+     "p_wls": 0.26651205943497325,
+     "coef_wls_robust": 1.0593855655890405,
+     "ep_wls_robust": 0.9772568664896484,
+     "p_wls_robust": 0.2783470493339425,
+     "coef_ols": 1.7008882977041875,
+     "ep_ols": 0.8524782063026849,
+     "p_ols": 0.04650911598647308,
+     "coef_ols_robust": 1.7008882977041875,
+     "ep_ols_robust": 0.9720195398290834,
+     "p_ols_robust": 0.0801442170237534,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 4.746954711274642,
+     "ep_wls": 0.6792178460849211,
+     "p_wls": 8.021040575124874e-12,
+     "coef_wls_robust": 4.746954711274642,
+     "ep_wls_robust": 0.7244712174758919,
+     "p_wls_robust": 5.665655035133035e-11,
+     "coef_ols": 3.5935673774682444,
+     "ep_ols": 0.6396841144645666,
+     "p_ols": 3.071245152755905e-08,
+     "coef_ols_robust": 3.5935673774682444,
+     "ep_ols_robust": 0.6538396608623412,
+     "p_ols_robust": 3.882850165888948e-08,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coef_wls": 0.4488090145658251,
+     "ep_wls": 0.9575456428444701,
+     "p_wls": 0.6394636245386139,
+     "coef_wls_robust": 0.4488090145658251,
+     "ep_wls_robust": 1.0102441200463386,
+     "p_wls_robust": 0.6568560757557247,
+     "coef_ols": -0.06784590428231535,
+     "ep_ols": 0.8507406869692776,
+     "p_ols": 0.9364656168387758,
+     "coef_ols_robust": -0.06784590428231535,
+     "ep_ols_robust": 0.9784171720545196,
+     "p_ols_robust": 0.9447169876448424,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coef_wls": -0.2221349674370674,
+     "ep_wls": 2.43117449836029,
+     "p_wls": 0.9272322179968099,
+     "coef_wls_robust": -0.2221349674370674,
+     "ep_wls_robust": 2.5087794110031063,
+     "p_wls_robust": 0.9294450739687337,
+     "coef_ols": -0.2963521560656003,
+     "ep_ols": 2.150546579828711,
+     "p_ols": 0.8904462227854887,
+     "coef_ols_robust": -0.2963521560656003,
+     "ep_ols_robust": 2.2074790970264075,
+     "p_ols_robust": 0.8932055745844528,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coef_wls": 1.6658340505105604,
+     "ep_wls": 0.4647424462890249,
+     "p_wls": 0.0003677388468225018,
+     "coef_wls_robust": 1.6658340505105604,
+     "ep_wls_robust": 0.5122641267429575,
+     "p_wls_robust": 0.001146345066289864,
+     "coef_ols": 1.1513423119635329,
+     "ep_ols": 0.4499934380990152,
+     "p_ols": 0.010775862546342376,
+     "coef_ols_robust": 1.1513423119635329,
+     "ep_ols_robust": 0.46165006178912005,
+     "p_ols_robust": 0.012632252110602949,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coef_wls": 12.528614262518676,
+     "ep_wls": 1.6643466215968554,
+     "p_wls": 2.1166516091541637e-13,
+     "coef_wls_robust": 12.528614262518676,
+     "ep_wls_robust": 1.8056487373854315,
+     "p_wls_robust": 3.960978757354658e-12,
+     "coef_ols": 10.885648770671624,
+     "ep_ols": 1.6005870018333277,
+     "p_ols": 2.7069620892825812e-11,
+     "coef_ols_robust": 10.885648770671624,
+     "ep_ols_robust": 1.7502351347984573,
+     "p_ols_robust": 4.986302244750895e-10,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coef_wls": 3.850032273307873,
+     "ep_wls": 1.4866578273633497,
+     "p_wls": 0.009858865131969775,
+     "coef_wls_robust": 3.850032273307873,
+     "ep_wls_robust": 1.6874108520552606,
+     "p_wls_robust": 0.0225117174761759,
+     "coef_ols": 3.6777810413977097,
+     "ep_ols": 1.4722897357629874,
+     "p_ols": 0.01277943780302965,
+     "coef_ols_robust": 3.6777810413977097,
+     "ep_ols_robust": 1.602582959986538,
+     "p_ols_robust": 0.021738376293432636,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coef_wls": 0.04745121727108881,
+     "ep_wls": 2.7971854347720044,
+     "p_wls": 0.9864715324936694,
+     "coef_wls_robust": 0.04745121727108881,
+     "ep_wls_robust": 3.01954798246773,
+     "p_wls_robust": 0.9874620189366095,
+     "coef_ols": -0.891905928065627,
+     "ep_ols": 2.594562153858744,
+     "p_ols": 0.7311579027377406,
+     "coef_ols_robust": -0.891905928065627,
+     "ep_ols_robust": 2.7480441993131026,
+     "p_ols_robust": 0.7455139113775616,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "coef_wls": -3.5600663691682106,
+     "ep_wls": 0.5784358940885166,
+     "p_wls": 1.447713530148276e-09,
+     "coef_wls_robust": -3.5600663691682106,
+     "ep_wls_robust": 0.6559484583164454,
+     "p_wls_robust": 5.719470013086762e-08,
+     "coef_ols": -2.774651923064077,
+     "ep_ols": 0.6081985417739814,
+     "p_ols": 6.245697057184686e-06,
+     "coef_ols_robust": -2.774651923064077,
+     "ep_ols_robust": 0.6844724986314834,
+     "p_ols_robust": 5.04120472465552e-05,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coef_wls": 0.6134349516418955,
+     "ep_wls": 1.297827891279536,
+     "p_wls": 0.636640601909743,
+     "coef_wls_robust": 0.6134349516418955,
+     "ep_wls_robust": 1.5179385201829894,
+     "p_wls_robust": 0.6861217478766859,
+     "coef_ols": 1.0908051655131235,
+     "ep_ols": 1.6406604010161945,
+     "p_ols": 0.506419382845367,
+     "coef_ols_robust": 1.0908051655131235,
+     "ep_ols_robust": 1.4318515811037207,
+     "p_ols_robust": 0.4461707795505522,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coef_wls": 1.7379882638875914,
+     "ep_wls": 0.8237110484112973,
+     "p_wls": 0.03531216735320964,
+     "coef_wls_robust": 1.7379882638875914,
+     "ep_wls_robust": 0.9237837085665583,
+     "p_wls_robust": 0.05992023516181814,
+     "coef_ols": 1.6588705962891528,
+     "ep_ols": 0.9244117984970025,
+     "p_ols": 0.0732780880625354,
+     "coef_ols_robust": 1.6588705962891528,
+     "ep_ols_robust": 0.8508032910069946,
+     "p_ols_robust": 0.051203557875609824,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coef_wls": 0.43520052479318383,
+     "ep_wls": 0.8676571564904572,
+     "p_wls": 0.6161621220983236,
+     "coef_wls_robust": 0.43520052479318383,
+     "ep_wls_robust": 0.9372883581212412,
+     "p_wls_robust": 0.6424194183955221,
+     "coef_ols": 0.4734951377603344,
+     "ep_ols": 0.9254905618719943,
+     "p_ols": 0.6091248662164254,
+     "coef_ols_robust": 0.4734951377603344,
+     "ep_ols_robust": 0.8422975860062545,
+     "p_ols_robust": 0.574015806201809,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 3.152,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 2.842,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.308,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "vif": 3.533,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "vif": 1.926,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "vif": 1.947,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "vif": 1.591,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "vif": 2.381,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_SEXO",
+     "vif": 1.132,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "vif": 2.17,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "vif": 1.344,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "vif": 3.448,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "vif": 4.173,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.998085,
+    "shapiro_pvalue": 0.785905,
+    "shapiro_normal": true,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 566,
+    "bp_stat": 17.691312,
+    "bp_pvalue": 0.169596,
+    "bp_homocedastic": true
+   },
+   "diagnostics_ols": {
+    "bp_stat": 21.853153,
+    "bp_pvalue": 0.057679,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.092701,
+    "spearman_pvalue": 0.027433,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "shap_mean_abs": 1.7002130341150172
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "shap_mean_abs": 1.6392162340577956
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 1.606091759542703
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 1.364522632801405
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "shap_mean_abs": 0.8387160994421262
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "shap_mean_abs": 0.686389572279627
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "shap_mean_abs": 0.6162407646059297
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.33267411385629353
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "shap_mean_abs": 0.18553940741638197
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "shap_mean_abs": 0.1569190270008281
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "shap_mean_abs": 0.036812959593300554
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "shap_mean_abs": 0.023007933461255885
+    },
+    {
+     "variavel": "TP_SEXO",
+     "shap_mean_abs": 0.0029029131213974355
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "c0aa2a3a012cd0fc7fa3f7e3cefe3729af199419ffd679258b791d59998d118d",
+  "n_cursos_base": 566,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "05_formacao_geral": {
+  "pedido": {
+   "y": "NT_FG",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_FG ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.4332,
+    "r2_adj": 0.4308,
+    "aic": 4435.02,
+    "bic": 4453.25,
+    "n_obs": 705,
+    "f_stat": 178.5954,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -2.675693262248289,
+     "erro_padrao": 2.1585685574868485,
+     "t_stat": -1.2395683486483804,
+     "p_valor": 0.21554990743206479,
+     "ic_inf_95": -6.913727172057449,
+     "ic_sup_95": 1.56234064756087,
+     "erro_padrao_robusto": 2.745969555135112,
+     "p_valor_robusto": 0.329854259158747
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 2.7847647087679244,
+     "erro_padrao": 0.30951092867743485,
+     "t_stat": 8.997306559311003,
+     "p_valor": 2.142118460127807e-18,
+     "ic_inf_95": 2.1770852321805867,
+     "ic_sup_95": 3.392444185355262,
+     "erro_padrao_robusto": 0.3284371608787655,
+     "p_valor_robusto": 2.2745871041756755e-17
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 2.353991707049664,
+     "erro_padrao": 0.5913761381587016,
+     "t_stat": 3.980532110035774,
+     "p_valor": 7.592815825481028e-05,
+     "ic_inf_95": 1.1929110833762906,
+     "ic_sup_95": 3.5150723307230374,
+     "erro_padrao_robusto": 0.7036428450042425,
+     "p_valor_robusto": 0.0008215348385906698
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 7.1158752008862445,
+     "erro_padrao": 0.535509312022517,
+     "t_stat": 13.288051283386531,
+     "p_valor": 4.2480799339932745e-36,
+     "ic_inf_95": 6.064480925963462,
+     "ic_sup_95": 8.167269475809027,
+     "erro_padrao_robusto": 0.6118036503266032,
+     "p_valor_robusto": 2.867905306382306e-31
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -2.675693262248289,
+     "ep_wls": 2.1585685574868485,
+     "p_wls": 0.21554990743206479,
+     "coef_wls_robust": -2.675693262248289,
+     "ep_wls_robust": 2.745969555135112,
+     "p_wls_robust": 0.329854259158747,
+     "coef_ols": 4.621026264492984,
+     "ep_ols": 2.4283168818448346,
+     "p_ols": 0.057453227741812676,
+     "coef_ols_robust": 4.621026264492984,
+     "ep_ols_robust": 2.7873819441161096,
+     "p_ols_robust": 0.09735027357726245,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 2.7847647087679244,
+     "ep_wls": 0.30951092867743485,
+     "p_wls": 2.142118460127807e-18,
+     "coef_wls_robust": 2.7847647087679244,
+     "ep_wls_robust": 0.3284371608787655,
+     "p_wls_robust": 2.2745871041756755e-17,
+     "coef_ols": 2.623229622562395,
+     "ep_ols": 0.334790057684822,
+     "p_ols": 1.7353215978793218e-14,
+     "coef_ols_robust": 2.623229622562395,
+     "ep_ols_robust": 0.36809669386353794,
+     "p_ols_robust": 1.0297652973671048e-12,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 2.353991707049664,
+     "ep_wls": 0.5913761381587016,
+     "p_wls": 7.592815825481028e-05,
+     "coef_wls_robust": 2.353991707049664,
+     "ep_wls_robust": 0.7036428450042425,
+     "p_wls_robust": 0.0008215348385906698,
+     "coef_ols": 2.0880357561745972,
+     "ep_ols": 0.5649283840269517,
+     "p_ols": 0.0002360137660721902,
+     "coef_ols_robust": 2.0880357561745972,
+     "ep_ols_robust": 0.6993809108017937,
+     "p_ols_robust": 0.0028307007771460634,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 7.1158752008862445,
+     "ep_wls": 0.535509312022517,
+     "p_wls": 4.2480799339932745e-36,
+     "coef_wls_robust": 7.1158752008862445,
+     "ep_wls_robust": 0.6118036503266032,
+     "p_wls_robust": 2.867905306382306e-31,
+     "coef_ols": 5.011549058193642,
+     "ep_ols": 0.5773833566703117,
+     "p_ols": 2.761671268113714e-17,
+     "coef_ols_robust": 5.011549058193642,
+     "ep_ols_robust": 0.633325752711286,
+     "p_ols_robust": 2.5112429681969227e-15,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.287,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.287,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.018,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.995841,
+    "shapiro_pvalue": 0.0573,
+    "shapiro_normal": true,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 2.441034,
+    "bp_pvalue": 0.486042,
+    "bp_homocedastic": true
+   },
+   "diagnostics_ols": {
+    "bp_stat": 4.855199,
+    "bp_pvalue": 0.182712,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.256772,
+    "spearman_pvalue": 0.0,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 2.1513242767925553
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 1.6715462352217103
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.8099203152406769
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "63d7dfa2eb9c79ab22978283a97dd344d32230948baa472defba964c140cb8a1",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "06_componente_especifico": {
+  "pedido": {
+   "y": "NT_CE",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_CE ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.394,
+    "r2_adj": 0.3914,
+    "aic": 4788.89,
+    "bic": 4807.12,
+    "n_obs": 705,
+    "f_stat": 151.9096,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -4.406497354686049,
+     "erro_padrao": 2.7743564901457183,
+     "t_stat": -1.5882952931022234,
+     "p_valor": 0.1126704864200749,
+     "ic_inf_95": -9.853540879134457,
+     "ic_sup_95": 1.040546169762357,
+     "erro_padrao_robusto": 3.2999242911027395,
+     "p_valor_robusto": 0.18176742706703763
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 3.6497080794475734,
+     "erro_padrao": 0.3978069868427154,
+     "t_stat": 9.174570080868367,
+     "p_valor": 4.985178395114866e-19,
+     "ic_inf_95": 2.868672196222583,
+     "ic_sup_95": 4.4307439626725635,
+     "erro_padrao_robusto": 0.46809946002469255,
+     "p_valor_robusto": 6.346430395344304e-15
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 0.8065053518890172,
+     "erro_padrao": 0.7600815926495775,
+     "t_stat": 1.0610773365496335,
+     "p_valor": 0.2890201875144689,
+     "ic_inf_95": -0.6858037770927655,
+     "ic_sup_95": 2.2988144808707998,
+     "erro_padrao_robusto": 0.8540033801795492,
+     "p_valor_robusto": 0.3449745171815639
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 9.496480317373058,
+     "erro_padrao": 0.688277298485661,
+     "t_stat": 13.797462648073813,
+     "p_valor": 1.7407879112206447e-38,
+     "ic_inf_95": 8.14514842651564,
+     "ic_sup_95": 10.847812208230476,
+     "erro_padrao_robusto": 0.768071082473392,
+     "p_valor_robusto": 4.089451140100582e-35
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -4.406497354686049,
+     "ep_wls": 2.7743564901457183,
+     "p_wls": 0.1126704864200749,
+     "coef_wls_robust": -4.406497354686049,
+     "ep_wls_robust": 3.2999242911027395,
+     "p_wls_robust": 0.18176742706703763,
+     "coef_ols": 7.703038086891508,
+     "ep_ols": 2.7460114021780915,
+     "p_ols": 0.005168306398589987,
+     "coef_ols_robust": 7.703038086891508,
+     "ep_ols_robust": 2.689226609918713,
+     "p_ols_robust": 0.004177915224771517,
+     "sinal_diverge": true,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 3.6497080794475734,
+     "ep_wls": 0.3978069868427154,
+     "p_wls": 4.985178395114866e-19,
+     "coef_wls_robust": 3.6497080794475734,
+     "ep_wls_robust": 0.46809946002469255,
+     "p_wls_robust": 6.346430395344304e-15,
+     "coef_ols": 2.963386974550432,
+     "ep_ols": 0.37859034074661035,
+     "p_ols": 1.840211475117285e-14,
+     "coef_ols_robust": 2.963386974550432,
+     "ep_ols_robust": 0.3901693476010368,
+     "p_ols_robust": 3.0748323924586684e-14,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 0.8065053518890172,
+     "ep_wls": 0.7600815926495775,
+     "p_wls": 0.2890201875144689,
+     "coef_wls_robust": 0.8065053518890172,
+     "ep_wls_robust": 0.8540033801795492,
+     "p_wls_robust": 0.3449745171815639,
+     "coef_ols": 0.6053109710468451,
+     "ep_ols": 0.6388374579735672,
+     "p_ols": 0.34370061685257847,
+     "coef_ols_robust": 0.6053109710468451,
+     "ep_ols_robust": 0.6590152048787917,
+     "p_ols_robust": 0.3583527874088839,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 9.496480317373058,
+     "ep_wls": 0.688277298485661,
+     "p_wls": 1.7407879112206447e-38,
+     "coef_wls_robust": 9.496480317373058,
+     "ep_wls_robust": 0.768071082473392,
+     "p_wls_robust": 4.089451140100582e-35,
+     "coef_ols": 6.321258282609502,
+     "ep_ols": 0.65292190352027,
+     "p_ols": 6.84756422873528e-21,
+     "coef_ols_robust": 6.321258282609502,
+     "ep_ols_robust": 0.6585953072910724,
+     "p_ols_robust": 8.143802826087189e-22,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.287,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.287,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.018,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.991384,
+    "shapiro_pvalue": 0.000396,
+    "shapiro_normal": false,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 9.034993,
+    "bp_pvalue": 0.028829,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 2.69585,
+    "bp_pvalue": 0.440933,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.067857,
+    "spearman_pvalue": 0.071767,
+    "erro_cai_com_tamanho": false
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 2.8710465085591834
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.1907257660407478
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.27748826254954373
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "785f45f2ca6c9d509404a56483b912e752c10d74c556eaaa707e541f27c02a4e",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "07_so_cc": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO"
+   ],
+   "interactions": [],
+   "grupos": [
+    4004
+   ],
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.6541,
+    "r2_adj": 0.6508,
+    "aic": 2034.63,
+    "bic": 2049.69,
+    "n_obs": 319,
+    "f_stat": 198.529,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -24.573247069891558,
+     "erro_padrao": 3.5050869295238316,
+     "t_stat": -7.0107382681176045,
+     "p_valor": 1.4491616785829421e-11,
+     "ic_inf_95": -31.46958808435079,
+     "ic_sup_95": -17.676906055432326,
+     "erro_padrao_robusto": 4.042614058894385,
+     "p_valor_robusto": 1.2127129154083233e-09
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 4.135174653996387,
+     "erro_padrao": 0.5263803950012315,
+     "t_stat": 7.8558675309074015,
+     "p_valor": 6.316263051399963e-14,
+     "ic_inf_95": 3.0995088402108797,
+     "ic_sup_95": 5.170840467781894,
+     "erro_padrao_robusto": 0.6509693774156116,
+     "p_valor_robusto": 2.1207276978762314e-10
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 2.472124890364806,
+     "erro_padrao": 1.038947750241657,
+     "t_stat": 2.3794506410835337,
+     "p_valor": 0.017933660946962162,
+     "ic_inf_95": 0.427970743567355,
+     "ic_sup_95": 4.516279037162256,
+     "erro_padrao_robusto": 1.2370757601149482,
+     "p_valor_robusto": 0.04567745451245263
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 12.691252716062719,
+     "erro_padrao": 0.8340969135170178,
+     "t_stat": 15.215561297966348,
+     "p_valor": 1.4089759354744216e-39,
+     "ic_inf_95": 11.0501474110075,
+     "ic_sup_95": 14.332358021117937,
+     "erro_padrao_robusto": 0.9207496934673843,
+     "p_valor_robusto": 3.198777635657987e-43
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -24.573247069891558,
+     "ep_wls": 3.5050869295238316,
+     "p_wls": 1.4491616785829421e-11,
+     "coef_wls_robust": -24.573247069891558,
+     "ep_wls_robust": 4.042614058894385,
+     "p_wls_robust": 1.2127129154083233e-09,
+     "coef_ols": -14.968050236535223,
+     "ep_ols": 3.6976430268108693,
+     "p_ols": 6.506951877142563e-05,
+     "coef_ols_robust": -14.968050236535223,
+     "ep_ols_robust": 3.8101272417556338,
+     "p_ols_robust": 8.548058103800355e-05,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 4.135174653996387,
+     "ep_wls": 0.5263803950012315,
+     "p_wls": 6.316263051399963e-14,
+     "coef_wls_robust": 4.135174653996387,
+     "ep_wls_robust": 0.6509693774156116,
+     "p_wls_robust": 2.1207276978762314e-10,
+     "coef_ols": 3.2823896860265425,
+     "ep_ols": 0.5210666119503417,
+     "p_ols": 1.0046965865602246e-09,
+     "coef_ols_robust": 3.2823896860265425,
+     "ep_ols_robust": 0.6192513394669684,
+     "p_ols_robust": 1.1543698142337325e-07,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 2.472124890364806,
+     "ep_wls": 1.038947750241657,
+     "p_wls": 0.017933660946962162,
+     "coef_wls_robust": 2.472124890364806,
+     "ep_wls_robust": 1.2370757601149482,
+     "p_wls_robust": 0.04567745451245263,
+     "coef_ols": 3.1203476202126845,
+     "ep_ols": 0.9415519640662549,
+     "p_ols": 0.0010267447865885228,
+     "coef_ols_robust": 3.1203476202126845,
+     "ep_ols_robust": 1.1069302768757496,
+     "p_ols_robust": 0.004818556329171902,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 12.691252716062719,
+     "ep_wls": 0.8340969135170178,
+     "p_wls": 1.4089759354744216e-39,
+     "coef_wls_robust": 12.691252716062719,
+     "ep_wls_robust": 0.9207496934673843,
+     "p_wls_robust": 3.198777635657987e-43,
+     "coef_ols": 9.370890960030932,
+     "ep_ols": 0.8468132433543579,
+     "p_ols": 2.896836509587879e-24,
+     "coef_ols_robust": 9.370890960030932,
+     "ep_ols_robust": 0.8993084315044664,
+     "p_ols_robust": 2.0072518565888928e-25,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.471,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.47,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.052,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.995647,
+    "shapiro_pvalue": 0.519668,
+    "shapiro_normal": true,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 319,
+    "bp_stat": 18.761103,
+    "bp_pvalue": 0.000306,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 3.259309,
+    "bp_pvalue": 0.353346,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.087348,
+    "spearman_pvalue": 0.119485,
+    "erro_cai_com_tamanho": false
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 4.05012233030931
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.547881874668095
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.8188245645698502
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "b0aba46a9d1e17e2a03ade037db1c11e04189a457a5891bb735df161082bd8f3",
+  "n_cursos_base": 319,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "08_so_si": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO"
+   ],
+   "interactions": [],
+   "grupos": [
+    4006
+   ],
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.3139,
+    "r2_adj": 0.3085,
+    "aic": 2340.0,
+    "bic": 2355.83,
+    "n_obs": 386,
+    "f_stat": 58.2568,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": 8.277918550630483,
+     "erro_padrao": 3.004928315090853,
+     "t_stat": 2.7547807077654705,
+     "p_valor": 0.006154134677497215,
+     "ic_inf_95": 2.3696480090182197,
+     "ic_sup_95": 14.186189092242746,
+     "erro_padrao_robusto": 3.8865931993430576,
+     "p_valor_robusto": 0.03318276626259788
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 2.6210461847932756,
+     "erro_padrao": 0.3464510386032301,
+     "t_stat": 7.565415867593933,
+     "p_valor": 2.915964636643349e-13,
+     "ic_inf_95": 1.9398564022581306,
+     "ic_sup_95": 3.3022359673284205,
+     "erro_padrao_robusto": 0.35313399777500215,
+     "p_valor_robusto": 1.1515367734617636e-13
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 1.9059442538849023,
+     "erro_padrao": 0.6858571912563304,
+     "t_stat": 2.7789228985026124,
+     "p_valor": 0.005723344349089618,
+     "ic_inf_95": 0.5574162978260946,
+     "ic_sup_95": 3.2544722099437102,
+     "erro_padrao_robusto": 0.8194285022734055,
+     "p_valor_robusto": 0.020021574431161197
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 5.130166882605867,
+     "erro_padrao": 0.6949986019692672,
+     "t_stat": 7.381549931279894,
+     "p_valor": 9.871720526078384e-13,
+     "ic_inf_95": 3.7636651441600435,
+     "ic_sup_95": 6.49666862105169,
+     "erro_padrao_robusto": 0.9095061676729538,
+     "p_valor_robusto": 1.6945169811979556e-08
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": 8.277918550630483,
+     "ep_wls": 3.004928315090853,
+     "p_wls": 0.006154134677497215,
+     "coef_wls_robust": 8.277918550630483,
+     "ep_wls_robust": 3.8865931993430576,
+     "p_wls_robust": 0.03318276626259788,
+     "coef_ols": 16.83574689569012,
+     "ep_ols": 2.8351666835549993,
+     "p_ols": 6.481665273856804e-09,
+     "coef_ols_robust": 16.83574689569012,
+     "ep_ols_robust": 2.9291181441379806,
+     "p_ols_robust": 9.045560475077947e-09,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 2.6210461847932756,
+     "ep_wls": 0.3464510386032301,
+     "p_wls": 2.915964636643349e-13,
+     "coef_wls_robust": 2.6210461847932756,
+     "ep_wls_robust": 0.35313399777500215,
+     "p_wls_robust": 1.1515367734617636e-13,
+     "coef_ols": 2.5860004798114185,
+     "ep_ols": 0.36174180587603744,
+     "p_ols": 4.482227996220933e-12,
+     "coef_ols_robust": 2.5860004798114185,
+     "ep_ols_robust": 0.3549409783027593,
+     "p_ols_robust": 3.1995758209320825e-13,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 1.9059442538849023,
+     "ep_wls": 0.6858571912563304,
+     "p_wls": 0.005723344349089618,
+     "coef_wls_robust": 1.9059442538849023,
+     "ep_wls_robust": 0.8194285022734055,
+     "p_wls_robust": 0.020021574431161197,
+     "coef_ols": 0.6291781522848272,
+     "ep_ols": 0.5873899259145403,
+     "p_ols": 0.28478176473977085,
+     "coef_ols_robust": 0.6291781522848272,
+     "ep_ols_robust": 0.6736635080320125,
+     "p_ols_robust": 0.3503219367713041,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 5.130166882605867,
+     "ep_wls": 0.6949986019692672,
+     "p_wls": 9.871720526078384e-13,
+     "coef_wls_robust": 5.130166882605867,
+     "ep_wls_robust": 0.9095061676729538,
+     "p_wls_robust": 1.6945169811979556e-08,
+     "coef_ols": 3.84698661823926,
+     "ep_ols": 0.6561570680904598,
+     "p_ols": 9.846544122991109e-09,
+     "coef_ols_robust": 3.84698661823926,
+     "ep_ols_robust": 0.7100123356755419,
+     "p_ols_robust": 6.020310280936771e-08,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.147,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.147,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.0,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.99199,
+    "shapiro_pvalue": 0.03572,
+    "shapiro_normal": false,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 386,
+    "bp_stat": 3.326382,
+    "bp_pvalue": 0.343988,
+    "bp_homocedastic": true
+   },
+   "diagnostics_ols": {
+    "bp_stat": 3.403168,
+    "bp_pvalue": 0.33354,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.105338,
+    "spearman_pvalue": 0.038583,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 1.494225859866524
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 1.438206640647473
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.6379962398204466
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "1527fb75d8fd0eb81dd9b75e922b10013f001be85013b3c8dbe593406670625c",
+  "n_cursos_base": 386,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "09_ies_publica": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO",
+    "QE_ESC_PAI",
+    "QE_FAM_SUPERIOR",
+    "QE_TRABALHO",
+    "QE_ACAO_AFIRM_BIN",
+    "QE_TIPO_EM_BIN",
+    "TP_SEXO",
+    "CO_TURNO_V",
+    "CO_TURNO_N",
+    "CO_TURNO_I"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": [
+    0
+   ],
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + QE_ESC_PAI + QE_FAM_SUPERIOR + QE_TRABALHO + QE_ACAO_AFIRM_BIN + QE_TIPO_EM_BIN + TP_SEXO + CO_TURNO_V + CO_TURNO_N + CO_TURNO_I",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.6463,
+    "r2_adj": 0.6272,
+    "aic": 1380.29,
+    "bic": 1425.27,
+    "n_obs": 235,
+    "f_stat": 33.8056,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": 4.793349149916498,
+     "erro_padrao": 6.254212050046611,
+     "t_stat": 0.7664193525195191,
+     "p_valor": 0.4442410174030089,
+     "ic_inf_95": -7.531872789012269,
+     "ic_sup_95": 17.118571088845265,
+     "erro_padrao_robusto": 6.215256967502719,
+     "p_valor_robusto": 0.44057476113216354
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 3.4814371862025033,
+     "erro_padrao": 0.7782767070244735,
+     "t_stat": 4.473264013660153,
+     "p_valor": 1.2299249626354339e-05,
+     "ic_inf_95": 1.9476815240637713,
+     "ic_sup_95": 5.015192848341235,
+     "erro_padrao_robusto": 0.8961011920113562,
+     "p_valor_robusto": 0.00010229038661525763
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 1.1080675563377549,
+     "erro_padrao": 1.3995387245257593,
+     "t_stat": 0.7917376896543031,
+     "p_valor": 0.42935878002458067,
+     "ic_inf_95": -1.6500137581224281,
+     "ic_sup_95": 3.8661488707979377,
+     "erro_padrao_robusto": 1.476822987030493,
+     "p_valor_robusto": 0.45307107879772945
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 5.558493919773935,
+     "erro_padrao": 0.9184353536985554,
+     "t_stat": 6.052134096743751,
+     "p_valor": 6.022633008864866e-09,
+     "ic_inf_95": 3.7485265761164914,
+     "ic_sup_95": 7.368461263431378,
+     "erro_padrao_robusto": 1.0182751821022373,
+     "p_valor_robusto": 4.7954006723429673e-08
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coeficiente": 1.1660815484580556,
+     "erro_padrao": 1.3867845831260928,
+     "t_stat": 0.8408526909272903,
+     "p_valor": 0.40133521601371924,
+     "ic_inf_95": -1.5668650852248427,
+     "ic_sup_95": 3.899028182140954,
+     "erro_padrao_robusto": 1.3284590175611,
+     "p_valor_robusto": 0.3800685166793425
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coeficiente": -1.9157060554065748,
+     "erro_padrao": 3.486367448925487,
+     "t_stat": -0.54948483872433,
+     "p_valor": 0.5832250845331076,
+     "ic_inf_95": -8.786316169808321,
+     "ic_sup_95": 4.954904058995172,
+     "erro_padrao_robusto": 3.093546228005469,
+     "p_valor_robusto": 0.5357458109677355
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coeficiente": 0.46989878200152874,
+     "erro_padrao": 0.638813653191731,
+     "t_stat": 0.735580367848674,
+     "p_valor": 0.46276254371347286,
+     "ic_inf_95": -0.7890160085750517,
+     "ic_sup_95": 1.7288135725781093,
+     "erro_padrao_robusto": 0.6644848328537972,
+     "p_valor_robusto": 0.4794654749053605
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coeficiente": 5.842847925241177,
+     "erro_padrao": 2.4871486337962843,
+     "t_stat": 2.3492154211639886,
+     "p_valor": 0.019690893366395065,
+     "ic_inf_95": 0.9414057193578298,
+     "ic_sup_95": 10.744290131124524,
+     "erro_padrao_robusto": 2.9330379741885237,
+     "p_valor_robusto": 0.046362219730645755
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coeficiente": 4.458792483571355,
+     "erro_padrao": 2.3077713321827233,
+     "t_stat": 1.9320772475989487,
+     "p_valor": 0.05462262282838652,
+     "ic_inf_95": -0.08914954746953097,
+     "ic_sup_95": 9.00673451461224,
+     "erro_padrao_robusto": 2.3499719047309062,
+     "p_valor_robusto": 0.05777764667752648
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coeficiente": -5.560460003191983,
+     "erro_padrao": 3.453202681215058,
+     "t_stat": -1.6102327365376239,
+     "p_valor": 0.10876800510094446,
+     "ic_inf_95": -12.365712064602704,
+     "ic_sup_95": 1.2447920582187386,
+     "erro_padrao_robusto": 3.6840238030822934,
+     "p_valor_robusto": 0.1312108418395884
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coeficiente": 1.0553873768671302,
+     "erro_padrao": 1.3523713291220079,
+     "t_stat": 0.7803976275896896,
+     "p_valor": 0.4359881549681332,
+     "ic_inf_95": -1.6097408026528786,
+     "ic_sup_95": 3.720515556387139,
+     "erro_padrao_robusto": 1.5966923676375135,
+     "p_valor_robusto": 0.5086228681132788
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coeficiente": 0.33738240569713573,
+     "erro_padrao": 0.9113532885230923,
+     "t_stat": 0.3701993617029528,
+     "p_valor": 0.7115868975390119,
+     "ic_inf_95": -1.4586282597448814,
+     "ic_sup_95": 2.133393071139153,
+     "erro_padrao_robusto": 0.9913975567894174,
+     "p_valor_robusto": 0.7336231607571869
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coeficiente": 0.3618389606518866,
+     "erro_padrao": 1.0522103620017385,
+     "t_stat": 0.3438846201471724,
+     "p_valor": 0.7312585446597123,
+     "ic_inf_95": -1.7117597811776863,
+     "ic_sup_95": 2.4354377024814595,
+     "erro_padrao_robusto": 1.0429905847393819,
+     "p_valor_robusto": 0.7286480591392125
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": 4.793349149916498,
+     "ep_wls": 6.254212050046611,
+     "p_wls": 0.4442410174030089,
+     "coef_wls_robust": 4.793349149916498,
+     "ep_wls_robust": 6.215256967502719,
+     "p_wls_robust": 0.44057476113216354,
+     "coef_ols": 6.69587083381552,
+     "ep_ols": 6.15571705390893,
+     "p_ols": 0.27788575722799946,
+     "coef_ols_robust": 6.69587083381552,
+     "ep_ols_robust": 6.008865476265829,
+     "p_ols_robust": 0.26513680155558306,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 3.4814371862025033,
+     "ep_wls": 0.7782767070244735,
+     "p_wls": 1.2299249626354339e-05,
+     "coef_wls_robust": 3.4814371862025033,
+     "ep_wls_robust": 0.8961011920113562,
+     "p_wls_robust": 0.00010229038661525763,
+     "coef_ols": 3.4870387563549117,
+     "ep_ols": 0.7450547798280106,
+     "p_ols": 4.9835287634618465e-06,
+     "coef_ols_robust": 3.4870387563549117,
+     "ep_ols_robust": 0.8801373889301604,
+     "p_ols_robust": 7.434774421346525e-05,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 1.1080675563377549,
+     "ep_wls": 1.3995387245257593,
+     "p_wls": 0.42935878002458067,
+     "coef_wls_robust": 1.1080675563377549,
+     "ep_wls_robust": 1.476822987030493,
+     "p_wls_robust": 0.45307107879772945,
+     "coef_ols": 1.8506481431706,
+     "ep_ols": 1.238393400878517,
+     "p_ols": 0.13649258668671377,
+     "coef_ols_robust": 1.8506481431706,
+     "ep_ols_robust": 1.606162493529951,
+     "p_ols_robust": 0.24923180791152044,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 5.558493919773935,
+     "ep_wls": 0.9184353536985554,
+     "p_wls": 6.022633008864866e-09,
+     "coef_wls_robust": 5.558493919773935,
+     "ep_wls_robust": 1.0182751821022373,
+     "p_wls_robust": 4.7954006723429673e-08,
+     "coef_ols": 5.564237445341213,
+     "ep_ols": 0.9353847225636686,
+     "p_ols": 1.0423155772801122e-08,
+     "coef_ols_robust": 5.564237445341213,
+     "ep_ols_robust": 1.0422308666315747,
+     "p_ols_robust": 9.357601861167368e-08,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coef_wls": 1.1660815484580556,
+     "ep_wls": 1.3867845831260928,
+     "p_wls": 0.40133521601371924,
+     "coef_wls_robust": 1.1660815484580556,
+     "ep_wls_robust": 1.3284590175611,
+     "p_wls_robust": 0.3800685166793425,
+     "coef_ols": 0.2477299934206849,
+     "ep_ols": 1.1989219654313388,
+     "p_ols": 0.8364903336941113,
+     "coef_ols_robust": 0.2477299934206849,
+     "ep_ols_robust": 1.5496076373279126,
+     "p_ols_robust": 0.8729864191330559,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coef_wls": -1.9157060554065748,
+     "ep_wls": 3.486367448925487,
+     "p_wls": 0.5832250845331076,
+     "coef_wls_robust": -1.9157060554065748,
+     "ep_wls_robust": 3.093546228005469,
+     "p_wls_robust": 0.5357458109677355,
+     "coef_ols": -4.722892001396761,
+     "ep_ols": 2.93550636974068,
+     "p_ols": 0.10906261877654726,
+     "coef_ols_robust": -4.722892001396761,
+     "ep_ols_robust": 3.416376226908603,
+     "p_ols_robust": 0.16684051711459624,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coef_wls": 0.46989878200152874,
+     "ep_wls": 0.638813653191731,
+     "p_wls": 0.46276254371347286,
+     "coef_wls_robust": 0.46989878200152874,
+     "ep_wls_robust": 0.6644848328537972,
+     "p_wls_robust": 0.4794654749053605,
+     "coef_ols": 0.6588034669406849,
+     "ep_ols": 0.6271413702763466,
+     "p_ols": 0.29463672645955025,
+     "coef_ols_robust": 0.6588034669406849,
+     "ep_ols_robust": 0.7126894218707233,
+     "p_ols_robust": 0.35528293982775716,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coef_wls": 5.842847925241177,
+     "ep_wls": 2.4871486337962843,
+     "p_wls": 0.019690893366395065,
+     "coef_wls_robust": 5.842847925241177,
+     "ep_wls_robust": 2.9330379741885237,
+     "p_wls_robust": 0.046362219730645755,
+     "coef_ols": 4.896457784833088,
+     "ep_ols": 2.3689133568776715,
+     "p_ols": 0.03989737512955025,
+     "coef_ols_robust": 4.896457784833088,
+     "ep_ols_robust": 3.134127052584811,
+     "p_ols_robust": 0.11821649879117084,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coef_wls": 4.458792483571355,
+     "ep_wls": 2.3077713321827233,
+     "p_wls": 0.05462262282838652,
+     "coef_wls_robust": 4.458792483571355,
+     "ep_wls_robust": 2.3499719047309062,
+     "p_wls_robust": 0.05777764667752648,
+     "coef_ols": 5.299901805696439,
+     "ep_ols": 2.4194153978050763,
+     "p_ols": 0.029523685445701782,
+     "coef_ols_robust": 5.299901805696439,
+     "ep_ols_robust": 2.9267638271382146,
+     "p_ols_robust": 0.07016558033794916,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coef_wls": -5.560460003191983,
+     "ep_wls": 3.453202681215058,
+     "p_wls": 0.10876800510094446,
+     "coef_wls_robust": -5.560460003191983,
+     "ep_wls_robust": 3.6840238030822934,
+     "p_wls_robust": 0.1312108418395884,
+     "coef_ols": -5.464617207764491,
+     "ep_ols": 3.275158141131141,
+     "p_ols": 0.09662527667442264,
+     "coef_ols_robust": -5.464617207764491,
+     "ep_ols_robust": 3.449863085358575,
+     "p_ols_robust": 0.11319147104269077,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coef_wls": 1.0553873768671302,
+     "ep_wls": 1.3523713291220079,
+     "p_wls": 0.4359881549681332,
+     "coef_wls_robust": 1.0553873768671302,
+     "ep_wls_robust": 1.5966923676375135,
+     "p_wls_robust": 0.5086228681132788,
+     "coef_ols": 2.190195184564721,
+     "ep_ols": 1.748313790984954,
+     "p_ols": 0.2116157069462478,
+     "coef_ols_robust": 2.190195184564721,
+     "ep_ols_robust": 1.9561702089301027,
+     "p_ols_robust": 0.2628696497717238,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coef_wls": 0.33738240569713573,
+     "ep_wls": 0.9113532885230923,
+     "p_wls": 0.7115868975390119,
+     "coef_wls_robust": 0.33738240569713573,
+     "ep_wls_robust": 0.9913975567894174,
+     "p_wls_robust": 0.7336231607571869,
+     "coef_ols": 0.18141808870961917,
+     "ep_ols": 1.02217251156237,
+     "p_ols": 0.8592909672965249,
+     "coef_ols_robust": 0.18141808870961917,
+     "ep_ols_robust": 0.9649182753624098,
+     "p_ols_robust": 0.8508657219050879,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coef_wls": 0.3618389606518866,
+     "ep_wls": 1.0522103620017385,
+     "p_wls": 0.7312585446597123,
+     "coef_wls_robust": 0.3618389606518866,
+     "ep_wls_robust": 1.0429905847393819,
+     "p_wls_robust": 0.7286480591392125,
+     "coef_ols": 0.020820857090601996,
+     "ep_ols": 1.1075671675715864,
+     "p_ols": 0.9850185506992288,
+     "coef_ols_robust": 0.020820857090601996,
+     "ep_ols_robust": 1.0386777152530016,
+     "p_ols_robust": 0.9840070431091977,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 3.684,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 3.346,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.43,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "vif": 4.377,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "vif": 1.856,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "vif": 1.991,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "vif": 1.347,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "vif": 2.303,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_SEXO",
+     "vif": 1.119,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "vif": 1.408,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "vif": 2.927,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "vif": 3.127,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.989666,
+    "shapiro_pvalue": 0.09161,
+    "shapiro_normal": true,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 235,
+    "bp_stat": 10.736896,
+    "bp_pvalue": 0.551591,
+    "bp_homocedastic": true
+   },
+   "diagnostics_ols": {
+    "bp_stat": 21.803041,
+    "bp_pvalue": 0.039787,
+    "bp_homocedastic": false,
+    "spearman_rho": -0.220913,
+    "spearman_pvalue": 0.000648,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.3312141820735857
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 1.749214008988239
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "shap_mean_abs": 0.743225480480421
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "shap_mean_abs": 0.6462448550691804
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "shap_mean_abs": 0.5030453201781679
+    },
+    {
+     "variavel": "TP_SEXO",
+     "shap_mean_abs": 0.39571026412881405
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.3798655346919417
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "shap_mean_abs": 0.25217586818985477
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "shap_mean_abs": 0.20955252911274333
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "shap_mean_abs": 0.1655686202036475
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "shap_mean_abs": 0.15453306823815768
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "shap_mean_abs": 0.11919323951076291
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "0a4f22329f5cd0b6388456f7aee10166625f4b8f869d193fed8642efa0caf8ea",
+  "n_cursos_base": 235,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "10_ies_privada": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO",
+    "QE_ESC_PAI",
+    "QE_FAM_SUPERIOR",
+    "QE_TRABALHO",
+    "QE_ACAO_AFIRM_BIN",
+    "QE_TIPO_EM_BIN",
+    "TP_SEXO",
+    "CO_TURNO_V",
+    "CO_TURNO_N",
+    "CO_TURNO_I"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": [
+    1
+   ],
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + QE_ESC_PAI + QE_FAM_SUPERIOR + QE_TRABALHO + QE_ACAO_AFIRM_BIN + QE_TIPO_EM_BIN + TP_SEXO + CO_TURNO_V + CO_TURNO_N + CO_TURNO_I",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.3296,
+    "r2_adj": 0.312,
+    "aic": 2969.36,
+    "bic": 3023.34,
+    "n_obs": 470,
+    "f_stat": 18.724,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": 5.767601993321681,
+     "erro_padrao": 5.6019369747012595,
+     "t_stat": 1.029572810149164,
+     "p_valor": 0.30375517449965966,
+     "ic_inf_95": -5.2411480401150685,
+     "ic_sup_95": 16.77635202675843,
+     "erro_padrao_robusto": 6.397076987045375,
+     "p_valor_robusto": 0.3672696085163156
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 2.5832212994973585,
+     "erro_padrao": 0.5555778815487896,
+     "t_stat": 4.649611486145,
+     "p_valor": 4.359051914778027e-06,
+     "ic_inf_95": 1.4914171521643511,
+     "ic_sup_95": 3.675025446830366,
+     "erro_padrao_robusto": 0.6892042845637972,
+     "p_valor_robusto": 0.00017816404875217227
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": -0.16432522651279552,
+     "erro_padrao": 0.9976725225834798,
+     "t_stat": -0.16470858201774888,
+     "p_valor": 0.869246188814088,
+     "ic_inf_95": -2.1249198326196446,
+     "ic_sup_95": 1.7962693795940536,
+     "erro_padrao_robusto": 1.0840094384701473,
+     "p_valor_robusto": 0.8795101495657971
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 2.860072061663322,
+     "erro_padrao": 0.8188752037491825,
+     "t_stat": 3.492683681919557,
+     "p_valor": 0.0005247112397470385,
+     "ic_inf_95": 1.2508443128746847,
+     "ic_sup_95": 4.469299810451959,
+     "erro_padrao_robusto": 0.9447391968842918,
+     "p_valor_robusto": 0.002466944252416021
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coeficiente": -1.2394545581601315,
+     "erro_padrao": 1.0066913847937577,
+     "t_stat": -1.2312160180193261,
+     "p_valor": 0.21887531424365292,
+     "ic_inf_95": -3.217772748110809,
+     "ic_sup_95": 0.7388636317905457,
+     "erro_padrao_robusto": 1.1229392708446417,
+     "p_valor_robusto": 0.2696976050483887
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coeficiente": -0.010391525475613062,
+     "erro_padrao": 2.4844794626967053,
+     "t_stat": -0.004182576524232519,
+     "p_valor": 0.9966646216213211,
+     "ic_inf_95": -4.892812283073274,
+     "ic_sup_95": 4.872029232122047,
+     "erro_padrao_robusto": 2.6310744157275225,
+     "p_valor_robusto": 0.9968487336826914
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coeficiente": 1.6433874917153508,
+     "erro_padrao": 0.5534187813223247,
+     "t_stat": 2.969518829463436,
+     "p_valor": 0.0031396023063240764,
+     "ic_inf_95": 0.5558263401171457,
+     "ic_sup_95": 2.730948643313556,
+     "erro_padrao_robusto": 0.7103193366144449,
+     "p_valor_robusto": 0.020690239926506385
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coeficiente": 14.653607497299072,
+     "erro_padrao": 1.850955448109217,
+     "t_stat": 7.91678022951227,
+     "p_valor": 1.864094472312998e-14,
+     "ic_inf_95": 11.016168171707779,
+     "ic_sup_95": 18.291046822890365,
+     "erro_padrao_robusto": 2.053150194547622,
+     "p_valor_robusto": 9.529712633567903e-13
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coeficiente": 6.692813615985129,
+     "erro_padrao": 1.6838866510061972,
+     "t_stat": 3.9746224082160606,
+     "p_valor": 8.190618412858485e-05,
+     "ic_inf_95": 3.383692626355156,
+     "ic_sup_95": 10.001934605615102,
+     "erro_padrao_robusto": 2.117788242154707,
+     "p_valor_robusto": 0.0015761508631046775
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coeficiente": 5.459168853031484,
+     "erro_padrao": 3.530992322657485,
+     "t_stat": 1.54607213898523,
+     "p_valor": 0.12277932410836566,
+     "ic_inf_95": -1.4798260027957637,
+     "ic_sup_95": 12.398163708858732,
+     "erro_padrao_robusto": 3.6521631218655806,
+     "p_valor_robusto": 0.13497269241717552
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coeficiente": 1.8668987157065327,
+     "erro_padrao": 2.759202458756968,
+     "t_stat": 0.676608093683556,
+     "p_valor": 0.4989969472557998,
+     "ic_inf_95": -3.555399017609075,
+     "ic_sup_95": 7.289196449022141,
+     "erro_padrao_robusto": 3.3252292110487414,
+     "p_valor_robusto": 0.5745013057569996
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coeficiente": 4.11179742931971,
+     "erro_padrao": 1.5014250470934738,
+     "t_stat": 2.7385965335262736,
+     "p_valor": 0.006411286223798044,
+     "ic_inf_95": 1.1612442345875427,
+     "ic_sup_95": 7.062350624051877,
+     "erro_padrao_robusto": 1.944958786494099,
+     "p_valor_robusto": 0.03450848083011665
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coeficiente": 1.1213865323201146,
+     "erro_padrao": 1.228220735585272,
+     "t_stat": 0.9130170984987901,
+     "p_valor": 0.3617149542992446,
+     "ic_inf_95": -1.2922741577241765,
+     "ic_sup_95": 3.5350472223644056,
+     "erro_padrao_robusto": 1.5551898340818846,
+     "p_valor_robusto": 0.4708720657146842
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": 5.767601993321681,
+     "ep_wls": 5.6019369747012595,
+     "p_wls": 0.30375517449965966,
+     "coef_wls_robust": 5.767601993321681,
+     "ep_wls_robust": 6.397076987045375,
+     "p_wls_robust": 0.3672696085163156,
+     "coef_ols": 12.240728569960847,
+     "ep_ols": 4.920016531376262,
+     "p_ols": 0.013203719805651028,
+     "coef_ols_robust": 12.240728569960847,
+     "ep_ols_robust": 5.393861015635131,
+     "p_ols_robust": 0.023245134329160328,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 2.5832212994973585,
+     "ep_wls": 0.5555778815487896,
+     "p_wls": 4.359051914778027e-06,
+     "coef_wls_robust": 2.5832212994973585,
+     "ep_wls_robust": 0.6892042845637972,
+     "p_wls_robust": 0.00017816404875217227,
+     "coef_ols": 2.399246880505986,
+     "ep_ols": 0.5218987342981138,
+     "p_ols": 5.5507517482081695e-06,
+     "coef_ols_robust": 2.399246880505986,
+     "ep_ols_robust": 0.5451987570869625,
+     "p_ols_robust": 1.0791069501457392e-05,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": -0.16432522651279552,
+     "ep_wls": 0.9976725225834798,
+     "p_wls": 0.869246188814088,
+     "coef_wls_robust": -0.16432522651279552,
+     "ep_wls_robust": 1.0840094384701473,
+     "p_wls_robust": 0.8795101495657971,
+     "coef_ols": -1.0921272658569503,
+     "ep_ols": 0.8189527882769936,
+     "p_ols": 0.18301054741824832,
+     "coef_ols_robust": -1.0921272658569503,
+     "ep_ols_robust": 0.9181081405111147,
+     "p_ols_robust": 0.23422685129769638,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 2.860072061663322,
+     "ep_wls": 0.8188752037491825,
+     "p_wls": 0.0005247112397470385,
+     "coef_wls_robust": 2.860072061663322,
+     "ep_wls_robust": 0.9447391968842918,
+     "p_wls_robust": 0.002466944252416021,
+     "coef_ols": 2.4710897135258922,
+     "ep_ols": 0.7239405092865918,
+     "p_ols": 0.000698732538086756,
+     "coef_ols_robust": 2.4710897135258922,
+     "ep_ols_robust": 0.7901229064993903,
+     "p_ols_robust": 0.0017631475601855105,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coef_wls": -1.2394545581601315,
+     "ep_wls": 1.0066913847937577,
+     "p_wls": 0.21887531424365292,
+     "coef_wls_robust": -1.2394545581601315,
+     "ep_wls_robust": 1.1229392708446417,
+     "p_wls_robust": 0.2696976050483887,
+     "coef_ols": -0.7341417459913602,
+     "ep_ols": 0.8203505147889067,
+     "p_ols": 0.37130507089221576,
+     "coef_ols_robust": -0.7341417459913602,
+     "ep_ols_robust": 0.9525955093457041,
+     "p_ols_robust": 0.4408994682194486,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coef_wls": -0.010391525475613062,
+     "ep_wls": 2.4844794626967053,
+     "p_wls": 0.9966646216213211,
+     "coef_wls_robust": -0.010391525475613062,
+     "ep_wls_robust": 2.6310744157275225,
+     "p_wls_robust": 0.9968487336826914,
+     "coef_ols": 1.302693599677162,
+     "ep_ols": 2.007015438128904,
+     "p_ols": 0.5166191539246603,
+     "coef_ols_robust": 1.302693599677162,
+     "ep_ols_robust": 2.056669354017049,
+     "p_ols_robust": 0.5264727091692547,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coef_wls": 1.6433874917153508,
+     "ep_wls": 0.5534187813223247,
+     "p_wls": 0.0031396023063240764,
+     "coef_wls_robust": 1.6433874917153508,
+     "ep_wls_robust": 0.7103193366144449,
+     "p_wls_robust": 0.020690239926506385,
+     "coef_ols": 0.49711362963953454,
+     "ep_ols": 0.49994962591624187,
+     "p_ols": 0.32058966028767955,
+     "coef_ols_robust": 0.49711362963953454,
+     "ep_ols_robust": 0.5439736103392813,
+     "p_ols_robust": 0.36079243709499964,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coef_wls": 14.653607497299072,
+     "ep_wls": 1.850955448109217,
+     "p_wls": 1.864094472312998e-14,
+     "coef_wls_robust": 14.653607497299072,
+     "ep_wls_robust": 2.053150194547622,
+     "p_wls_robust": 9.529712633567903e-13,
+     "coef_ols": 8.771958061426385,
+     "ep_ols": 1.7486865424281424,
+     "p_ols": 7.553963333585835e-07,
+     "coef_ols_robust": 8.771958061426385,
+     "ep_ols_robust": 2.047649521266614,
+     "p_ols_robust": 1.836324608908856e-05,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coef_wls": 6.692813615985129,
+     "ep_wls": 1.6838866510061972,
+     "p_wls": 8.190618412858485e-05,
+     "coef_wls_robust": 6.692813615985129,
+     "ep_wls_robust": 2.117788242154707,
+     "p_wls_robust": 0.0015761508631046775,
+     "coef_ols": 6.787459471366429,
+     "ep_ols": 1.656677175029404,
+     "p_ols": 4.951011192865502e-05,
+     "coef_ols_robust": 6.787459471366429,
+     "ep_ols_robust": 1.8363428196512084,
+     "p_ols_robust": 0.0002188650698973908,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coef_wls": 5.459168853031484,
+     "ep_wls": 3.530992322657485,
+     "p_wls": 0.12277932410836566,
+     "coef_wls_robust": 5.459168853031484,
+     "ep_wls_robust": 3.6521631218655806,
+     "p_wls_robust": 0.13497269241717552,
+     "coef_ols": 7.564411375312728,
+     "ep_ols": 3.2409574342324383,
+     "p_ols": 0.020028006926649917,
+     "coef_ols_robust": 7.564411375312728,
+     "ep_ols_robust": 3.534282000386929,
+     "p_ols_robust": 0.03233081312552746,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coef_wls": 1.8668987157065327,
+     "ep_wls": 2.759202458756968,
+     "p_wls": 0.4989969472557998,
+     "coef_wls_robust": 1.8668987157065327,
+     "ep_wls_robust": 3.3252292110487414,
+     "p_wls_robust": 0.5745013057569996,
+     "coef_ols": 1.0042193716184094,
+     "ep_ols": 3.6117460367215783,
+     "p_ols": 0.781105381570601,
+     "coef_ols_robust": 1.0042193716184094,
+     "ep_ols_robust": 2.4286780454300785,
+     "p_ols_robust": 0.6792520851964303,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coef_wls": 4.11179742931971,
+     "ep_wls": 1.5014250470934738,
+     "p_wls": 0.006411286223798044,
+     "coef_wls_robust": 4.11179742931971,
+     "ep_wls_robust": 1.944958786494099,
+     "p_wls_robust": 0.03450848083011665,
+     "coef_ols": 4.066014431644268,
+     "ep_ols": 1.8722954053631427,
+     "p_ols": 0.030393948835072994,
+     "coef_ols_robust": 4.066014431644268,
+     "ep_ols_robust": 2.3730870815382903,
+     "p_ols_robust": 0.08664153085078515,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coef_wls": 1.1213865323201146,
+     "ep_wls": 1.228220735585272,
+     "p_wls": 0.3617149542992446,
+     "coef_wls_robust": 1.1213865323201146,
+     "ep_wls_robust": 1.5551898340818846,
+     "p_wls_robust": 0.4708720657146842,
+     "coef_ols": 2.0241017400477466,
+     "ep_ols": 1.4647309606168586,
+     "p_ols": 0.16767960403108942,
+     "coef_ols_robust": 2.0241017400477466,
+     "ep_ols_robust": 1.703873706041517,
+     "p_ols_robust": 0.23485658442265678,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 2.276,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 2.019,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.03,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "vif": 2.213,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "vif": 1.584,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "vif": 1.489,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "vif": 1.197,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "vif": 2.299,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_SEXO",
+     "vif": 1.067,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "vif": 1.172,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "vif": 2.129,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "vif": 2.579,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.997155,
+    "shapiro_pvalue": 0.594466,
+    "shapiro_normal": true,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 470,
+    "bp_stat": 24.991464,
+    "bp_pvalue": 0.014863,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 10.870475,
+    "bp_pvalue": 0.54005,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.115297,
+    "spearman_pvalue": 0.012375,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "shap_mean_abs": 1.7272298049173906
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 1.45682217410891
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "shap_mean_abs": 1.2668299884816647
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "shap_mean_abs": 0.8173589039796144
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 0.7546695818709284
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "shap_mean_abs": 0.43108228658154013
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "shap_mean_abs": 0.38148076200396586
+    },
+    {
+     "variavel": "TP_SEXO",
+     "shap_mean_abs": 0.33474052462065246
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "shap_mean_abs": 0.2387090502239626
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.054343229381191925
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "shap_mean_abs": 0.03418525056555794
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "shap_mean_abs": 0.0012464606272994264
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "e95cec4262f2002ce1e1e3409164e68512c8999b86382604ba6ae6c1f527074c",
+  "n_cursos_base": 470,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "11_completo_com_curso": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO",
+    "QE_ESC_PAI",
+    "QE_FAM_SUPERIOR",
+    "QE_TRABALHO",
+    "QE_ACAO_AFIRM_BIN",
+    "QE_TIPO_EM_BIN",
+    "TP_SEXO",
+    "TP_CATEGAD_BIN",
+    "CO_TURNO_V",
+    "CO_TURNO_N",
+    "CO_TURNO_I",
+    "CURSO_SI"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + QE_ESC_PAI + QE_FAM_SUPERIOR + QE_TRABALHO + QE_ACAO_AFIRM_BIN + QE_TIPO_EM_BIN + TP_SEXO + TP_CATEGAD_BIN + CO_TURNO_V + CO_TURNO_N + CO_TURNO_I + CURSO_SI",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.6898,
+    "r2_adj": 0.6835,
+    "aic": 4204.75,
+    "bic": 4273.13,
+    "n_obs": 705,
+    "f_stat": 109.6118,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -5.300484179457662,
+     "erro_padrao": 3.5848574713402264,
+     "t_stat": -1.4785759885388234,
+     "p_valor": 0.13971001480495612,
+     "ic_inf_95": -12.339021999434397,
+     "ic_sup_95": 1.7380536405190732,
+     "erro_padrao_robusto": 3.848985759359165,
+     "p_valor_robusto": 0.16847764708815693
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 3.680301008650709,
+     "erro_padrao": 0.4017598825407071,
+     "t_stat": 9.16044923494275,
+     "p_valor": 5.804413527425487e-19,
+     "ic_inf_95": 2.89148244322111,
+     "ic_sup_95": 4.469119574080308,
+     "erro_padrao_robusto": 0.483387004403663,
+     "p_valor_robusto": 2.6662590545544478e-14
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 1.0294870810907852,
+     "erro_padrao": 0.7295351092047847,
+     "t_stat": 1.4111549507369936,
+     "p_valor": 0.15864965006504367,
+     "ic_inf_95": -0.4028879849167981,
+     "ic_sup_95": 2.4618621470983686,
+     "erro_padrao_robusto": 0.7596127663763463,
+     "p_valor_robusto": 0.17532874569636103
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 5.048149292562271,
+     "erro_padrao": 0.5392942541202314,
+     "t_stat": 9.360658404932359,
+     "p_valor": 1.095043678427003e-19,
+     "ic_inf_95": 3.989294642393351,
+     "ic_sup_95": 6.107003942731191,
+     "erro_padrao_robusto": 0.626620683444048,
+     "p_valor_robusto": 7.873595747989501e-16
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coeficiente": 1.0051082176641766,
+     "erro_padrao": 0.7215532158022128,
+     "t_stat": 1.3929786405936966,
+     "p_valor": 0.16407486819950248,
+     "ic_inf_95": -0.4115951350219782,
+     "ic_sup_95": 2.4218115703503313,
+     "erro_padrao_robusto": 0.7310156607930156,
+     "p_valor_robusto": 0.1691476951139158
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coeficiente": -1.8244380585830628,
+     "erro_padrao": 1.829562138344109,
+     "t_stat": -0.9971992862917005,
+     "p_valor": 0.31901735951141214,
+     "ic_inf_95": -5.416614988261159,
+     "ic_sup_95": 1.7677388710950337,
+     "erro_padrao_robusto": 1.8475380007843516,
+     "p_valor_robusto": 0.3233990991882435
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coeficiente": -0.0009623864309351906,
+     "erro_padrao": 0.37611155742951485,
+     "t_stat": -0.0025587792024060483,
+     "p_valor": 0.9979591313898433,
+     "ic_inf_95": -0.7394228252802064,
+     "ic_sup_95": 0.7374980524183361,
+     "erro_padrao_robusto": 0.40770833937915707,
+     "p_valor_robusto": 0.9981166130600627
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coeficiente": 9.656868234223223,
+     "erro_padrao": 1.31215726355604,
+     "t_stat": 7.359535706910939,
+     "p_valor": 5.262379456899777e-13,
+     "ic_inf_95": 7.0805681723288405,
+     "ic_sup_95": 12.233168296117606,
+     "erro_padrao_robusto": 1.451154331406931,
+     "p_valor_robusto": 2.840494386838702e-11
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coeficiente": 2.445595988341808,
+     "erro_padrao": 1.1994828644046431,
+     "t_stat": 2.0388753027794744,
+     "p_valor": 0.041843096415948224,
+     "ic_inf_95": 0.09052174256718448,
+     "ic_sup_95": 4.800670234116431,
+     "erro_padrao_robusto": 1.315156207510458,
+     "p_valor_robusto": 0.06294951368707193
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coeficiente": 6.667650570292752,
+     "erro_padrao": 2.261140744493567,
+     "t_stat": 2.948799444055006,
+     "p_valor": 0.0032979578828263084,
+     "ic_inf_95": 2.2281087548525047,
+     "ic_sup_95": 11.107192385732999,
+     "erro_padrao_robusto": 2.686486093872245,
+     "p_valor_robusto": 0.013067565355974324
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "coeficiente": -3.818948365349793,
+     "erro_padrao": 0.4620242762069238,
+     "t_stat": -8.265687674903527,
+     "p_valor": 7.118503109015864e-16,
+     "ic_inf_95": -4.726090523114307,
+     "ic_sup_95": -2.911806207585279,
+     "erro_padrao_robusto": 0.5607496014829332,
+     "p_valor_robusto": 9.730448848262448e-12
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coeficiente": 1.8529539506742214,
+     "erro_padrao": 1.0775287797820918,
+     "t_stat": 1.7196329095255753,
+     "p_valor": 0.08594762945636206,
+     "ic_inf_95": -0.2626746703359788,
+     "ic_sup_95": 3.9685825716844216,
+     "erro_padrao_robusto": 1.3595864604037575,
+     "p_valor_robusto": 0.1729201577041093
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coeficiente": 1.3031723182868888,
+     "erro_padrao": 0.6787569432271561,
+     "t_stat": 1.919939576737063,
+     "p_valor": 0.05527751826385769,
+     "ic_inf_95": -0.02950449067144656,
+     "ic_sup_95": 2.6358491272452245,
+     "erro_padrao_robusto": 0.9319111857621638,
+     "p_valor_robusto": 0.1619969392916888
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coeficiente": -0.35630621382840993,
+     "erro_padrao": 0.7147353173863684,
+     "t_stat": -0.49851491196957254,
+     "p_valor": 0.6182800312510612,
+     "ic_inf_95": -1.759623250256156,
+     "ic_sup_95": 1.0470108225993362,
+     "erro_padrao_robusto": 0.887099751432017,
+     "p_valor_robusto": 0.6879394706356932
+    },
+    {
+     "variavel": "CURSO_SI",
+     "coeficiente": 4.840051908469957,
+     "erro_padrao": 0.35255705765966666,
+     "t_stat": 13.728421551390971,
+     "p_valor": 4.2810659168328594e-38,
+     "ic_inf_95": 4.147838562785795,
+     "ic_sup_95": 5.532265254154119,
+     "erro_padrao_robusto": 0.3818716499394756,
+     "p_valor_robusto": 8.182532119185314e-37
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -5.300484179457662,
+     "ep_wls": 3.5848574713402264,
+     "p_wls": 0.13971001480495612,
+     "coef_wls_robust": -5.300484179457662,
+     "ep_wls_robust": 3.848985759359165,
+     "p_wls_robust": 0.16847764708815693,
+     "coef_ols": 4.520983616861145,
+     "ep_ols": 3.3591342047222743,
+     "p_ols": 0.17878401837551744,
+     "coef_ols_robust": 4.520983616861145,
+     "ep_ols_robust": 3.7784217769426784,
+     "p_ols_robust": 0.2314909744794631,
+     "sinal_diverge": true,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 3.680301008650709,
+     "ep_wls": 0.4017598825407071,
+     "p_wls": 5.804413527425487e-19,
+     "coef_wls_robust": 3.680301008650709,
+     "ep_wls_robust": 0.483387004403663,
+     "p_wls_robust": 2.6662590545544478e-14,
+     "coef_ols": 3.2369942201974955,
+     "ep_ols": 0.3775750496673747,
+     "p_ols": 6.592803808121287e-17,
+     "coef_ols_robust": 3.2369942201974955,
+     "ep_ols_robust": 0.41459192690309205,
+     "p_ols_robust": 5.825791479423268e-15,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 1.0294870810907852,
+     "ep_wls": 0.7295351092047847,
+     "p_wls": 0.15864965006504367,
+     "coef_wls_robust": 1.0294870810907852,
+     "ep_wls_robust": 0.7596127663763463,
+     "p_wls_robust": 0.17532874569636103,
+     "coef_ols": 0.015526731372279648,
+     "ep_ols": 0.6146445264722763,
+     "p_ols": 0.9798538309132832,
+     "coef_ols_robust": 0.015526731372279648,
+     "ep_ols_robust": 0.7073031686317449,
+     "p_ols_robust": 0.9824862309752781,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 5.048149292562271,
+     "ep_wls": 0.5392942541202314,
+     "p_wls": 1.095043678427003e-19,
+     "coef_wls_robust": 5.048149292562271,
+     "ep_wls_robust": 0.626620683444048,
+     "p_wls_robust": 7.873595747989501e-16,
+     "coef_ols": 3.989246299974544,
+     "ep_ols": 0.5141333738403099,
+     "p_ols": 3.0841484931243826e-14,
+     "coef_ols_robust": 3.989246299974544,
+     "ep_ols_robust": 0.5709725060653444,
+     "p_ols_robust": 2.8131234158397195e-12,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "coef_wls": 1.0051082176641766,
+     "ep_wls": 0.7215532158022128,
+     "p_wls": 0.16407486819950248,
+     "coef_wls_robust": 1.0051082176641766,
+     "ep_wls_robust": 0.7310156607930156,
+     "p_wls_robust": 0.1691476951139158,
+     "coef_ols": 0.7749093280669159,
+     "ep_ols": 0.6056593984174132,
+     "p_ols": 0.20116961791657892,
+     "coef_ols_robust": 0.7749093280669159,
+     "ep_ols_robust": 0.7123457648565039,
+     "p_ols_robust": 0.2766712572366823,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "coef_wls": -1.8244380585830628,
+     "ep_wls": 1.829562138344109,
+     "p_wls": 0.31901735951141214,
+     "coef_wls_robust": -1.8244380585830628,
+     "ep_wls_robust": 1.8475380007843516,
+     "p_wls_robust": 0.3233990991882435,
+     "coef_ols": -0.9696416341487267,
+     "ep_ols": 1.50306764326918,
+     "p_ols": 0.519071344861462,
+     "coef_ols_robust": -0.9696416341487267,
+     "ep_ols_robust": 1.6004048550574055,
+     "p_ols_robust": 0.5445992793057696,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "coef_wls": -0.0009623864309351906,
+     "ep_wls": 0.37611155742951485,
+     "p_wls": 0.9979591313898433,
+     "coef_wls_robust": -0.0009623864309351906,
+     "ep_wls_robust": 0.40770833937915707,
+     "p_wls_robust": 0.9981166130600627,
+     "coef_ols": -0.3386749370226622,
+     "ep_ols": 0.3520790115410583,
+     "p_ols": 0.3364223475119342,
+     "coef_ols_robust": -0.3386749370226622,
+     "ep_ols_robust": 0.3894123425253129,
+     "p_ols_robust": 0.3844601291669355,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "coef_wls": 9.656868234223223,
+     "ep_wls": 1.31215726355604,
+     "p_wls": 5.262379456899777e-13,
+     "coef_wls_robust": 9.656868234223223,
+     "ep_wls_robust": 1.451154331406931,
+     "p_wls_robust": 2.840494386838702e-11,
+     "coef_ols": 7.031904139336945,
+     "ep_ols": 1.2478948091630613,
+     "p_ols": 2.5511918598675427e-08,
+     "coef_ols_robust": 7.031904139336945,
+     "ep_ols_robust": 1.459025980558628,
+     "p_ols_robust": 1.4385497364911231e-06,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "coef_wls": 2.445595988341808,
+     "ep_wls": 1.1994828644046431,
+     "p_wls": 0.041843096415948224,
+     "coef_wls_robust": 2.445595988341808,
+     "ep_wls_robust": 1.315156207510458,
+     "p_wls_robust": 0.06294951368707193,
+     "coef_ols": 4.428900304457982,
+     "ep_ols": 1.2184079958458334,
+     "p_ols": 0.000298662656346239,
+     "coef_ols_robust": 4.428900304457982,
+     "ep_ols_robust": 1.3640815142165506,
+     "p_ols_robust": 0.0011671023964480564,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "TP_SEXO",
+     "coef_wls": 6.667650570292752,
+     "ep_wls": 2.261140744493567,
+     "p_wls": 0.0032979578828263084,
+     "coef_wls_robust": 6.667650570292752,
+     "ep_wls_robust": 2.686486093872245,
+     "p_wls_robust": 0.013067565355974324,
+     "coef_ols": 6.795481233028896,
+     "ep_ols": 2.1492088855156366,
+     "p_ols": 0.0016363487949200152,
+     "coef_ols_robust": 6.795481233028896,
+     "ep_ols_robust": 2.467375654507431,
+     "p_ols_robust": 0.00588478106141594,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "coef_wls": -3.818948365349793,
+     "ep_wls": 0.4620242762069238,
+     "p_wls": 7.118503109015864e-16,
+     "coef_wls_robust": -3.818948365349793,
+     "ep_wls_robust": 0.5607496014829332,
+     "p_wls_robust": 9.730448848262448e-12,
+     "coef_ols": -3.256186219378964,
+     "ep_ols": 0.5055463890957371,
+     "p_ols": 2.226364897598101e-10,
+     "coef_ols_robust": -3.256186219378964,
+     "ep_ols_robust": 0.5475029060539688,
+     "p_ols_robust": 2.725340739916282e-09,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "coef_wls": 1.8529539506742214,
+     "ep_wls": 1.0775287797820918,
+     "p_wls": 0.08594762945636206,
+     "coef_wls_robust": 1.8529539506742214,
+     "ep_wls_robust": 1.3595864604037575,
+     "p_wls_robust": 0.1729201577041093,
+     "coef_ols": 3.1064532526394295,
+     "ep_ols": 1.533505631241072,
+     "p_ols": 0.04317783795689591,
+     "coef_ols_robust": 3.1064532526394295,
+     "ep_ols_robust": 1.4096878457785775,
+     "p_ols_robust": 0.027549236079828704,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "coef_wls": 1.3031723182868888,
+     "ep_wls": 0.6787569432271561,
+     "p_wls": 0.05527751826385769,
+     "coef_wls_robust": 1.3031723182868888,
+     "ep_wls_robust": 0.9319111857621638,
+     "p_wls_robust": 0.1619969392916888,
+     "coef_ols": 1.5040949459866662,
+     "ep_ols": 0.8421555123776363,
+     "p_ols": 0.07453728722856671,
+     "coef_ols_robust": 1.5040949459866662,
+     "ep_ols_robust": 0.9208857907849483,
+     "p_ols_robust": 0.10240313555801728,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "coef_wls": -0.35630621382840993,
+     "ep_wls": 0.7147353173863684,
+     "p_wls": 0.6182800312510612,
+     "coef_wls_robust": -0.35630621382840993,
+     "ep_wls_robust": 0.887099751432017,
+     "p_wls_robust": 0.6879394706356932,
+     "coef_ols": -0.31411786056115554,
+     "ep_ols": 0.8338695748593913,
+     "p_ols": 0.7065130949660036,
+     "coef_ols_robust": -0.31411786056115554,
+     "ep_ols_robust": 0.8991992536501604,
+     "p_ols_robust": 0.7268410900386,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CURSO_SI",
+     "coef_wls": 4.840051908469957,
+     "ep_wls": 0.35255705765966666,
+     "p_wls": 4.2810659168328594e-38,
+     "coef_wls_robust": 4.840051908469957,
+     "ep_wls_robust": 0.3818716499394756,
+     "p_wls_robust": 8.182532119185314e-37,
+     "coef_ols": 5.0517085175998595,
+     "ep_ols": 0.3914192592737192,
+     "p_ols": 2.725456060462278e-34,
+     "coef_ols_robust": 5.0517085175998595,
+     "ep_ols_robust": 0.38455768648035127,
+     "p_ols_robust": 2.036546177040459e-39,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 2.469,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 2.297,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.218,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "vif": 2.646,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "vif": 1.654,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "vif": 1.729,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "vif": 1.409,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "vif": 2.196,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_SEXO",
+     "vif": 1.147,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "vif": 1.847,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "vif": 1.324,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "vif": 3.368,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "vif": 4.133,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CURSO_SI",
+     "vif": 1.235,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.994954,
+    "shapiro_pvalue": 0.020198,
+    "shapiro_normal": false,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 33.491813,
+    "bp_pvalue": 0.002446,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 15.022665,
+    "bp_pvalue": 0.376607,
+    "bp_homocedastic": true,
+    "spearman_rho": -0.15198,
+    "spearman_pvalue": 5.1e-05,
+    "erro_cai_com_tamanho": true
+   },
+   "shap_summary": [
+    {
+     "variavel": "CURSO_SI",
+     "shap_mean_abs": 2.4377001872123887
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.209089075326052
+    },
+    {
+     "variavel": "TP_CATEGAD_BIN",
+     "shap_mean_abs": 1.7927343222553793
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 1.5261940125945153
+    },
+    {
+     "variavel": "QE_ACAO_AFIRM_BIN",
+     "shap_mean_abs": 1.344956888464739
+    },
+    {
+     "variavel": "QE_TIPO_EM_BIN",
+     "shap_mean_abs": 0.44726810083979124
+    },
+    {
+     "variavel": "TP_SEXO",
+     "shap_mean_abs": 0.4469346635731448
+    },
+    {
+     "variavel": "CO_TURNO_N",
+     "shap_mean_abs": 0.441817855094735
+    },
+    {
+     "variavel": "QE_ESC_PAI",
+     "shap_mean_abs": 0.3800030433569528
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.3542079178767734
+    },
+    {
+     "variavel": "QE_FAM_SUPERIOR",
+     "shap_mean_abs": 0.21578566980387123
+    },
+    {
+     "variavel": "CO_TURNO_I",
+     "shap_mean_abs": 0.1498685019060196
+    },
+    {
+     "variavel": "CO_TURNO_V",
+     "shap_mean_abs": 0.1032812181481938
+    },
+    {
+     "variavel": "QE_TRABALHO",
+     "shap_mean_abs": 0.0005187134895893482
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "3f45d2ec47d067349c9fe756399faf3e696f036497de7633d87652b2e844a2cc",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ },
+ "12_principal_com_curso": {
+  "pedido": {
+   "y": "NT_GER",
+   "x_vars": [
+    "QE_RENDA",
+    "QE_ESC_MAE",
+    "QE_HORAS_ESTUDO",
+    "CURSO_SI"
+   ],
+   "interactions": [],
+   "grupos": null,
+   "ies_filter": null,
+   "min_alunos": null
+  },
+  "formula": "NT_GER ~ QE_RENDA + QE_ESC_MAE + QE_HORAS_ESTUDO + CURSO_SI",
+  "esperado": {
+   "model_metrics": {
+    "r2": 0.5334,
+    "r2_adj": 0.5308,
+    "aic": 4472.57,
+    "bic": 4495.36,
+    "n_obs": 705,
+    "f_stat": 200.0907,
+    "f_pvalue": 0.0
+   },
+   "coef_table": [
+    {
+     "variavel": "Intercept",
+     "coeficiente": -15.77038609887533,
+     "erro_padrao": 2.426266457983319,
+     "t_stat": -6.499857444340004,
+     "p_valor": 1.5276376313975095e-10,
+     "ic_inf_95": -20.53401748460618,
+     "ic_sup_95": -11.00675471314448,
+     "erro_padrao_robusto": 2.903912141247011,
+     "p_valor_robusto": 5.612146842860732e-08
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coeficiente": 3.4342881869467963,
+     "erro_padrao": 0.31764039790913395,
+     "t_stat": 10.81187471604046,
+     "p_valor": 2.652259655847807e-25,
+     "ic_inf_95": 2.8106461447146858,
+     "ic_sup_95": 4.057930229178907,
+     "erro_padrao_robusto": 0.3779605071026156,
+     "p_valor_robusto": 1.0240287381319727e-19
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coeficiente": 2.8880427148992496,
+     "erro_padrao": 0.6233109070292918,
+     "t_stat": 4.633390307035858,
+     "p_valor": 4.290181383030345e-06,
+     "ic_inf_95": 1.6642598158597606,
+     "ic_sup_95": 4.111825613938739,
+     "erro_padrao_robusto": 0.7213509031918558,
+     "p_valor_robusto": 6.237036573676822e-05
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coeficiente": 9.878629811797971,
+     "erro_padrao": 0.5556388091271877,
+     "t_stat": 17.778869383360007,
+     "p_valor": 1.2295885883770505e-58,
+     "ic_inf_95": 8.787711515672978,
+     "ic_sup_95": 10.969548107922964,
+     "erro_padrao_robusto": 0.668003720936866,
+     "p_valor_robusto": 1.7433800207155702e-49
+    },
+    {
+     "variavel": "CURSO_SI",
+     "coeficiente": 4.679093494220892,
+     "erro_padrao": 0.3921430610889656,
+     "t_stat": 11.9321083515471,
+     "p_valor": 5.2437634709197956e-30,
+     "ic_inf_95": 3.909175999234523,
+     "ic_sup_95": 5.4490109892072605,
+     "erro_padrao_robusto": 0.4495896993772965,
+     "p_valor_robusto": 2.292211059286221e-25
+    }
+   ],
+   "comparison_table": [
+    {
+     "variavel": "Intercept",
+     "coef_wls": -15.77038609887533,
+     "ep_wls": 2.426266457983319,
+     "p_wls": 1.5276376313975095e-10,
+     "coef_wls_robust": -15.77038609887533,
+     "ep_wls_robust": 2.903912141247011,
+     "p_wls_robust": 5.612146842860732e-08,
+     "coef_ols": -1.4433699662495862,
+     "ep_ols": 2.387135654671697,
+     "p_ols": 0.5456107426099894,
+     "coef_ols_robust": -1.4433699662495862,
+     "ep_ols_robust": 2.558171946374792,
+     "p_ols_robust": 0.5726048995254971,
+     "sinal_diverge": false,
+     "signif_diverge": true
+    },
+    {
+     "variavel": "QE_RENDA",
+     "coef_wls": 3.4342881869467963,
+     "ep_wls": 0.31764039790913395,
+     "p_wls": 2.652259655847807e-25,
+     "coef_wls_robust": 3.4342881869467963,
+     "ep_wls_robust": 0.3779605071026156,
+     "p_wls_robust": 1.0240287381319727e-19,
+     "coef_ols": 3.1131430563324445,
+     "ep_ols": 0.31035835841339365,
+     "p_ols": 3.243739118894799e-22,
+     "coef_ols_robust": 3.1131430563324445,
+     "ep_ols_robust": 0.32681843284473294,
+     "p_ols_robust": 1.6408451650343278e-21,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "coef_wls": 2.8880427148992496,
+     "ep_wls": 0.6233109070292918,
+     "p_wls": 4.290181383030345e-06,
+     "coef_wls_robust": 2.8880427148992496,
+     "ep_wls_robust": 0.7213509031918558,
+     "p_wls_robust": 6.237036573676822e-05,
+     "coef_ols": 1.809583577761637,
+     "ep_ols": 0.5285001641241267,
+     "p_ols": 0.0006530327699645833,
+     "coef_ols_robust": 1.809583577761637,
+     "ep_ols_robust": 0.5828868021868373,
+     "p_ols_robust": 0.001905882159528509,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "coef_wls": 9.878629811797971,
+     "ep_wls": 0.5556388091271877,
+     "p_wls": 1.2295885883770505e-58,
+     "coef_wls_robust": 9.878629811797971,
+     "ep_wls_robust": 0.668003720936866,
+     "p_wls_robust": 1.7433800207155702e-49,
+     "coef_ols": 6.691304811221936,
+     "ep_ols": 0.5380555028768843,
+     "p_ols": 3.198822011341059e-32,
+     "coef_ols_robust": 6.691304811221936,
+     "ep_ols_robust": 0.5803668460294835,
+     "p_ols_robust": 9.375138984269836e-31,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    },
+    {
+     "variavel": "CURSO_SI",
+     "coef_wls": 4.679093494220892,
+     "ep_wls": 0.3921430610889656,
+     "p_wls": 5.2437634709197956e-30,
+     "coef_wls_robust": 4.679093494220892,
+     "ep_wls_robust": 0.4495896993772965,
+     "p_wls_robust": 2.292211059286221e-25,
+     "coef_ols": 4.288903118080188,
+     "ep_ols": 0.4147057382033105,
+     "p_ols": 1.998138627405338e-23,
+     "coef_ols_robust": 4.288903118080188,
+     "ep_ols_robust": 0.4211674910967366,
+     "p_ols_robust": 2.3527685722602436e-24,
+     "sinal_diverge": false,
+     "signif_diverge": false
+    }
+   ],
+   "vif_table": [
+    {
+     "variavel": "QE_RENDA",
+     "vif": 1.294,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "vif": 1.317,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "vif": 1.034,
+     "alerta": "ok"
+    },
+    {
+     "variavel": "CURSO_SI",
+     "vif": 1.075,
+     "alerta": "ok"
+    }
+   ],
+   "residuals_diag": {
+    "shapiro_stat": 0.995715,
+    "shapiro_pvalue": 0.049409,
+    "shapiro_normal": false,
+    "shapiro_confiavel": true,
+    "shapiro_n_usado": 705,
+    "bp_stat": 40.749493,
+    "bp_pvalue": 0.0,
+    "bp_homocedastic": false
+   },
+   "diagnostics_ols": {
+    "bp_stat": 22.095397,
+    "bp_pvalue": 0.000192,
+    "bp_homocedastic": false,
+    "spearman_rho": -0.034529,
+    "spearman_pvalue": 0.359956,
+    "erro_cai_com_tamanho": false
+   },
+   "shap_summary": [
+    {
+     "variavel": "QE_HORAS_ESTUDO",
+     "shap_mean_abs": 2.986580783895818
+    },
+    {
+     "variavel": "CURSO_SI",
+     "shap_mean_abs": 2.356633214384737
+    },
+    {
+     "variavel": "QE_RENDA",
+     "shap_mean_abs": 2.061420654852071
+    },
+    {
+     "variavel": "QE_ESC_MAE",
+     "shap_mean_abs": 0.9936672500054782
+    }
+   ],
+   "medias_centragem": {}
+  },
+  "hash_base_sha256": "acec6a6d781236babbc5a29de5710f1a235559f1aac565d6f55727523a41a448",
+  "n_cursos_base": 705,
+  "versoes": {
+   "pandas": "3.0.3",
+   "numpy": "2.4.6",
+   "statsmodels": "0.14.6",
+   "scipy": "1.17.1",
+   "patsy": "1.0.2"
+  }
+ }
+}

@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from fpdf import FPDF
 
-_OUTPUT_DIR = Path(__file__).parent.parent / "outputs"
+# PDFs gerados em runtime ficam em local/outputs/ (pasta não versionada).
+_OUTPUT_DIR = Path(__file__).parent.parent / "local" / "outputs"
 
 # Fonte Unicode (2026-10-18 — ver DEVELOPMENT.md): a primeira candidata que
 # existir. A última é a DejaVu Sans que vem dentro do matplotlib (dependência
@@ -813,7 +814,7 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
         new_x="LMARGIN", new_y="NEXT")
     pdf.set_text_color(*_COR_TITULO)
 
-    _OUTPUT_DIR.mkdir(exist_ok=True)
+    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     output_path = _OUTPUT_DIR / filename
     pdf.output(str(output_path))
     return output_path

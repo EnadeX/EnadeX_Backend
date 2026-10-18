@@ -1,9 +1,9 @@
-# Saída em runtime (PDFs gerados pela aplicação/API)
-outputs/*.pdf
+# ── Pasta local, NÃO versionada ──────────────────────────────────────────────
+# Tudo que fica em local/ é ignorado (microdados brutos, PDFs gerados, material
+# do TCC, backups) — só o LEIA-ME.md que explica a pasta é versionado.
+local/*
+resultados/*
 
-# Configuração local do Claude Code e diário/instruções internas —
-# ver docs/E-XplainENADE/ para dados brutos, TCC, atas e demais materiais
-# não essenciais à execução (movidos para lá em 2026-08-30).
 CLAUDE.md
 DEVELOPMENT.md
 
@@ -14,7 +14,6 @@ __pycache__/
 .venv/
 venv/
 env/
-docs/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -22,5 +21,3 @@ docs/
 # OS
 .DS_Store
 Thumbs.db
-
-/dados
