@@ -5,7 +5,6 @@ Produz um relatório acessível para não-especialistas, com legendas,
 textos explicativos e linguagem clara em cada seção.
 """
 import io
-import platform
 import re
 from datetime import date
 from pathlib import Path
@@ -19,15 +18,29 @@ from fpdf import FPDF
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "outputs"
 
-# Fonte Unicode: Arial no Windows, Liberation Sans no Linux (Streamlit Cloud)
-if platform.system() == "Windows":
-    _FONT_REGULAR = Path("C:/Windows/Fonts/arial.ttf")
-    _FONT_BOLD    = Path("C:/Windows/Fonts/arialbd.ttf")
-else:
-    _FONT_REGULAR = Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf")
-    _FONT_BOLD    = Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf")
+# Fonte Unicode (2026-10-18 — ver DEVELOPMENT.md): a primeira candidata que
+# existir. A última é a DejaVu Sans que vem dentro do matplotlib (dependência
+# deste módulo), então há sempre uma fonte Unicode disponível, em qualquer
+# sistema e sem instalar nada. Antes, sem a Arial/Liberation no caminho fixo, o
+# módulo caía para a Helvetica, que não tem "↑", "×", "ρ"…, e o /relatorio
+# devolvia 500.
+_FONTES_CANDIDATAS = [
+    (Path("C:/Windows/Fonts/arial.ttf"), Path("C:/Windows/Fonts/arialbd.ttf")),
+    (Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),   # Debian/Ubuntu
+     Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf")),
+    (Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"),  # Debian/Ubuntu (v2)
+     Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf")),
+    (Path("/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf"),       # Fedora
+     Path("/usr/share/fonts/liberation-sans/LiberationSans-Bold.ttf")),
+    (Path(matplotlib.get_data_path()) / "fonts" / "ttf" / "DejaVuSans.ttf",
+     Path(matplotlib.get_data_path()) / "fonts" / "ttf" / "DejaVuSans-Bold.ttf"),
+]
+_FONT_REGULAR, _FONT_BOLD = next(
+    ((reg, bold) for reg, bold in _FONTES_CANDIDATAS if reg.exists() and bold.exists()),
+    (None, None),
+)
 
-_USE_UNICODE = _FONT_REGULAR.exists()
+_USE_UNICODE = _FONT_REGULAR is not None
 
 # Paleta de cores
 _COR_AZUL    = (41,  98, 168)
