@@ -1,6 +1,8 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import APIRouter, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from educluster.educluster_config import (
+    CORS_ORIGENS,
     DIMENSOES_ARQ4,
     ESPACOS_PERFIL_DESEMPENHO,
     K_MAXIMO,
@@ -43,15 +45,15 @@ from educluster.modelos.mdl_perfil_desempenho.modelo_perfil_desempenho import (
     amostrar_para_plotagem,
     aplicar_perfil,
     avaliar_perfil,
+    clusterizar_perfil_em_memoria,
+    modelo_treinado_para,
     perfilar_desempenho,
     preparar_dados_perfil_desempenho,
 )
 
-app = FastAPI(
-    title="EduCluster",
-    version="0.1.0",
-    description="Perfis academicos latentes no ENADE 2021. Modulo do ecossistema EnadeX.",
-)
+VERSAO = "0.2.0"
+
+router = APIRouter(prefix="/api/educluster")
 
 _cache_cursos = {}
 _cache_estudantes = {}
@@ -100,11 +102,14 @@ def obter_estudantes(origem: str, espaco: str):
     chave = (origem, espaco)
     if chave not in _cache_estudantes:
         base = preparar_dados_perfil_desempenho(origem, espaco)
-        _cache_estudantes[chave] = aplicar_perfil(base, espaco)
+        if modelo_treinado_para(espaco):
+            _cache_estudantes[chave] = aplicar_perfil(base, espaco)
+        else:
+            _cache_estudantes[chave] = clusterizar_perfil_em_memoria(base, espaco)
     return _cache_estudantes[chave]
 
 
-@app.get("/api/educluster/cursos", tags=["cursos"], summary="A6: colecao de cursos com cluster e coordenadas PCA")
+@router.get("/cursos", tags=["cursos"], summary="A6: colecao de cursos com cluster e coordenadas PCA")
 def educluster_cursos(
     origem: str = ORIGEM,
     n_minimo: int = N_MINIMO,
@@ -123,7 +128,7 @@ def educluster_cursos(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/clusters", tags=["cursos"], summary="A6: perfil de cada cluster e metricas de validacao")
+@router.get("/cursos/clusters", tags=["cursos"], summary="A6: perfil de cada cluster e metricas de validacao")
 def educluster_cursos_clusters(origem: str = ORIGEM, n_minimo: int = N_MINIMO, k: int = K_OPCIONAL):
     try:
         df = obter_cursos(origem, n_minimo, k)
@@ -136,7 +141,7 @@ def educluster_cursos_clusters(origem: str = ORIGEM, n_minimo: int = N_MINIMO, k
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/discrepantes", tags=["cursos"], summary="A7: cursos que destoam dos pares da propria area")
+@router.get("/cursos/discrepantes", tags=["cursos"], summary="A7: cursos que destoam dos pares da propria area")
 def educluster_cursos_discrepantes(
     origem: str = ORIGEM,
     n_minimo: int = N_MINIMO,
@@ -158,7 +163,7 @@ def educluster_cursos_discrepantes(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/clusters/estabilidade", tags=["cursos"], summary="Estabilidade dos clusters por reamostragem")
+@router.get("/cursos/clusters/estabilidade", tags=["cursos"], summary="Estabilidade dos clusters por reamostragem")
 def educluster_cursos_estabilidade(
     origem: str = ORIGEM,
     n_minimo: int = N_MINIMO,
@@ -180,7 +185,7 @@ def educluster_cursos_estabilidade(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/clusters/descricao", tags=["cursos"], summary="Descricao automatica dos perfis, gerada por IA no backend")
+@router.get("/cursos/clusters/descricao", tags=["cursos"], summary="Descricao automatica dos perfis, gerada por IA no backend")
 def educluster_cursos_descricao(
     origem: str = ORIGEM,
     n_minimo: int = N_MINIMO,
@@ -199,7 +204,7 @@ def educluster_cursos_descricao(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/dimensoes-desempenho", tags=["cursos"], summary="A8: qual dimensao percebida mais se associa ao desempenho")
+@router.get("/cursos/dimensoes-desempenho", tags=["cursos"], summary="A8: qual dimensao percebida mais se associa ao desempenho")
 def educluster_dimensoes_desempenho(
     origem: str = ORIGEM,
     n_minimo: int = N_MINIMO,
@@ -211,7 +216,7 @@ def educluster_dimensoes_desempenho(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/estudantes/calibracao", tags=["estudantes"], summary="A3: percepcao da prova versus desempenho real")
+@router.get("/estudantes/calibracao", tags=["estudantes"], summary="A3: percepcao da prova versus desempenho real")
 def educluster_estudantes_calibracao(origem: str = ORIGEM):
     try:
         df = obter_calibracao(origem)
@@ -224,7 +229,7 @@ def educluster_estudantes_calibracao(origem: str = ORIGEM):
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/estudantes/discursivas", tags=["estudantes"], summary="A4: desistencia versus erro conceitual nas discursivas")
+@router.get("/estudantes/discursivas", tags=["estudantes"], summary="A4: desistencia versus erro conceitual nas discursivas")
 def educluster_estudantes_discursivas(origem: str = ORIGEM):
     try:
         df = obter_discursiva(origem)
@@ -237,7 +242,7 @@ def educluster_estudantes_discursivas(origem: str = ORIGEM):
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/estudantes/clusters/descricao", tags=["estudantes"], summary="Descricao automatica dos perfis de desempenho")
+@router.get("/estudantes/clusters/descricao", tags=["estudantes"], summary="Descricao automatica dos perfis de desempenho")
 def educluster_estudantes_descricao(
     origem: str = ORIGEM,
     espaco: str = Query("objetivo_discursivo", pattern="^(trio|par|objetivo_discursivo)$"),
@@ -254,7 +259,7 @@ def educluster_estudantes_descricao(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/comparacao-tradicional", tags=["cursos"], summary="Fase 6: o artefato versus o ranking por nota media")
+@router.get("/cursos/comparacao-tradicional", tags=["cursos"], summary="Fase 6: o artefato versus o ranking por nota media")
 def educluster_comparacao_tradicional(
     origem: str = ORIGEM,
     n_minimo: int = N_MINIMO,
@@ -266,7 +271,7 @@ def educluster_comparacao_tradicional(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/cursos/{co_curso}", tags=["cursos"], summary="A6: detalhe de um curso")
+@router.get("/cursos/{co_curso}", tags=["cursos"], summary="A6: detalhe de um curso")
 def educluster_curso_detalhe(co_curso: int, origem: str = ORIGEM, n_minimo: int = N_MINIMO):
     try:
         df = obter_cursos(origem, n_minimo)
@@ -277,7 +282,7 @@ def educluster_curso_detalhe(co_curso: int, origem: str = ORIGEM, n_minimo: int 
     return df.loc[co_curso].to_dict()
 
 
-@app.get("/api/educluster/estudantes/clusters", tags=["estudantes"], summary="A1: perfil de cada cluster de desempenho")
+@router.get("/estudantes/clusters", tags=["estudantes"], summary="A1: perfil de cada cluster de desempenho")
 def educluster_estudantes_clusters(
     origem: str = ORIGEM,
     espaco: str = Query("objetivo_discursivo", pattern="^(trio|par|objetivo_discursivo)$"),
@@ -292,7 +297,7 @@ def educluster_estudantes_clusters(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/estudantes/amostra", tags=["estudantes"], summary="A1: amostra reprodutivel para plotagem")
+@router.get("/estudantes/amostra", tags=["estudantes"], summary="A1: amostra reprodutivel para plotagem")
 def educluster_estudantes_amostra(
     origem: str = ORIGEM,
     espaco: str = Query("objetivo_discursivo", pattern="^(trio|par|objetivo_discursivo)$"),
@@ -311,12 +316,12 @@ def educluster_estudantes_amostra(
         _traduzir_erro(erro)
 
 
-@app.get("/api/educluster/espacos-desempenho", tags=["catalogo"], summary="Espacos de variaveis disponiveis para A1")
+@router.get("/espacos-desempenho", tags=["catalogo"], summary="Espacos de variaveis disponiveis para A1")
 def educluster_espacos_desempenho():
     return ESPACOS_PERFIL_DESEMPENHO
 
 
-@app.get("/api/educluster/dimensoes", tags=["catalogo"], summary="Dimensoes percebidas do arq4 e seus itens")
+@router.get("/dimensoes", tags=["catalogo"], summary="Dimensoes percebidas do arq4 e seus itens")
 def educluster_dimensoes():
     return {
         sigla: {"rotulo": ROTULOS_DIMENSAO[sigla], "itens": itens, "quantidade": len(itens)}
@@ -324,7 +329,7 @@ def educluster_dimensoes():
     }
 
 
-@app.get("/api/educluster/areas", tags=["catalogo"], summary="Areas de avaliacao presentes na base")
+@router.get("/areas", tags=["catalogo"], summary="Areas de avaliacao presentes na base")
 def educluster_areas(origem: str = ORIGEM, n_minimo: int = N_MINIMO):
     try:
         df = obter_cursos(origem, n_minimo)
@@ -335,6 +340,36 @@ def educluster_areas(origem: str = ORIGEM, n_minimo: int = N_MINIMO):
         return {"total": len(resumo), "areas": resumo.reset_index().to_dict(orient="records")}
     except Exception as erro:
         _traduzir_erro(erro)
+
+
+@router.get("/health", tags=["catalogo"], summary="Saude da API e estado da base em memoria")
+def educluster_health():
+    return {
+        "status": "ok",
+        "modulo": "educluster",
+        "versao": VERSAO,
+        "origem": ORIGEM_PADRAO,
+        "base_cursos_em_memoria": bool(_cache_cursos),
+    }
+
+
+def criar_app() -> FastAPI:
+    app = FastAPI(
+        title="EduCluster",
+        version=VERSAO,
+        description="Perfis academicos latentes no ENADE 2021. Modulo do ecossistema EnadeX.",
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=CORS_ORIGENS,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
+    app.include_router(router)
+    return app
+
+
+app = criar_app()
 
 
 if __name__ == "__main__":

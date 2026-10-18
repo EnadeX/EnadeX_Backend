@@ -11,7 +11,7 @@ educluster/
   educluster_config.py       constantes, dimensoes do arq4, features, reprodutibilidade
   educluster_dados.py        carga plugavel: Supabase (padrao) ou microdados locais
   educluster_preparo.py      limpeza da escala, derivacao de area, agregacao por curso
-  educluster_endpoints.py    API FastAPI
+  educluster_endpoints.py    rotas (APIRouter) e app standalone com CORS
   educluster_interpretacao.py  descricao automatica dos perfis via Gemini, com cache
   modelos/
     mdl_curso_percepcao/       A6 e A7, mais estabilidade por reamostragem
@@ -30,7 +30,7 @@ educluster/
 
 **A6, perfis de curso (analise central).** Cruza arq3 e arq4 agregados por `CO_CURSO`, unico join permitido pela versao LGPD dos microdados. Features: `NT_FG`, `NT_CE`, taxa de presenca, e as tres dimensoes percebidas do arq4 (ODP, OPORT, INFRA). Base de 3.832 cursos com no minimo 20 respondentes em cada arquivo, representando 316.232 estudantes em 30 areas.
 
-**A1, perfis de desempenho.** Nivel do estudante, apenas arq3. Espaco padrao `objetivo_discursivo` (`NT_OBJ_FG`, `NT_DIS_FG`, `NT_OBJ_CE`, `NT_DIS_CE`), que substitui o trio colinear usado no TCC 1. Os espacos `trio` e `par` seguem disponiveis para comparacao.
+**A1, perfis de desempenho.** Nivel do estudante, apenas arq3. Espaco padrao `objetivo_discursivo` (`NT_OBJ_FG`, `NT_DIS_FG`, `NT_OBJ_CE`, `NT_DIS_CE`), que substitui o trio colinear usado no TCC 1. Os espacos `trio` e `par` seguem disponiveis para comparacao: so o `objetivo_discursivo` tem modelo treinado e versionado, e os outros dois sao reagrupados em memoria na primeira chamada (k por silhouette, `random_state=42`), sem gravar joblib.
 
 ## Decisoes de tratamento
 
@@ -48,6 +48,10 @@ PYTHONPATH=. python -m educluster.educluster_endpoints
 ```
 
 A documentacao interativa fica em `http://localhost:8001/docs`. A primeira chamada baixa o arq3 e o arq4 do Supabase (cerca de 60 s); as seguintes usam o cache em memoria.
+
+O frontend do ecossistema (`EnadeX_Frontend`, Next.js em `http://localhost:3000`) chama esta API direto do navegador, por isso a app standalone tem CORS. As origens liberadas vem de `EDUCLUSTER_CORS_ORIGENS` (lista separada por virgula, padrao `http://localhost:3000`).
+
+Para entrar no `api_main.py` do grupo, basta incluir o router: `from educluster.educluster_endpoints import router as edu_cluster_router` e `app.include_router(edu_cluster_router)`. O CORS fica a cargo do `api_main.py`, que ja libera `http://localhost:3000`.
 
 Verificar se banco, analises e modelos continuam batendo com os resultados aprovados:
 
@@ -88,6 +92,7 @@ Prefixo `/api/educluster`. Organizadas por recurso e granularidade, nao por anal
 | `GET /areas` | catalogo | As 30 areas com agregados |
 | `GET /dimensoes` | catalogo | ODP, OPORT e INFRA com seus itens |
 | `GET /espacos-desempenho` | catalogo | Espacos de variaveis da A1 |
+| `GET /health` | catalogo | Saude da API, versao, origem e se a base de cursos ja esta em memoria |
 
 Parametros gerais: `origem` (`supabase`, padrao, ou `local`), `n_minimo`, `k` (reclusteriza em memoria).
 

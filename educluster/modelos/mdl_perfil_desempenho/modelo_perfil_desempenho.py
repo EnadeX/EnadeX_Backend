@@ -109,6 +109,39 @@ def perfilar_desempenho(df_resultado: pd.DataFrame, espaco: str) -> pd.DataFrame
     return perfil
 
 
+def carregar_scaler_treinado(espaco: str, diretorio_modelos: str = DIRETORIO_MODELO):
+    caminho = os.path.join(diretorio_modelos, ARQ_SCALER)
+    if not os.path.exists(caminho):
+        return None
+    scaler = joblib.load(caminho)
+    if list(scaler.feature_names_in_) != ESPACOS_PERFIL_DESEMPENHO[espaco]:
+        return None
+    return scaler
+
+
+def modelo_treinado_para(espaco: str, diretorio_modelos: str = DIRETORIO_MODELO) -> bool:
+    return carregar_scaler_treinado(espaco, diretorio_modelos) is not None
+
+
+def clusterizar_perfil_em_memoria(df_base: pd.DataFrame, espaco: str, num_clusters: int = None) -> pd.DataFrame:
+    colunas = ESPACOS_PERFIL_DESEMPENHO[espaco]
+    print(f"[educluster] espaco '{espaco}' sem modelo treinado, reagrupando em memoria")
+    dados_padronizados = StandardScaler().fit_transform(df_base[colunas])
+
+    if num_clusters is None:
+        num_clusters, _ = escolher_k_por_silhouette(dados_padronizados)
+
+    kmeans = KMeans(n_clusters=num_clusters, random_state=RANDOM_STATE, n_init=N_INIT)
+    pca = PCA(n_components=2, random_state=RANDOM_STATE)
+    coordenadas = pca.fit_transform(dados_padronizados)
+
+    df_resultado = df_base.copy()
+    df_resultado["Cluster_ID"] = kmeans.fit_predict(dados_padronizados)
+    df_resultado["PCA_X"] = coordenadas[:, 0]
+    df_resultado["PCA_Y"] = coordenadas[:, 1]
+    return df_resultado
+
+
 def plotar_perfil(df_resultado: pd.DataFrame, nome_arquivo: str = "clusters_pca.png", diretorio: str = DIRETORIO_MODELO):
     caminho = os.path.join(diretorio, nome_arquivo)
     plt.figure(figsize=(8, 6))
@@ -162,7 +195,9 @@ def descrever_perfis_com_ia(perfil: pd.DataFrame) -> str:
 
 def avaliar_perfil(df_resultado: pd.DataFrame, espaco: str, diretorio_modelos: str = DIRETORIO_MODELO) -> dict:
     colunas = ESPACOS_PERFIL_DESEMPENHO[espaco]
-    scaler = joblib.load(os.path.join(diretorio_modelos, ARQ_SCALER))
+    scaler = carregar_scaler_treinado(espaco, diretorio_modelos)
+    if scaler is None:
+        scaler = StandardScaler().fit(df_resultado[colunas])
     dados_padronizados = scaler.transform(df_resultado[colunas])
 
     pca_completo = PCA(random_state=RANDOM_STATE)

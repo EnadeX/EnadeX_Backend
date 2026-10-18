@@ -1,0 +1,85 @@
+1. Dados gerais da base utilizada
+
+quantidade exata de cursos após o recorte;
+quantidade exata de alunos utilizada na associação;
+confirmação de 2021 + Ciência da Computação e Sistemas de Informação + Norte e Nordeste;
+quais arquivos do ENADE efetivamente entraram em cada modelo.
+
+2. Resultado final da associação — esta é a principal lacuna
+
+A documentação diz que o resultado final teve:
+
+2.417 regras → 377 regras simples → 50 publicadas → 4 relacionadas a desempenho.
+
+Mas ela não lista explicitamente as quatro regras finais de desempenho.
+
+Isso é importante porque são justamente essas regras que provavelmente vão ser usadas como exemplo no artigo. O CSV que você me mandou anteriormente mostra quatro regras, mas aquelas são claramente do modelo antigo, com QE_I30, QE_I56 e QE_I57. Elas não correspondem à configuração final documentada agora.
+
+Então eu não quero misturar os dois resultados.
+
+Precisamos do resultado final das quatro regras de desempenho, de preferência com antecedente, consequente, suporte, confiança e lift.
+
+3. SHAP/importância da regressão
+
+Sabemos o ranking principal:
+
+PCA_ECON_1 → QE_I13_B → demais variáveis.
+
+Mas, para apresentar uma tabela/gráfico no artigo, seria muito bom ter os valores de importância das 14 variáveis. Você já mandou dados_shap_importancia.csv, então esse dado provavelmente já está disponível; preciso apenas considerá-lo como resultado final e não como uma exploração intermediária.
+
+4. Clusters: como exatamente o k=3 foi escolhido
+
+Temos o resultado final e o silhouette, mas ainda não ficou explícito na documentação final qual foi o critério para definir três clusters.
+
+Por exemplo, precisamos saber se foi:
+
+escolhido previamente;
+comparado entre vários valores de k;
+escolhido pelo melhor silhouette;
+ou alguma decisão baseada na interpretação dos perfis.
+
+Isso é importante para a seção de métodos.
+
+5. Perfil final dos clusters
+
+Temos:
+
+Alto: 73 cursos, NT_GER = 39,80;
+Médio: 16 cursos, NT_GER = 37,57;
+Baixo: 72 cursos, NT_GER = 34,75;
+silhouette = 0,211.
+
+Mas o documento detalha apenas algumas variáveis do perfil, especialmente QE_I11_A/B.
+
+Para a discussão, seria muito interessante ter o perfil das principais variáveis que diferenciam os três grupos, principalmente porque o objetivo do clustering é justamente revelar perfis. Não precisamos necessariamente de todas as 23 variáveis, mas de uma tabela ou ranking das mais representativas.
+
+6. Caracterização do corpus e das variáveis
+
+Também falta fechar uma tabelinha conceitual simples:
+
+Modelo	Unidade de análise	Alvo	Principais variáveis
+Regressão	curso	NT_GER	14 variáveis
+Clustering	curso	—	23 variáveis
+Associação	aluno + banda do curso	regras	6 itens + desempenho
+
+Isso está espalhado nos documentos, mas consolidar isso antes da escrita evita confusão, principalmente porque regressão/clustering trabalham no nível de curso, enquanto associação trabalha no nível de aluno, com a banda de desempenho incorporada a partir do curso.
+
+7. Avaliação do artefato em sentido DSR
+
+Aqui existe uma lacuna mais conceitual.
+
+Temos uma avaliação técnica muito boa dos modelos, inclusive testes de robustez, comparação de algoritmos, validação cruzada, teste independente para associações etc.
+
+Mas eu ainda não vi uma avaliação do tipo:
+
+um especialista/pesquisador utilizou os resultados e avaliou a interpretabilidade, utilidade ou facilidade de compreensão.
+
+Então, no artigo, eu recomendaria não afirmar que houve validação por especialistas ou avaliação de usabilidade, a menos que exista esse material.
+
+Podemos perfeitamente apresentar a avaliação como avaliação computacional/empírica do artefato, que está muito bem sustentada.
+
+8. Procedimento da revisão bibliográfica
+
+Temos as referências e os achados da literatura, mas ainda não temos fechado o procedimento de revisão: bases consultadas, termos de busca, período, critérios de inclusão/exclusão etc.
+
+Isso só é necessário caso você queira apresentar a revisão como uma etapa metodológica estruturada. Para uma revisão bibliográfica narrativa do TCC, podemos trabalhar de maneira mais simples.
