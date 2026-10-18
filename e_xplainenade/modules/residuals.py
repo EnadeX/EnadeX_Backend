@@ -15,6 +15,11 @@ testes vale sobre o resíduo ponderado, não sobre o resíduo bruto: testar o
 resíduo bruto de um modelo WLS reintroduziria exatamente a heterocedasticidade
 ligada ao tamanho do curso que a ponderação foi feita para corrigir, dando um
 diagnóstico inconsistente com os gráficos.
+
+diagnose_weighting() (2026-10-14) faz o diagnóstico sobre o OLS SEM pesos
+(resíduo bruto): Breusch-Pagan e a correlação de Spearman entre |resíduo| e
+QT_ALUNOS. É esse segundo teste que documenta objetivamente por que o WLS foi
+adotado — cursos menores com erro maior aparecem como correlação negativa.
 """
 import numpy as np
 import pandas as pd
@@ -71,6 +76,37 @@ def run_diagnostics(result: RegressionResultsWrapper) -> dict:
         "bp_stat":            round(float(bp_stat), 6),
         "bp_pvalue":          round(float(bp_pvalue), 6),
         "bp_homocedastic":    float(bp_pvalue) >= 0.05,
+    }
+
+
+def diagnose_weighting(
+    ols_result: RegressionResultsWrapper,
+    df: pd.DataFrame,
+    weight_col: str = "QT_ALUNOS",
+) -> dict:
+    """
+    Diagnóstico de heterocedasticidade do OLS sem pesos.
+
+    Returns
+    -------
+    dict com chaves:
+      bp_stat, bp_pvalue, bp_homocedastic (bool) — Breusch-Pagan do OLS
+      spearman_rho, spearman_pvalue — |resíduo| × QT_ALUNOS
+      erro_cai_com_tamanho (bool) — rho < 0 e p < 0,05: cursos menores erram mais
+    """
+    resid = ols_result.resid
+    bp_stat, bp_pvalue, _, _ = het_breuschpagan(resid.values, ols_result.model.exog)
+
+    pesos = df.loc[resid.index, weight_col]
+    rho, sp_p = stats.spearmanr(np.abs(resid.values), pesos.values)
+
+    return {
+        "bp_stat":              round(float(bp_stat), 6),
+        "bp_pvalue":            round(float(bp_pvalue), 6),
+        "bp_homocedastic":      float(bp_pvalue) >= 0.05,
+        "spearman_rho":         round(float(rho), 6),
+        "spearman_pvalue":      round(float(sp_p), 6),
+        "erro_cai_com_tamanho": float(rho) < 0 and float(sp_p) < 0.05,
     }
 
 

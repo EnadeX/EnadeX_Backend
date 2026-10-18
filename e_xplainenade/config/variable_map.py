@@ -116,13 +116,16 @@ CODE_TO_LABEL["CO_TURNO_V"]        = "Turno: Vespertino (ref. Matutino)"
 CODE_TO_LABEL["CO_TURNO_N"]        = "Turno: Noturno (ref. Matutino)"
 CODE_TO_LABEL["CO_TURNO_I"]        = "Turno: Integral (ref. Matutino)"
 CODE_TO_LABEL["QT_ALUNOS"]         = "Nº de Alunos Presentes no Curso"
+# Derivada em etl.py a partir de CO_GRUPO (código nominal — nunca entra cru na regressão)
+CODE_TO_LABEL["CURSO_SI"]          = "Curso: Sistemas de Informação (vs Ciência da Computação)"
 
 # Labels para valores categóricos — exibição na UI e no relatório
 VALUE_LABELS = {
     "CO_TURNO": {1: "Matutino", 2: "Vespertino", 3: "Noturno", 4: "Integral"},
     "CO_CATEGAD": {
         1: "Fed. Pública", 2: "Est. Pública", 3: "Mun. Pública",
-        4: "Privada s/fins", 5: "Privada c/fins",
+        4: "Privada c/fins", 5: "Privada s/fins",
+        7: "Especial",  # sem classificação pública/privada — excluída em etl.py
     },
     "TP_CATEGAD_BIN":    {0: "Pública",  1: "Privada"},
     "QE_TIPO_EM_BIN":    {0: "Pública",  1: "Privada"},
@@ -130,6 +133,7 @@ VALUE_LABELS = {
     "CO_TURNO_V":        {0: "Não",      1: "Sim"},
     "CO_TURNO_N":        {0: "Não",      1: "Sim"},
     "CO_TURNO_I":        {0: "Não",      1: "Sim"},
+    "CURSO_SI":          {0: "Ciência da Computação", 1: "Sistemas de Informação"},
     "CO_GRUPO":   {4004: "Ciência da Computação", 4005: "Engenharia de Software", 4006: "Sistemas de Informação"},
     "CO_REGIAO":  {1: "Norte", 2: "Nordeste", 3: "Sudeste", 4: "Sul", 5: "Centro-Oeste"},
     "TP_SEXO":    {0: "Feminino", 1: "Masculino"},
@@ -198,6 +202,7 @@ X_OPTS = {
     "Turno: Vespertino (vs Matutino)": "CO_TURNO_V",         # proporção do curso no turno vespertino (0-1)
     "Turno: Noturno (vs Matutino)":    "CO_TURNO_N",         # proporção do curso no turno noturno (0-1)
     "Turno: Integral (vs Matutino)":   "CO_TURNO_I",         # proporção do curso no turno integral (0-1)
+    "Curso: Sistemas de Informação (vs Ciência da Computação)": "CURSO_SI",  # 1=SI (4006) / 0=CC (4004, referência)
 }
 
 CODE_TO_UI_LABEL = {v: k for k, v in X_OPTS.items()}
@@ -235,6 +240,7 @@ X_CATEGORIAS = {
             "Turno: Vespertino (vs Matutino)",
             "Turno: Noturno (vs Matutino)",
             "Turno: Integral (vs Matutino)",
+            "Curso: Sistemas de Informação (vs Ciência da Computação)",
         ],
     },
 }

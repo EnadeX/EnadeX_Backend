@@ -157,11 +157,12 @@ def get_dataset_from_supabase(
     grupos: Optional[List[int]] = None,
     ies_filter: Optional[List[int]] = None,
     force_refresh: bool = False,
+    min_alunos: Optional[int] = None,
 ) -> pd.DataFrame:
     """
-    Carrega a base agregada por curso a partir do Supabase (tbl_arq1_2021 ...
-    tbl_arq29_2021) — única fonte de dados do sistema. É o ponto de entrada
-    usado por app.py e por e_xplainenade_rotas.py.
+    Carrega a base agregada por curso a partir do Supabase (13 tabelas
+    tbl_e_xplainenade_arqN_2021, N em etl.ARQUIVOS_USADOS) — única fonte de dados do
+    sistema. É o ponto de entrada usado por app.py e por e_xplainenade_rotas.py.
 
     Parameters
     ----------
@@ -171,11 +172,16 @@ def get_dataset_from_supabase(
         Valores de TP_CATEGAD_BIN a incluir (0=Pública, 1=Privada).
     force_refresh : bool, optional
         Ignora o cache em memória e refaz as consultas ao Supabase.
+    min_alunos : int, optional
+        Mantém só cursos com QT_ALUNOS >= min_alunos. Aplicado depois do
+        cache (o cache guarda a base completa), então não refaz as consultas.
 
     Returns
     -------
     pd.DataFrame
         Uma linha por curso, nomes amigáveis, pronta para modelagem.
+        `df.attrs["funil"]` traz o funil do ETL (ver etl.load_raw) mais
+        cursos_apos_ies, cursos_apos_min_alunos e cursos_disponiveis.
 
     Raises
     ------
@@ -189,8 +195,7 @@ def get_dataset_from_supabase(
     if force_refresh or chave not in _supabase_cache:
         df = etl.load_raw(grupos=grupos)
         if df.empty:
-            tabelas = ", ".join(etl.table_name(n) for n in
-                                 [1, 2, 3, 5, 6, 10, 11, 14, 16, 21, 23, 27, 29])
+            tabelas = ", ".join(etl.table_name(n) for n in etl.ARQUIVOS_USADOS)
             raise RuntimeError(
                 "Nenhum curso retornado do Supabase para este recorte. "
                 "Verifique se as 13 tabelas do escopo do E-XplainENADE já foram "
@@ -199,6 +204,18 @@ def get_dataset_from_supabase(
         _supabase_cache[chave] = df
 
     df = _supabase_cache[chave]
+    funil = dict(df.attrs.get("funil", {}))
     if ies_filter:
         df = df[df["TP_CATEGAD_BIN"].isin(ies_filter)].reset_index(drop=True)
+        funil["cursos_apos_ies"] = len(df)
+    if min_alunos:
+        df = df[df["QT_ALUNOS"] >= min_alunos].reset_index(drop=True)
+        funil["cursos_apos_min_alunos"] = len(df)
+    funil["cursos_disponiveis"] = len(df)
+
+    # Atribuído explicitamente no objeto devolvido (não depende de o pandas
+    # propagar attrs pelos filtros acima) — e numa cópia, para não alterar o
+    # DataFrame guardado no cache.
+    df = df.copy()
+    df.attrs["funil"] = funil
     return df

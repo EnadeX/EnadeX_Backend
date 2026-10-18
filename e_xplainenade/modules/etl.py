@@ -26,7 +26,15 @@ equivalente, é este o módulo a substituir — load_raw() mantém a mesma
 assinatura e o mesmo schema de saída (nível curso).
 
 FONTE DE DADOS (2026-08-30): load_raw() lê os 13 arquivos exclusivamente do
-Supabase (tbl_arq1_2021 ... tbl_arq29_2021) via modules.supabase_client. Não
+Supabase via modules.supabase_client — tabelas tbl_e_xplainenade_arqN_2021 para
+N = 1, 2, 3, 5, 6, 10, 11, 14, 16, 21, 23, 27, 29 (ver ARQUIVOS_USADOS).
+
+TABELAS PRÓPRIAS (2026-10-14 — ver DEVELOPMENT.md): até esta data o ETL lia as
+tabelas compartilhadas tbl_arqN_2021, que o refino do MultiENADE passou a
+truncar e regravar só com Norte+Nordeste (8 das 13 tabelas), derrubando a base
+de 707 para 169 cursos. Agora o E-XplainENADE lê tabelas próprias, populadas
+direto dos microdados brutos por banco/carregar_tabelas.py (CC+SI, Brasil
+inteiro, só as colunas usadas aqui). Não
 há mais caminho local/offline — decisão do usuário de depender só do banco
 compartilhado do ecossistema EnadeX (ver DEVELOPMENT.md).
 
@@ -36,6 +44,13 @@ contra o Supabase (~8-15s), e em série isso levava mais de 2 minutos por
 chamada fria (medido: 123s). Em paralelo, o tempo total fica limitado pela
 busca mais lenta, não pela soma de todas. Cada busca também pede só as
 colunas realmente usadas (não mais "*"), reduzindo o payload.
+
+CO_CATEGAD = 7 (2026-10-14 — ver DEVELOPMENT.md): o dicionário oficial do INEP
+define 7 como "Especial", sem classificação como pública ou privada, então
+TP_CATEGAD_BIN fica indefinido para esses cursos. Eles são excluídos aqui,
+explicitamente e contados no funil (df.attrs["funil"]), em vez de serem
+descartados em silêncio pelo statsmodels só quando TP_CATEGAD_BIN entra no
+modelo — assim o nº de cursos da base fecha com o n_obs de qualquer modelo.
 """
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
@@ -46,8 +61,8 @@ from modules.loader import preprocess
 
 
 def table_name(n: int) -> str:
-    """Nome da tabela no Supabase para o arquivo bruto nº n (ex: 3 -> 'tbl_arq3_2021')."""
-    return f"tbl_arq{n}_2021"
+    """Nome da tabela no Supabase para o arquivo bruto nº n (ex: 3 -> 'tbl_e_xplainenade_arq3_2021')."""
+    return f"tbl_e_xplainenade_arq{n}_2021"
 
 
 # Os 13 arquivos do escopo do E-XplainENADE (ver DEVELOPMENT.md, 2026-08-26/27).
@@ -68,6 +83,12 @@ _ARQUIVOS_SIMPLES = [
     (27, ["QE_I21"],             ["QE_FAM_SUPERIOR"]),
     (29, ["QE_I23"],             ["QE_HORAS_ESTUDO"]),
 ]
+
+# Lista explícita das 13 tabelas lidas (usada em mensagens e no config do relatório).
+ARQUIVOS_USADOS = [1, 2, 3, 5, 6, 10, 11, 14, 16, 21, 23, 27, 29]
+
+# CO_CATEGAD sem classificação pública/privada no dicionário do INEP (7 = Especial).
+CATEGAD_SEM_CLASSIFICACAO = [7]
 
 # Colunas brutas realmente necessárias por arquivo (evita pedir "*" do Supabase).
 _COLUNAS_ARQ1 = ["CO_CURSO", "CO_GRUPO", "CO_REGIAO_CURSO", "CO_CATEGAD"]
@@ -123,10 +144,14 @@ def load_raw(grupos: Optional[List[int]] = None) -> pd.DataFrame:
     pd.DataFrame
         Uma linha por curso. Colunas: CO_CURSO, NT_GER, NT_FG, NT_CE
         (médias), QT_ALUNOS (peso — nº de presentes), CO_GRUPO, CO_REGIAO,
-        TP_CATEGAD_BIN (atributos de curso/IES), CO_TURNO_V/N/I, TP_SEXO,
+        TP_CATEGAD_BIN, CURSO_SI (1=SI, 0=CC) (atributos de curso/IES), CO_TURNO_V/N/I, TP_SEXO,
         NU_IDADE, QE_ESC_PAI, QE_ESC_MAE, QE_RENDA, QE_TRABALHO,
         QE_ACAO_AFIRM_BIN, QE_TIPO_EM_BIN, QE_FAM_SUPERIOR, QE_HORAS_ESTUDO
         (médias/proporções por curso).
+
+        `df.attrs["funil"]` registra quantos cursos restam a cada etapa:
+        cursos_recorte (arq1), cursos_com_nota (arq3), cursos_excluidos_categad
+        (CO_CATEGAD sem classificação) e cursos_final (após o inner join).
     """
     grupos = grupos or [4004, 4006]
 
@@ -159,6 +184,15 @@ def load_raw(grupos: Optional[List[int]] = None) -> pd.DataFrame:
         CO_REGIAO=("CO_REGIAO", "first"),
         TP_CATEGAD_BIN=("TP_CATEGAD_BIN", "mean"),
     ).reset_index()
+    # CURSO_SI (2026-10-14 — ver DEVELOPMENT.md): controle do curso nos modelos que
+    # misturam CC e SI. CO_GRUPO é código nominal (4004/4006) e não pode entrar
+    # como número na regressão; vira binária com CC como referência.
+    curso_info["CURSO_SI"] = (curso_info["CO_GRUPO"] == 4006).astype("int64")
+
+    excluidos_categad = set(
+        df1.loc[df1["CO_CATEGAD"].isin(CATEGAD_SEM_CLASSIFICACAO), "CO_CURSO"]
+    )
+    curso_info = curso_info[~curso_info["CO_CURSO"].isin(excluidos_categad)]
 
     base = notas.merge(curso_info, on="CO_CURSO", how="inner")
 
@@ -169,4 +203,14 @@ def load_raw(grupos: Optional[List[int]] = None) -> pd.DataFrame:
         agg = df.groupby("CO_CURSO")[cols_final].mean().reset_index()
         base = base.merge(agg, on="CO_CURSO", how="inner")
 
+    base.attrs["funil"] = {
+        "cursos_recorte": len(cursos_recorte),
+        "cursos_com_nota": int(len(notas)),
+        "cursos_excluidos_categad": len(excluidos_categad & set(notas["CO_CURSO"])),
+        "motivo_exclusao_categad": (
+            "CO_CATEGAD = 7 (Especial): o dicionário do INEP não classifica essa "
+            "categoria como pública nem privada, então TP_CATEGAD_BIN fica indefinido"
+        ),
+        "cursos_final": int(len(base)),
+    }
     return base

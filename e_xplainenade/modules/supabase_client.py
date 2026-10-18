@@ -8,9 +8,11 @@ Lê as credenciais do `.env` na raiz do repositório EnadeX (fora desta pasta,
 padrão combinado pelo grupo — ver docs/EnadeX - Diagrama de pastas.pdf), com
 SUPABASE_URL e SUPABASE_KEY.
 """
+import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import httpx
 import pandas as pd
 from dotenv import load_dotenv
 import os
@@ -18,6 +20,8 @@ import os
 _ENV_PATH = Path(__file__).resolve().parents[2] / ".env"  # modules/ -> e_xplainenade/ -> EnadeX/
 
 _env_loaded = False
+
+_TENTATIVAS = 3  # por página, só para quedas de conexão (ver fetch_table)
 
 
 def _ensure_env_loaded() -> None:
@@ -58,6 +62,7 @@ def fetch_table(
     columns: str = "*",
     filters: Optional[Dict] = None,
     page_size: int = 1000,
+    order: Optional[str] = "id",
 ) -> pd.DataFrame:
     """
     Consulta uma tabela do Supabase com paginação automática (o limite do
@@ -70,6 +75,10 @@ def fetch_table(
     tipadas como `text` (decisão registrada no DEVELOPMENT.md, 2026-08-30, ver
     Supabase/criar_tabelas_faltantes.sql) — a normalização aqui garante que o
     pipeline se comporte da mesma forma mesmo que isso mude no futuro.
+
+    Paginação ordenada por `order` (padrão: "id", que todas as tabelas do
+    E-XplainENADE têm): sem ORDER BY o Postgres não garante a mesma ordem entre
+    uma página e a próxima, e `.range()` poderia repetir ou pular linhas.
 
     Chamada por até 13 threads em paralelo (ver modules/etl.py::load_raw()) —
     cada chamada cria seu próprio client via _client(), sem estado
@@ -84,17 +93,31 @@ def fetch_table(
         if filters:
             for col, val in filters.items():
                 query = query.eq(col, val)
-        try:
-            resposta = query.range(offset, offset + page_size - 1).execute()
-        except Exception as e:
-            # Traduz qualquer erro do cliente Supabase/Postgrest (tabela
-            # inexistente, credenciais inválidas, falha de rede) para
-            # RuntimeError — o mesmo tipo de erro que o restante do pipeline
-            # (etl.py/loader.py) já usa para sinalizar "dado ainda não
-            # disponível", tratado de forma amigável por app.py e pela API.
-            raise RuntimeError(
-                f"Falha ao consultar a tabela '{table}' no Supabase: {e}"
-            ) from e
+        if order:
+            query = query.order(order)
+        resposta = None
+        for tentativa in range(_TENTATIVAS):
+            try:
+                resposta = query.range(offset, offset + page_size - 1).execute()
+                break
+            except httpx.TransportError as e:
+                # Queda de conexão (ex: WinError 10054, "conexão cancelada pelo
+                # host remoto") é transitória com 13 consultas paralelas —
+                # repete a mesma página antes de desistir.
+                if tentativa == _TENTATIVAS - 1:
+                    raise RuntimeError(
+                        f"Falha ao consultar a tabela '{table}' no Supabase: {e}"
+                    ) from e
+                time.sleep(1.5 * (tentativa + 1))
+            except Exception as e:
+                # Traduz qualquer erro do cliente Supabase/Postgrest (tabela
+                # inexistente, credenciais inválidas) para RuntimeError — o
+                # mesmo tipo de erro que o restante do pipeline (etl.py/loader.py)
+                # já usa para sinalizar "dado ainda não disponível", tratado de
+                # forma amigável por app.py e pela API.
+                raise RuntimeError(
+                    f"Falha ao consultar a tabela '{table}' no Supabase: {e}"
+                ) from e
         pagina = resposta.data or []
         registros.extend(pagina)
         if len(pagina) < page_size:
@@ -103,5 +126,8 @@ def fetch_table(
 
     df = pd.DataFrame(registros)
     for col in df.columns:
-        df[col] = df[col].map(lambda v: v if v is None else str(v))
+        # pd.isna, não `v is None`: no pandas 3 o DataFrame já converte None em
+        # NaN ao ser montado, e str(NaN) viraria o texto 'nan' (achado em
+        # 2026-10-14 — ver DEVELOPMENT.md).
+        df[col] = df[col].map(lambda v: None if pd.isna(v) else str(v))
     return df

@@ -19,7 +19,7 @@ from config.variable_map import (
     Y_OPTS, X_OPTS, CODE_TO_UI_LABEL, CURSO_OPTS, IES_OPTS, X_CATEGORIAS,
 )
 from modules import loader
-from modules.hypothesis import build_hypothesis
+from modules.hypothesis import build_hypothesis, center_for_interactions
 from modules.modeling import fit_ols, get_coefficients_table, get_model_metrics
 from modules.multicollinearity import (
     compute_vif, has_multicollinearity, get_variable_to_remove,
@@ -307,7 +307,7 @@ def _hero():
         <div class="exn-meta-card">
           <div class="exn-meta-label">Exec-ID</div>
           <div class="exn-meta-value">{exec_id_short}…</div>
-          <div class="exn-meta-sub">seed 42 · reprodutível</div>
+          <div class="exn-meta-sub">sem etapa estocástica · reprodutível</div>
         </div>
       </div>
     </div>
@@ -393,8 +393,8 @@ with st.container(border=True):
     )
     st.caption(
         "Fonte: banco de dados compartilhado do ecossistema EnadeX (Supabase), "
-        "tabelas `tbl_arq1_2021` … `tbl_arq29_2021` — agregadas por `CO_CURSO` em "
-        "tempo real a cada carregamento (`modules/etl.py::load_raw_from_supabase`). "
+        "13 tabelas próprias `tbl_e_xplainenade_arqN_2021` (N = 1, 2, 3, 5, 6, 10, 11, 14, 16, 21, 23, 27, 29) "
+        "— agregadas por `CO_CURSO` a cada carregamento (`modules/etl.py::load_raw`). "
         "Cada linha representa um **curso**, não um estudante individual — ver "
         "seção de limitações do relatório para o porquê dessa granularidade."
     )
@@ -613,12 +613,13 @@ if st.button("Executar Modelagem", type="primary", disabled=(len(x_vars) == 0)):
         # Não há divisão treino/teste — a inferência (p-valores, IC 95%) usa
         # todas as observações, como é padrão em modelagem estatística inferencial.
         with st.spinner("WLS → VIF → resíduos → SHAP…"):
-            result     = fit_ols(hyp, df)
+            df_fit, _ = center_for_interactions(hyp, df)
+            result     = fit_ols(hyp, df_fit)
             metrics    = get_model_metrics(result)
             coef_table = get_coefficients_table(result)
-            vif_table  = compute_vif(df, x_vars, formula=hyp.to_formula())
+            vif_table  = compute_vif(df_fit, x_vars, formula=hyp.to_formula())
             diag       = run_diagnostics(result)
-            shap_vals, feat_names = compute_shap(result, df, x_vars)
+            shap_vals, feat_names = compute_shap(result, df_fit, x_vars)
             shap_sum   = get_shap_summary(shap_vals, feat_names)
 
     except Exception as e:
@@ -644,8 +645,8 @@ if st.button("Executar Modelagem", type="primary", disabled=(len(x_vars) == 0)):
         "shap_visivel":   False,
         "config": {
             "exec_id":      st.session_state.exec_id,
-            "seed":         42,
-            "fonte_dados":  "Supabase (tbl_arq1_2021 ... tbl_arq29_2021, agregado por CO_CURSO)",
+            "aleatoriedade": "não aplicável (nenhuma etapa estocástica)",
+            "fonte_dados":  "Supabase (tbl_e_xplainenade_arqN_2021, N = 1, 2, 3, 5, 6, 10, 11, 14, 16, 21, 23, 27, 29; agregado por CO_CURSO)",
             "y":            hyp.y,
             "x_vars":       hyp.x_vars,
             "interactions": [list(par) for par in hyp.interactions],
@@ -759,12 +760,13 @@ else:
                             if a != remove_var and b != remove_var]
         new_hyp = build_hypothesis(hyp.y, new_x, new_interactions, df)
         with st.spinner("Reexecutando modelo..."):
-            result     = fit_ols(new_hyp, df)
+            df_fit, _ = center_for_interactions(new_hyp, df)
+            result     = fit_ols(new_hyp, df_fit)
             m          = get_model_metrics(result)
             ct         = get_coefficients_table(result)
-            vt         = compute_vif(df, new_x, formula=new_hyp.to_formula())
+            vt         = compute_vif(df_fit, new_x, formula=new_hyp.to_formula())
             dg         = run_diagnostics(result)
-            sv, fn     = compute_shap(result, df, new_x)
+            sv, fn     = compute_shap(result, df_fit, new_x)
             ss         = get_shap_summary(sv, fn)
         st.session_state.update({
             "hypothesis": new_hyp, "formula": new_hyp.to_formula(),

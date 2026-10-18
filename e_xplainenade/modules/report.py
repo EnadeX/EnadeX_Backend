@@ -275,6 +275,10 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
     model_metrics, coef_table, vif_table, residuals_diag,
     shap_summary, interpretacao_modelo, interpretacao_residuos,
     interpretacao_shap, plot_data
+
+    Opcionais (2026-10-14, análise de sensibilidade — ver DEVELOPMENT.md):
+    comparison_table, diagnostics_ols, interpretacao_sensibilidade,
+    interpretacao_ponderacao. Sem elas, a Seção 5 não é gerada.
     """
     from config.variable_map import CODE_TO_LABEL
     from modules.multicollinearity import VIF_MODERADO, VIF_SEVERO
@@ -283,7 +287,8 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
     pdf.add_page()
 
     y_label  = session.get("y_label", "Nota Geral")
-    filtros  = session.get("config", {}).get("filtros", {})
+    config   = session.get("config", {})
+    filtros  = config.get("filtros", {})
     hoje     = date.today().strftime("%d/%m/%Y")
 
     # ── Capa ──────────────────────────────────────────────────────────────────
@@ -330,15 +335,15 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
 
         pdf.caixa_contexto(
             "Como ler esta tabela:\n"
-            "  Efeito: quanto a nota muda, em media, a cada nivel a mais neste fator\n"
-            "  Direcao: se o fator aumenta (↑) ou diminui (↓) a nota do curso\n"
-            "  Confiavel?: 'Sim' = efeito improvavel de ser coincidencia (p < 0,05)\n"
-            "  IC 95%: intervalo onde o efeito verdadeiro esta em 95% das vezes"
+            "  Efeito: diferenca media na nota do curso associada a um nivel a mais neste fator\n"
+            "  Direcao: se a associacao e positiva (↑) ou negativa (↓)\n"
+            "  p < 0,05?: 'Sim' = coeficiente estatisticamente distinguivel de zero\n"
+            "  IC 95%: intervalo de confianca de 95% para o coeficiente"
         )
 
         # Cabeçalho
         widths = [62, 22, 22, 22, 18, 34]
-        headers = ["Fator", "Efeito", "Direcao", "Confiavel?", "P-valor", "IC 95%"]
+        headers = ["Fator", "Efeito", "Direcao", "p < 0,05?", "P-valor", "IC 95%"]
         for h, w in zip(headers, widths):
             pdf.th(h, w)
         pdf.ln()
@@ -371,7 +376,7 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
         pdf.ln(2)
         pdf.set_font(pdf._f, size=8)
         pdf.set_text_color(*_COR_CINZA)
-        pdf.cell(0, 5, "Legenda: verde = efeito comprovado (p < 0,05)  |  "
+        pdf.cell(0, 5, "Legenda: verde = estatisticamente distinguivel de zero (p < 0,05)  |  "
                        "IC 95% = intervalo de confianca de 95%",
                  new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(*_COR_TITULO)
@@ -402,7 +407,7 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
         pdf.caixa_contexto(
             "O que e esta analise: verifica se as variaveis escolhidas sao muito parecidas "
             "entre si. Quando duas variaveis andam sempre juntas (ex: renda e escolaridade da mae), "
-            "os coeficientes ficam instáveis e menos confiáveis.\n\n"
+            "os coeficientes ficam instaveis e seus erros-padrao, inflados.\n\n"
             "Como interpretar:\n"
             "  Verde  (VIF <= 5): sem problema\n"
             "  Amarelo (VIF 5-10): atencao — correlacao moderada\n"
@@ -512,8 +517,8 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
                     f"Leve desvio de normalidade nos residuos "
                     f"(Shapiro-Wilk p {_pfmt(diag['shapiro_pvalue'])}, "
                     f"avaliado em amostra de {sw_n:,} obs.). "
-                    f"Com n = {n_obs:,}, o Teorema Central do Limite garante a validade "
-                    f"assintotica dos estimadores. Impacto pratico minimo."
+                    f"Com n = {n_obs:,}, o Teorema Central do Limite sustenta a validade "
+                    f"assintotica dos estimadores; o impacto pratico tende a ser pequeno."
                 )
                 pdf.caixa_destaque(msg_sw, (219, 234, 254))
             else:
@@ -527,10 +532,10 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
 
         if sw_ok and bp_ok:
             msg_ok = (
-                f"Todos os pressupostos verificados. Residuos normalmente distribuidos "
-                f"(Shapiro-Wilk p {_pfmt(diag['shapiro_pvalue'])}) e variancia constante "
+                f"Os testes de pressupostos nao rejeitaram a normalidade dos residuos "
+                f"(Shapiro-Wilk p {_pfmt(diag['shapiro_pvalue'])}) nem a variancia constante "
                 f"(Breusch-Pagan p {_pfmt(diag['bp_pvalue'])}). "
-                f"O modelo e metodologicamente adequado para estes dados."
+                f"Nao rejeitar um pressuposto nao e prova de que ele vale."
             )
             pdf.caixa_destaque(msg_ok, (212, 237, 218))
 
@@ -554,11 +559,90 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
                 new_x="LMARGIN", new_y="NEXT")
             pdf.set_text_color(*_COR_TITULO)
 
-    # ── 5. Quais fatores mais influenciam (SHAP) ─────────────────────────────
+    # ── 5. Sensibilidade à ponderação e a erros-padrão robustos ──────────────
+    comp = session.get("comparison_table")
+    if comp is not None:
+        cov_type = config.get("cov_type", "HC3")
+        pdf.add_page()
+        pdf.titulo_secao("5", "Sensibilidade a ponderacao e a erros-padrao robustos")
+
+        pdf.caixa_contexto(
+            "O modelo principal e o WLS (ponderado pelo nº de alunos presentes). "
+            "Em dados agregados por curso, ponderar pelo tamanho do grupo so e o mais "
+            "eficiente sob uma condicao especifica sobre o erro (Dickens, 1990; Solon, "
+            "Haider e Wooldridge, 2013). Por isso o mesmo modelo foi ajustado tambem sem "
+            f"pesos (OLS) e com erros-padrao robustos a heterocedasticidade ({cov_type}).\n\n"
+            "Linhas em amarelo: o fator muda de sinal entre WLS e OLS, ou muda de "
+            "significancia (p < 0,05) entre as duas versoes robustas."
+        )
+
+        def _pf(p: float) -> str:
+            return "< 0,001" if p < 0.001 else f"{p:.3f}".replace(".", ",")
+
+        widths_s = [52, 20, 18, 20, 20, 18, 20, 12]
+        headers_s = ["Fator", "Coef WLS", "p WLS", f"p WLS {cov_type}",
+                     "Coef OLS", "p OLS", f"p OLS {cov_type}", "Muda?"]
+        for h, w in zip(headers_s, widths_s):
+            pdf.th(h, w)
+        pdf.ln()
+
+        for _, row in comp.iterrows():
+            var = str(row["variavel"])
+            if var == "Intercept":
+                continue
+            label = " x ".join(CODE_TO_LABEL.get(p, p) for p in var.split(":")) \
+                    if ":" in var else CODE_TO_LABEL.get(var, var)
+            diverge = bool(row["sinal_diverge"]) or bool(row["signif_diverge"])
+            fill = (255, 243, 205) if diverge else (255, 255, 255)
+            vals = [
+                label[:30],
+                f"{row['coef_wls']:+.2f}", _pf(row["p_wls"]), _pf(row["p_wls_robust"]),
+                f"{row['coef_ols']:+.2f}", _pf(row["p_ols"]), _pf(row["p_ols_robust"]),
+                "Sim" if diverge else "Nao",
+            ]
+            aligns = ["L", "C", "C", "C", "C", "C", "C", "C"]
+            for v, w, a in zip(vals, widths_s, aligns):
+                pdf.td(v, w, a, fill_color=fill)
+            pdf.ln()
+        pdf.ln(4)
+
+        interp_sens = session.get("interpretacao_sensibilidade", "")
+        if interp_sens:
+            pdf.caixa_destaque(_strip_inline(interp_sens),
+                               (255, 243, 205) if "Mudam" in interp_sens else (212, 237, 218))
+
+        diag_ols = session.get("diagnostics_ols")
+        if diag_ols:
+            pdf.ln(2)
+            pdf.set_font(pdf._f, "B", 10)
+            pdf.cell(0, 6, "Diagnostico que motiva a ponderacao (OLS sem pesos)",
+                     new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(1)
+            widths_d = [70, 60, 25, 25]
+            for h, w in zip(["Teste", "O que mede", "Estat.", "p-valor"], widths_d):
+                pdf.th(h, w)
+            pdf.ln()
+            for nome, oque, stat, pval in [
+                ("Breusch-Pagan (OLS)", "variancia constante do erro",
+                 f"{diag_ols['bp_stat']:.4f}", _pf(diag_ols["bp_pvalue"])),
+                ("Spearman |residuo| x QT_ALUNOS", "erro cai com o tamanho do curso",
+                 f"{diag_ols['spearman_rho']:+.4f}", _pf(diag_ols["spearman_pvalue"])),
+            ]:
+                pdf.td(nome, widths_d[0], "L")
+                pdf.td(oque, widths_d[1], "L")
+                pdf.td(stat, widths_d[2], "C")
+                pdf.td(pval, widths_d[3], "C", bold=True)
+                pdf.ln()
+            pdf.ln(3)
+            interp_pond = session.get("interpretacao_ponderacao", "")
+            if interp_pond:
+                pdf.caixa_contexto(_strip_inline(interp_pond))
+
+    # ── 6. Quais fatores mais influenciam (SHAP) ─────────────────────────────
     shap_summary = session.get("shap_summary")
     if shap_summary is not None:
         pdf.add_page()
-        pdf.titulo_secao("5", f"Quais fatores mais influenciam a {y_label}?")
+        pdf.titulo_secao("6", f"Quais fatores mais influenciam a {y_label}?")
 
         pdf.caixa_contexto(
             "O grafico abaixo mostra a importancia relativa de cada fator. "
@@ -566,7 +650,9 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
             "as diferencas de notas entre os cursos.\n\n"
             "Atencao: este grafico mostra O QUANTO cada fator importa (magnitude), "
             "nao a direcao do efeito. Para saber se o fator aumenta ou diminui a nota, "
-            "consulte a Secao 2."
+            "consulte a Secao 2.\n\n"
+            "Linha de base: media dos cursos ponderada por QT_ALUNOS (o mesmo peso do "
+            "modelo WLS)."
         )
 
         interp_shap = session.get("interpretacao_shap", "")
@@ -589,8 +675,8 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
             new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(*_COR_TITULO)
 
-    # ── 6. Limitações da análise ──────────────────────────────────────────────
-    pdf.titulo_secao("6", "Limitacoes da Analise")
+    # ── 7. Limitações da análise ──────────────────────────────────────────────
+    pdf.titulo_secao("7", "Limitacoes da Analise")
 
     pdf.caixa_contexto(
         "Toda analise estatistica tem limites de validade. Os pontos abaixo "
@@ -614,9 +700,25 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
         "mas que assume intervalos equivalentes entre niveis.",
         "Modelo ponderado (WLS): cursos com mais alunos presentes pesam mais no "
         "ajuste do que cursos com poucos alunos, pois suas medias sao "
-        "estatisticamente mais confiaveis — os testes de residuos desta secao "
-        "avaliam o residuo ja ponderado, nao o residuo bruto.",
+        "estatisticamente mais precisas — os testes de residuos desta secao "
+        "avaliam o residuo ja ponderado, nao o residuo bruto. A Secao 5 compara "
+        "o resultado com o OLS sem pesos e com erros-padrao robustos.",
+        "Cursos de IES com categoria administrativa 'Especial' (CO_CATEGAD = 7) "
+        "foram excluidos da base: o dicionario do INEP nao os classifica como "
+        "publicos nem privados.",
     ]
+    medias_c = config.get("medias_centragem") or {}
+    if medias_c:
+        limitacoes.append(
+            "Variaveis das interacoes centradas na media dos cursos: o coeficiente de "
+            "cada efeito principal e o efeito quando a outra variavel esta na media, "
+            "e o intercepto e o valor predito no curso medio."
+        )
+    if filtros.get("min_alunos"):
+        limitacoes.append(
+            f"Somente cursos com pelo menos {filtros['min_alunos']} alunos presentes "
+            "foram incluidos."
+        )
     pdf.set_font(pdf._f, "", 10)
     pdf.set_text_color(*_COR_TITULO)
     for item in limitacoes:
@@ -634,13 +736,36 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
              new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(pdf._f, size=8)
     pdf.set_fill_color(250, 250, 252)
-    pdf.multi_cell(0, 5,
+    rastro = (
         f"  Exec-ID: {session.get('exec_id', 'N/A')}\n"
         f"  Variavel analisada: {y_label}\n"
         f"  Curso: {filtros.get('curso', 'Todos')}  |  "
         f"Tipo de IES: {filtros.get('tipo_ies', 'Todas')}  |  "
         f"Ano: {filtros.get('ano', '2021')}\n"
-        f"  Formula: {session.get('formula', 'N/A')}",
+        f"  Formula: {session.get('formula', 'N/A')}"
+    )
+    if "hash_base_sha256" in config:
+        funil = config.get("funil_cursos", {})
+        versoes = config.get("versoes", {})
+        rastro += (
+            f"\n  Filtros: grupos={filtros.get('grupos')}  |  ies={filtros.get('ies_filter')}  |  "
+            f"min_alunos={filtros.get('min_alunos')}\n"
+            f"  Cursos: recorte {funil.get('cursos_recorte', '?')} -> com nota "
+            f"{funil.get('cursos_com_nota', '?')} -> excluidos CO_CATEGAD=7 "
+            f"{funil.get('cursos_excluidos_categad', '?')} -> base "
+            f"{config.get('n_cursos_base', '?')} -> no modelo {config.get('n_obs_modelo', '?')}\n"
+            f"  Erro-padrao robusto: {config.get('cov_type', 'N/A')}  |  "
+            f"Aleatoriedade: {config.get('aleatoriedade', 'N/A')}\n"
+        )
+        if medias_c:
+            rastro += "  Centragem: " + ", ".join(
+                f"{k}={v:.4f}" for k, v in medias_c.items()) + "\n"
+        rastro += (
+            f"  Base (SHA-256): {config['hash_base_sha256']}\n"
+            "  Versoes: " + ", ".join(f"{k} {v}" for k, v in versoes.items()) + "\n"
+            f"  Fonte: {config.get('fonte_dados', 'N/A')}"
+        )
+    pdf.multi_cell(0, 5, rastro,
         fill=True, border=1, new_x="LMARGIN", new_y="NEXT")
     pdf.set_draw_color(0, 0, 0)
     pdf.set_text_color(*_COR_TITULO)
@@ -668,8 +793,9 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
     pdf.set_text_color(*_COR_CINZA)
     pdf.multi_cell(0, 5,
         "Nota metodologica: os resultados foram obtidos por regressao linear multipla "
-        "ponderada (WLS via statsmodels, peso = QT_ALUNOS) com explicabilidade SHAP "
-        "(LinearExplainer, Lundberg & Lee, 2017). "
+        "ponderada (WLS via statsmodels, peso = QT_ALUNOS), com analise de sensibilidade "
+        "(OLS sem pesos e erros-padrao robustos) e explicabilidade SHAP "
+        "(modelo linear, Lundberg & Lee, 2017, linha de base ponderada por QT_ALUNOS). "
         f"Os dados sao os Microdados ENADE 2021 (INEP), versao LGPD ({filtro_desc}).",
         new_x="LMARGIN", new_y="NEXT")
     pdf.set_text_color(*_COR_TITULO)

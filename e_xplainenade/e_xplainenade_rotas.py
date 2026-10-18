@@ -23,16 +23,23 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from config.variable_map import CURSO_OPTS, IES_OPTS, X_CATEGORIAS, X_OPTS, Y_OPTS
-from modules import loader
+from modules import etl, loader
 from modules.explainability import compute_shap, get_shap_summary
-from modules.hypothesis import build_hypothesis
+from modules.hypothesis import build_hypothesis, center_for_interactions
 from modules.interpretation import (
-    interpretar_modelo, interpretar_residuos, interpretar_shap, interpretar_vif, label,
+    interpretar_modelo, interpretar_ponderacao, interpretar_residuos,
+    interpretar_sensibilidade, interpretar_shap, interpretar_vif, label,
 )
-from modules.modeling import fit_ols, get_coefficients_table, get_model_metrics
+from modules.modeling import (
+    COV_TYPE_ROBUSTO, fit_variants, get_coefficients_table, get_comparison_table,
+    get_model_metrics,
+)
 from modules.multicollinearity import compute_vif
 from modules.report import generate_report
-from modules.residuals import get_qqplot_data, get_residuals_plot_data, run_diagnostics
+from modules.reprodutibilidade import descrever_aleatoriedade, hash_dataframe, versoes
+from modules.residuals import (
+    diagnose_weighting, get_qqplot_data, get_residuals_plot_data, run_diagnostics,
+)
 
 router = APIRouter(prefix="/api/e-xplainenade", tags=["E-XplainENADE"])
 
@@ -43,6 +50,8 @@ class HipoteseRequest(BaseModel):
     interactions: List[Tuple[str, str]] = []
     grupos: Optional[List[int]] = None
     ies_filter: Optional[List[int]] = None
+    # Corte opcional de nº mínimo de presentes por curso (sem corte por padrão).
+    min_alunos: Optional[int] = Field(default=None, ge=1)
 
 
 def _clean_nans(obj: Any) -> Any:
@@ -58,33 +67,82 @@ def _clean_nans(obj: Any) -> Any:
 
 def _computar(req: HipoteseRequest) -> dict:
     """
-    Mesma sequência que app.py já executa (build_hypothesis -> fit_ols ->
+    Mesma sequência que app.py já executa (build_hypothesis -> ajuste ->
     métricas/VIF/resíduos/SHAP), reaproveitada pelos endpoints /hipotese e
     /relatorio para não duplicar a orquestração duas vezes nesta API.
+
+    Desde 2026-10-14 (ver DEVELOPMENT.md): as variáveis de interação são
+    centradas antes do ajuste, e o WLS principal vem acompanhado do OLS sem
+    pesos e das versões com erros-padrão robustos (análise de sensibilidade).
     """
     try:
-        df = loader.get_dataset_from_supabase(grupos=req.grupos, ies_filter=req.ies_filter)
+        df = loader.get_dataset_from_supabase(
+            grupos=req.grupos, ies_filter=req.ies_filter, min_alunos=req.min_alunos,
+        )
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    funil = df.attrs.get("funil", {})
 
     try:
         hyp = build_hypothesis(req.y, req.x_vars, req.interactions, df)
-        result = fit_ols(hyp, df)
+        df_fit, medias_centragem = center_for_interactions(hyp, df)
+        variants = fit_variants(hyp, df_fit, cov_type=COV_TYPE_ROBUSTO)
+        result = variants["wls"]
         metrics = get_model_metrics(result)
-        coef_table = get_coefficients_table(result)
-        vif_table = compute_vif(df, req.x_vars, formula=hyp.to_formula())
+        coef_table = get_coefficients_table(result, robust_result=variants["wls_robust"])
+        comparison_table = get_comparison_table(variants)
+        vif_table = compute_vif(df_fit, req.x_vars, formula=hyp.to_formula())
         diag = run_diagnostics(result)
-        shap_vals, feat_names = compute_shap(result, df, req.x_vars)
+        diag_ols = diagnose_weighting(variants["ols"], df_fit)
+        shap_vals, feat_names = compute_shap(result, df_fit, req.x_vars)
         shap_sum = get_shap_summary(shap_vals, feat_names)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"{type(e).__name__}: {e}")
 
+    reprodutibilidade = {
+        "fonte_dados": _fonte_dados(),
+        "filtros": {
+            "grupos": req.grupos, "ies_filter": req.ies_filter, "min_alunos": req.min_alunos,
+        },
+        "funil_cursos": funil,
+        "n_cursos_base": len(df),
+        "n_obs_modelo": metrics["n_obs"],
+        "hash_base_sha256": hash_dataframe(df_fit, hyp.variables() + ["QT_ALUNOS"]),
+        "cov_type": COV_TYPE_ROBUSTO,
+        "medias_centragem": medias_centragem,
+        "aleatoriedade": descrever_aleatoriedade(metrics["n_obs"])
+                         or "não aplicável (nenhuma etapa estocástica)",
+        "versoes": versoes(),
+    }
+
     return {
         "hyp": hyp, "result": result, "metrics": metrics,
-        "coef_table": coef_table, "vif_table": vif_table, "diag": diag,
+        "coef_table": coef_table, "comparison_table": comparison_table,
+        "vif_table": vif_table, "diag": diag, "diag_ols": diag_ols,
         "shap_sum": shap_sum, "y_label": label(req.y),
+        "medias_centragem": medias_centragem, "reprodutibilidade": reprodutibilidade,
+    }
+
+
+def _fonte_dados() -> str:
+    tabelas = ", ".join(etl.table_name(n) for n in etl.ARQUIVOS_USADOS)
+    return f"Supabase ({tabelas}; agregado por CO_CURSO)"
+
+
+def _interpretacoes(c: dict) -> dict:
+    return {
+        "interpretacao_modelo": interpretar_modelo(
+            c["coef_table"], c["metrics"], c["y_label"], c["medias_centragem"],
+        ),
+        "interpretacao_vif": interpretar_vif(c["vif_table"])[1],
+        "interpretacao_residuos": interpretar_residuos(c["diag"]),
+        "interpretacao_shap": interpretar_shap(c["shap_sum"], c["y_label"]),
+        "interpretacao_sensibilidade": interpretar_sensibilidade(
+            c["comparison_table"], COV_TYPE_ROBUSTO,
+        ),
+        "interpretacao_ponderacao": interpretar_ponderacao(c["diag_ols"]),
     }
 
 
@@ -104,17 +162,24 @@ def opcoes():
 def dataset_resumo(
     grupos: Optional[List[int]] = Query(None),
     ies: Optional[List[int]] = Query(None),
+    min_alunos: Optional[int] = Query(None, ge=1),
 ):
     """Métricas resumidas da base agregada (equivalente à Etapa 1 do Streamlit)."""
     try:
-        df = loader.get_dataset_from_supabase(grupos=grupos, ies_filter=ies)
+        df = loader.get_dataset_from_supabase(
+            grupos=grupos, ies_filter=ies, min_alunos=min_alunos,
+        )
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
     total_alunos = int(df["QT_ALUNOS"].sum()) if "QT_ALUNOS" in df.columns else None
     nt_ger = df["NT_GER"].dropna() if "NT_GER" in df.columns else None
+    funil = df.attrs.get("funil", {})
     return _clean_nans({
         "n_cursos": len(df),
+        "n_cursos_excluidos": funil.get("cursos_excluidos_categad", 0),
+        "motivo_exclusao": funil.get("motivo_exclusao_categad"),
+        "funil_cursos": funil,
         "n_estudantes_representados": total_alunos,
         "media_nota_geral": float(nt_ger.mean()) if nt_ger is not None and len(nt_ger) else None,
         "desvio_padrao_nota_geral": float(nt_ger.std()) if nt_ger is not None and len(nt_ger) > 1 else None,
@@ -148,15 +213,17 @@ def hipotese(req: HipoteseRequest):
         "y_label": c["y_label"],
         "model_metrics": c["metrics"],
         "coef_table": c["coef_table"].to_dict(orient="records"),
+        "comparison_table": c["comparison_table"].to_dict(orient="records"),
+        "cov_type": COV_TYPE_ROBUSTO,
         "vif_table": c["vif_table"].to_dict(orient="records"),
         "residuals_diag": c["diag"],
+        "diagnostics_ols": c["diag_ols"],
         "shap_summary": c["shap_sum"].to_dict(orient="records"),
         "residuals_plot": get_residuals_plot_data(c["result"]).to_dict(orient="records"),
         "qqplot": get_qqplot_data(c["result"]).to_dict(orient="records"),
-        "interpretacao_modelo": interpretar_modelo(c["coef_table"], c["metrics"], c["y_label"]),
-        "interpretacao_vif": interpretar_vif(c["vif_table"])[1],
-        "interpretacao_residuos": interpretar_residuos(c["diag"]),
-        "interpretacao_shap": interpretar_shap(c["shap_sum"], c["y_label"]),
+        "medias_centragem": c["medias_centragem"],
+        "reprodutibilidade": c["reprodutibilidade"],
+        **_interpretacoes(c),
     }
     return _clean_nans(resp)
 
@@ -171,26 +238,23 @@ def relatorio(req: HipoteseRequest):
         "exec_id": exec_id,
         "config": {
             "exec_id": exec_id,
-            "seed": 42,
-            "fonte_dados": "Supabase (tbl_arq1_2021 ... tbl_arq29_2021, agregado por CO_CURSO)",
             "y": req.y,
             "x_vars": req.x_vars,
             "interactions": [list(par) for par in req.interactions],
             "formula": c["hyp"].to_formula(),
-            "filtros": {"grupos": req.grupos, "ies_filter": req.ies_filter},
+            **c["reprodutibilidade"],
         },
         "formula": c["hyp"].to_formula(),
         "y_label": c["y_label"],
         "model_metrics": c["metrics"],
         "coef_table": c["coef_table"],
+        "comparison_table": c["comparison_table"],
         "vif_table": c["vif_table"],
         "residuals_diag": c["diag"],
+        "diagnostics_ols": c["diag_ols"],
         "shap_summary": c["shap_sum"],
-        "interpretacao_modelo": interpretar_modelo(c["coef_table"], c["metrics"], c["y_label"]),
-        "interpretacao_vif": interpretar_vif(c["vif_table"])[1],
-        "interpretacao_residuos": interpretar_residuos(c["diag"]),
-        "interpretacao_shap": interpretar_shap(c["shap_sum"], c["y_label"]),
         "plot_data": get_residuals_plot_data(c["result"]),
+        **_interpretacoes(c),
     }
 
     path = generate_report(session=session, filename=f"relatorio_api_{exec_id[:8]}.pdf")
@@ -229,6 +293,9 @@ if __name__ == "__main__":
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
+        # Sem isto o navegador esconde o Content-Disposition do /relatorio e o
+        # frontend baixa todo PDF com o nome genérico, perdendo o Exec-ID no nome.
+        expose_headers=["Content-Disposition"],
     )
 
     app.include_router(router)
