@@ -20,8 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from modules import etl  # noqa: E402
 from modules.hypothesis import build_hypothesis  # noqa: E402
 
-# 5 cursos: 3 de CC (4004) e 2 de SI (4006), 3 estudantes presentes cada.
-_CURSOS = {101: "4004", 102: "4004", 103: "4004", 201: "4006", 202: "4006"}
+# 13 cursos: 8 de CC (4004) e 5 de SI (4006), 3 estudantes presentes cada. O tamanho importa:
+# desde a F1 (2026-10-18) um recorte com n <= k+1 é recusado como "amostra insuficiente" ANTES
+# da checagem de variável constante, então cada grupo precisa ter mais cursos do que parâmetros.
+_CURSOS = {**{100 + i: "4004" for i in range(1, 9)}, **{200 + i: "4006" for i in range(1, 6)}}
 
 
 def _arquivos_sinteticos():
@@ -62,9 +64,9 @@ class TestCursoSiOffline(unittest.TestCase):
 
     def test_contagem_por_grupo(self):
         base = _base_sintetica()
-        self.assertEqual(len(base), 5)
-        self.assertEqual(int(base["CURSO_SI"].sum()), 2)
-        self.assertEqual(int((base["CURSO_SI"] == 0).sum()), 3)
+        self.assertEqual(len(base), 13)
+        self.assertEqual(int(base["CURSO_SI"].sum()), 5)
+        self.assertEqual(int((base["CURSO_SI"] == 0).sum()), 8)
 
     def test_variavel_constante_no_recorte_gera_erro_claro(self):
         base = _base_sintetica()

@@ -34,7 +34,46 @@ import pandas as pd
 import statsmodels.formula.api as smf
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 
+from config.variable_map import CODE_TO_LABEL, CODE_TO_UI_LABEL
 from modules.hypothesis import HypothesisConfig
+
+# Tolerância para dizer que uma coluna é combinação linear das outras: fração da variância da
+# coluna que sobra depois de regredi-la nas demais (1 - R² do VIF). VIF = inf <=> sobra 0.
+_TOL_COLINEARIDADE = 1e-10
+
+
+def _rotulo_termo(nome: str) -> str:
+    return " × ".join(CODE_TO_UI_LABEL.get(p, CODE_TO_LABEL.get(p, p)) for p in nome.split(":"))
+
+
+def _exigir_posto_completo(model) -> None:
+    """
+    Recusa o modelo se a matriz de design não tem posto completo, isto é, se alguma variável é
+    combinação linear exata das outras (colinearidade perfeita).
+
+    Por quê (2026-10-19, F3): o statsmodels usa pseudo-inversa e NÃO avisa — com PAI = 2 × MAE,
+    por exemplo, o ajuste saía "normal", com coeficientes arbitrários (a divisão do efeito entre
+    as duas variáveis é indeterminada), p-valores ≈ 0 e VIF infinito. Um resultado de aparência
+    legítima e sem sentido.
+    """
+    exog = model.exog
+    if np.linalg.matrix_rank(exog) == exog.shape[1]:
+        return
+    culpados = []
+    for j, nome in enumerate(model.exog_names):
+        if nome == "Intercept":
+            continue
+        outros = np.delete(exog, j, axis=1)
+        coef, *_ = np.linalg.lstsq(outros, exog[:, j], rcond=None)
+        sobra = float(np.sum((exog[:, j] - outros @ coef) ** 2))
+        total = float(np.sum((exog[:, j] - exog[:, j].mean()) ** 2))
+        if sobra <= _TOL_COLINEARIDADE * max(total, 1e-300):
+            culpados.append(_rotulo_termo(nome))
+    quem = f" Termos envolvidos: {', '.join(culpados)}." if culpados else ""
+    raise ValueError(
+        "Colinearidade perfeita: pelo menos uma variável é combinação linear exata das outras "
+        f"neste recorte, e os coeficientes ficariam indeterminados.{quem} Remova uma delas."
+    )
 
 
 def fit_ols(
@@ -68,6 +107,7 @@ def fit_ols(
         model = smf.wls(formula=formula, data=df, weights=df[weight_col])
     else:
         model = smf.ols(formula=formula, data=df)
+    _exigir_posto_completo(model)
     return model.fit()
 
 
@@ -90,6 +130,7 @@ def fit_variants(
     formula = hypothesis.to_formula()
     wls = smf.wls(formula=formula, data=df, weights=df[weight_col])
     ols = smf.ols(formula=formula, data=df)
+    _exigir_posto_completo(wls)  # wls e ols têm a mesma matriz de design
     return {
         "wls":        wls.fit(),
         "wls_robust": wls.fit(cov_type=cov_type),

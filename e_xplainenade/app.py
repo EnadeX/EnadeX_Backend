@@ -15,14 +15,14 @@ import pandas as pd
 import streamlit as st
 
 from config.variable_map import (
-    CODE_TO_LABEL, VALUE_LABELS,
-    Y_OPTS, X_OPTS, CODE_TO_UI_LABEL, CURSO_OPTS, IES_OPTS, X_CATEGORIAS,
+    VALUE_LABELS,
+    Y_OPTS, X_OPTS, CURSO_OPTS, IES_OPTS, X_CATEGORIAS,
 )
 from modules import loader
-from modules.hypothesis import build_hypothesis, center_for_interactions
+from modules.hypothesis import avisos_amostra, build_hypothesis, center_for_interactions
 from modules.modeling import fit_ols, get_coefficients_table, get_model_metrics
 from modules.multicollinearity import (
-    compute_vif, has_multicollinearity, get_variable_to_remove,
+    compute_vif, get_variable_to_remove,
     VIF_MODERADO, VIF_SEVERO,
 )
 from modules.residuals import get_residuals_plot_data, get_qqplot_data, run_diagnostics
@@ -410,7 +410,7 @@ with col1:
         ano_sel = st.radio("Ano", options=list(ANOS_OPTS.keys()),
                            label_visibility="collapsed")
         if not ANOS_OPTS[ano_sel]:
-            st.caption(f"Testes iniciais apenas para o ano de 2021.")
+            st.caption("Testes iniciais apenas para o ano de 2021.")
 
 with col2:
     with st.container(border=True):
@@ -605,7 +605,13 @@ if x_vars:
     st.info(f"**Modelo a executar:** {preview}")
 
 if st.button("Executar Modelagem", type="primary", disabled=(len(x_vars) == 0)):
-    hyp = build_hypothesis(y_var, x_vars, interactions, df)
+    try:
+        hyp = build_hypothesis(y_var, x_vars, interactions, df)
+    except ValueError as e:  # mesmas regras da API (F1): variável inválida, amostra insuficiente…
+        st.error(str(e))
+        st.stop()
+    for _aviso in hyp.avisos + avisos_amostra(hyp, df):
+        st.warning(_aviso)
     try:
         # Abordagem confirmatória: o WLS é ajustado na base completa do recorte,
         # ponderado por QT_ALUNOS (nº de alunos presentes de cada curso — cursos
@@ -827,7 +833,7 @@ def _style_testes(df: pd.DataFrame):
         bg  = "#f0fdf4" if ok else "#fff7ed"
         txt = "#14532d" if ok else "#92400e"
         return [f"background-color: {bg}; color: {txt}; font-weight: 600"
-                if col == "Decisão" else f"color: #1e293b"
+                if col == "Decisão" else "color: #1e293b"
                 for col in df.columns]
     return df.style.apply(color_row, axis=1)
 

@@ -8,7 +8,7 @@ import io
 import re
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import matplotlib
 matplotlib.use("Agg")
@@ -104,7 +104,6 @@ class _PDF(FPDF):
         self.set_fill_color(*_COR_FUNDO)
         self.set_font(self._f, size=9)
         self.set_text_color(*_COR_CINZA)
-        x = self.get_x()
         self.multi_cell(0, 5, texto, fill=True, border=0,
                         new_x="LMARGIN", new_y="NEXT")
         self.set_text_color(*_COR_TITULO)
@@ -238,7 +237,6 @@ def _render_interpretacao(pdf, texto: str) -> None:
       - Demais linhas        → parágrafo normal
     """
     _AZUL_TEXTO  = (29,  78, 137)
-    _CINZA_TEXTO = (75,  85,  99)
     _NORMAL      = (33,  37,  41)
     _INDENT      = 6   # mm de indentação dos bullets
 
@@ -281,15 +279,23 @@ def _render_interpretacao(pdf, texto: str) -> None:
 # Função pública
 # ══════════════════════════════════════════════════════════════════════════════
 
-def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") -> Path:
+def generate_report(
+    session: Dict[str, Any],
+    filename: str = "relatorio.pdf",
+    output_dir: Optional[Path] = None,
+) -> Path:
     """
     Gera relatório PDF acessível a partir do dicionário de sessão.
+
+    `output_dir`: pasta de destino (padrão: local/outputs/). A API passa uma pasta temporária,
+    apagada depois do envio — antes, cada /relatorio deixava um PDF para sempre em outputs/.
 
     Chaves esperadas: exec_id, config, formula, y_label,
     model_metrics, coef_table, vif_table, residuals_diag,
     shap_summary, interpretacao_modelo, interpretacao_residuos,
     interpretacao_shap, plot_data
 
+    Opcionais (2026-10-18): avisos (lista de textos; aparece na Secao 1 se nao vazia).
     Opcionais (2026-10-14, análise de sensibilidade — ver DEVELOPMENT.md):
     comparison_table, diagnostics_ols, interpretacao_sensibilidade,
     interpretacao_ponderacao. Sem elas, a Seção 5 não é gerada.
@@ -339,6 +345,13 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
         pdf.set_xy(135, y0); pdf.metrica("R2 Ajustado",            r2adj,  60)
         pdf.set_xy(15, y0 + 17)
         pdf.ln(4)
+
+        # Avisos que nao bloqueiam o ajuste (amostra pequena pela regra de Green, repeticoes
+        # removidas da hipotese) — F1, 2026-10-18. Sem avisos, a secao fica como antes.
+        avisos = session.get("avisos") or []
+        if avisos:
+            pdf.caixa_destaque("Avisos sobre este modelo:\n" + "\n".join("- " + a for a in avisos),
+                               (255, 243, 205))
 
         # A interpretacao completa e exibida apos a tabela de coeficientes (Secao 2)
 
@@ -814,7 +827,8 @@ def generate_report(session: Dict[str, Any], filename: str = "relatorio.pdf") ->
         new_x="LMARGIN", new_y="NEXT")
     pdf.set_text_color(*_COR_TITULO)
 
-    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = _OUTPUT_DIR / filename
+    destino = Path(output_dir) if output_dir else _OUTPUT_DIR
+    destino.mkdir(parents=True, exist_ok=True)
+    output_path = destino / filename
     pdf.output(str(output_path))
     return output_path

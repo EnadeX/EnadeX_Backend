@@ -11,6 +11,7 @@ Supabase (única fonte de dados do sistema desde 2026-08-30 — ver
 DEVELOPMENT.md) — não precisa (e não deve) rodar preprocess() de novo, pois
 etl.load_raw() já aplica a recodificação por arquivo antes da agregação.
 """
+import threading
 from typing import List, Optional
 
 import pandas as pd
@@ -146,11 +147,39 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# Cache em memória (processo local) do resultado de etl.load_raw(), por
-# `grupos` — evita repetir as 13 consultas paginadas ao Supabase a cada request.
-# Não persiste entre reinícios do processo; ver DEVELOPMENT.md para a pendência
-# em aberto sobre persistir isso no banco versus sempre recomputar.
+# Cache em memória (processo local) da base COMPLETA (CC + SI) devolvida por etl.load_raw().
+# Só ela é guardada (chave None): o recorte por curso (CO_GRUPO), por tipo de IES e por mínimo
+# de presentes é aplicado DEPOIS, em memória. Antes, cada recorte distinto (todos, só CC, só SI)
+# refazia as 13 consultas paginadas ao Supabase (~10 s cada). A agregação é por curso, então
+# filtrar depois é equivalente a agregar só aqueles cursos — conferido com dados reais
+# (ver DEVELOPMENT.md, 2026-10-19) e por teste.
+# Não persiste entre reinícios do processo; ver DEVELOPMENT.md para a pendência em aberto
+# sobre persistir isso no banco versus sempre recomputar.
 _supabase_cache: dict = {}
+_CHAVE_BASE = None
+
+# Trava da carga a frio: se duas requisições chegam juntas com o cache vazio, a segunda espera
+# a primeira terminar (e usa o resultado dela) em vez de repetir as 13 consultas.
+_trava_carga = threading.Lock()
+
+
+def _base_completa(force_refresh: bool = False) -> pd.DataFrame:
+    from modules import etl  # import local: evita ciclo de import com etl.py
+
+    if not force_refresh and _CHAVE_BASE in _supabase_cache:  # caminho rápido, sem trava
+        return _supabase_cache[_CHAVE_BASE]
+    with _trava_carga:
+        if force_refresh or _CHAVE_BASE not in _supabase_cache:
+            df = etl.load_raw()  # recorte padrão do ETL: CC + SI, Brasil inteiro
+            if df.empty:
+                tabelas = ", ".join(etl.table_name(n) for n in etl.ARQUIVOS_USADOS)
+                raise RuntimeError(
+                    "Nenhum curso retornado do Supabase. "
+                    "Verifique se as 13 tabelas do escopo do E-XplainENADE já foram "
+                    f"populadas: {tabelas}."
+                )
+            _supabase_cache[_CHAVE_BASE] = df
+        return _supabase_cache[_CHAVE_BASE]
 
 
 def get_dataset_from_supabase(
@@ -167,21 +196,20 @@ def get_dataset_from_supabase(
     Parameters
     ----------
     grupos : list[int], optional
-        CO_GRUPO a incluir (ex: [4004]). None = todos os cursos do recorte.
+        CO_GRUPO a incluir (ex: [4004]). None = CC + SI.
     ies_filter : list[int], optional
         Valores de TP_CATEGAD_BIN a incluir (0=Pública, 1=Privada).
     force_refresh : bool, optional
         Ignora o cache em memória e refaz as consultas ao Supabase.
     min_alunos : int, optional
-        Mantém só cursos com QT_ALUNOS >= min_alunos. Aplicado depois do
-        cache (o cache guarda a base completa), então não refaz as consultas.
+        Mantém só cursos com QT_ALUNOS >= min_alunos.
 
     Returns
     -------
     pd.DataFrame
-        Uma linha por curso, nomes amigáveis, pronta para modelagem.
-        `df.attrs["funil"]` traz o funil do ETL (ver etl.load_raw) mais
-        cursos_apos_ies, cursos_apos_min_alunos e cursos_disponiveis.
+        Uma linha por curso, nomes amigáveis, pronta para modelagem. É uma CÓPIA: alterá-la
+        não afeta o cache. `df.attrs["funil"]` traz o funil do ETL (ver etl.load_raw) mais
+        cursos_apos_curso, cursos_apos_ies, cursos_apos_min_alunos e cursos_disponiveis.
 
     Raises
     ------
@@ -189,22 +217,11 @@ def get_dataset_from_supabase(
         Se a agregação vier vazia (ex: as tabelas do Supabase ainda não foram
         populadas com os 13 arquivos do escopo do E-XplainENADE).
     """
-    from modules import etl  # import local: evita ciclo de import com etl.py
-
-    chave = tuple(sorted(grupos)) if grupos else None
-    if force_refresh or chave not in _supabase_cache:
-        df = etl.load_raw(grupos=grupos)
-        if df.empty:
-            tabelas = ", ".join(etl.table_name(n) for n in etl.ARQUIVOS_USADOS)
-            raise RuntimeError(
-                "Nenhum curso retornado do Supabase para este recorte. "
-                "Verifique se as 13 tabelas do escopo do E-XplainENADE já foram "
-                f"populadas: {tabelas}."
-            )
-        _supabase_cache[chave] = df
-
-    df = _supabase_cache[chave]
+    df = _base_completa(force_refresh)
     funil = dict(df.attrs.get("funil", {}))
+    if grupos:
+        df = df[df["CO_GRUPO"].isin(grupos)].reset_index(drop=True)
+        funil["cursos_apos_curso"] = len(df)
     if ies_filter:
         df = df[df["TP_CATEGAD_BIN"].isin(ies_filter)].reset_index(drop=True)
         funil["cursos_apos_ies"] = len(df)
@@ -213,9 +230,8 @@ def get_dataset_from_supabase(
         funil["cursos_apos_min_alunos"] = len(df)
     funil["cursos_disponiveis"] = len(df)
 
-    # Atribuído explicitamente no objeto devolvido (não depende de o pandas
-    # propagar attrs pelos filtros acima) — e numa cópia, para não alterar o
-    # DataFrame guardado no cache.
+    # Atribuído explicitamente no objeto devolvido (não depende de o pandas propagar attrs pelos
+    # filtros acima) — e numa cópia, para não alterar o DataFrame guardado no cache.
     df = df.copy()
     df.attrs["funil"] = funil
     return df

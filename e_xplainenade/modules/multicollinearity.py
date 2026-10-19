@@ -48,22 +48,22 @@ def compute_vif(
         # Constrói a design matrix completa (inclui interações) via patsy
         import patsy
         rhs = formula.split("~", 1)[1].strip()
-        try:
-            X_pat = patsy.dmatrix(rhs, data=df, return_type="dataframe")
-            # Remove a coluna Intercept — VIF é calculado nos preditores
-            X_pat = X_pat.drop(columns=[c for c in X_pat.columns
-                                        if c.lower() in ("intercept", "const")],
-                               errors="ignore")
-            X_pat = X_pat.dropna()
-            X_full = add_constant(X_pat, has_constant="add")
-            term_names = X_pat.columns.tolist()
-            vif_values = [
-                variance_inflation_factor(X_full.values, i + 1)
-                for i in range(len(term_names))
-            ]
-            return _build_vif_table(term_names, vif_values)
-        except Exception:
-            pass  # fallback para o modo sem fórmula
+        # Sem try/except (2026-10-19, F3): antes, qualquer falha aqui caía em silêncio no modo
+        # sem fórmula, devolvendo um VIF SEM os termos de interação como se fosse o completo.
+        # Se a fórmula não puder ser montada, o erro tem de aparecer.
+        X_pat = patsy.dmatrix(rhs, data=df, return_type="dataframe")
+        # Remove a coluna Intercept — VIF é calculado nos preditores
+        X_pat = X_pat.drop(columns=[c for c in X_pat.columns
+                                    if c.lower() in ("intercept", "const")],
+                           errors="ignore")
+        X_pat = X_pat.dropna()
+        X_full = add_constant(X_pat, has_constant="add")
+        term_names = X_pat.columns.tolist()
+        vif_values = [
+            variance_inflation_factor(X_full.values, i + 1)
+            for i in range(len(term_names))
+        ]
+        return _build_vif_table(term_names, vif_values)
 
     # Modo sem fórmula: só efeitos principais
     subset = df[x_vars].dropna()

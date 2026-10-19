@@ -1,6 +1,3 @@
-# ── Pasta local, NÃO versionada ──────────────────────────────────────────────
-# Tudo que fica em local/ é ignorado (microdados brutos, PDFs gerados, material
-# do TCC, backups) — só o LEIA-ME.md que explica a pasta é versionado.
 local/*
 resultados/*
 
