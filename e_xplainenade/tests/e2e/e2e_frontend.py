@@ -8,6 +8,12 @@ NÃO faz parte do `unittest discover`: precisa dos servidores e do Edge. Cobre a
   * coluna "p < 0,05?" (e o fim de "Confiável?")
   * o PDF baixado traz a hipótese que está NA TELA, mesmo com o formulário alterado depois
   * aviso "formulário alterado depois desta execução"
+  * "Baixar configuração (JSON)": o arquivo traz o MESMO Exec-ID e hash do PDF da execução exibida
+  * laço de multicolinearidade na interface: alerta de VIF → "Remover variável de maior VIF e
+    reexecutar" → nova requisição sem a variável → formulário sincronizado. Os dados reais nunca
+    chegam a VIF > 5 (máx. 4,38), então a resposta REAL da API é interceptada e um VIF severo é
+    injetado numa variável; a segunda chamada (a do botão) segue real
+  * o botão de remoção fica desabilitado se o formulário foi alterado depois da execução
   * rede fora do ar: mensagem clara em português e botão destravado
 
 Pré-requisitos (de e_xplainenade/ e do EnadeX_Frontend/):
@@ -19,6 +25,7 @@ Variáveis opcionais: EDGE_PATH (caminho do msedge.exe), FRONTEND_URL (padrão h
 Requer: pip install websockets pypdf
 """
 import asyncio
+import base64
 import json
 import os
 import re
@@ -65,11 +72,42 @@ async def main():
     async with websockets.connect(page["webSocketDebuggerUrl"], max_size=100_000_000) as ws:
         n, pend, ev = 0, {}, []
 
+        mock = {"pendente": False}
+
+        async def tratar_pausa(p):
+            """Estágio de RESPOSTA do Fetch: a 1ª resposta de POST /hipotese após `mock["pendente"]`
+            ganha um VIF severo na última variável; todas as outras passam intactas."""
+            rid, req = p["requestId"], p["request"]
+            try:
+                if mock["pendente"] and req["method"] == "POST" and req["url"].split("?")[0].endswith("/hipotese") \
+                        and p.get("responseStatusCode") == 200:
+                    mock["pendente"] = False
+                    corpo = await cmd("Fetch.getResponseBody", requestId=rid)
+                    texto = base64.b64decode(corpo["body"]).decode("utf-8") if corpo.get("base64Encoded") else corpo["body"]
+                    j = json.loads(texto)
+                    ultima = j["vif_table"][-1]
+                    mock["variavel"] = ultima["variavel"]
+                    ultima["vif"], ultima["alerta"] = 12.3, "severo (VIF > 10)"
+                    cabecalhos = [h for h in p["responseHeaders"]
+                                  if h["name"].lower() not in ("content-length", "content-encoding")]
+                    await cmd("Fetch.fulfillRequest", requestId=rid, responseCode=200, responseHeaders=cabecalhos,
+                              body=base64.b64encode(json.dumps(j).encode("utf-8")).decode())
+                else:
+                    await cmd("Fetch.continueResponse", requestId=rid)
+            except Exception as e:  # nunca deixar uma requisição pausada para sempre
+                print("     (interceptação:", e, ")")
+                try:
+                    await cmd("Fetch.continueResponse", requestId=rid)
+                except Exception:
+                    pass
+
         async def leitor():
             async for raw in ws:
                 m = json.loads(raw)
                 if m.get("id") in pend:
                     pend.pop(m["id"]).set_result(m)
+                elif m.get("method") == "Fetch.requestPaused":
+                    asyncio.create_task(tratar_pausa(m["params"]))
                 elif "method" in m:
                     ev.append(m)
 
@@ -97,20 +135,26 @@ async def main():
                 await asyncio.sleep(0.5)
             return False
 
-        async def baixar_pdf():
+        async def baixar(botao, extensao):
+            """Clica no botão e devolve o caminho do arquivo baixado ('' se nada chegou)."""
             shutil.rmtree(DL, ignore_errors=True)
             os.makedirs(DL)
-            await js("__btn('Baixar relatório PDF').click()")
+            await js(f"__btn({json.dumps(botao)}).click()")
             for _ in range(240):
                 await asyncio.sleep(0.5)
-                if any(f.endswith(".pdf") for f in os.listdir(DL)):
+                if any(f.endswith(extensao) for f in os.listdir(DL)):
                     break
             await asyncio.sleep(1)
-            arquivos = [f for f in os.listdir(DL) if f.endswith(".pdf")]
-            if not arquivos:
+            arquivos = [f for f in os.listdir(DL) if f.endswith(extensao)]
+            return os.path.join(DL, arquivos[0]) if arquivos else ""
+
+        def ler_pdf(caminho):
+            if not caminho:
                 return ""
-            leitor_pdf = PdfReader(os.path.join(DL, arquivos[0]))
-            return re.sub(r"[ \t]+", " ", " ".join(p.extract_text() for p in leitor_pdf.pages))
+            return re.sub(r"[ \t]+", " ", " ".join(p.extract_text() for p in PdfReader(caminho).pages))
+
+        async def baixar_pdf():
+            return ler_pdf(await baixar("Baixar relatório PDF", ".pdf"))
 
         t = asyncio.create_task(leitor())
         for d in ("Page", "Network", "Runtime"):
@@ -179,6 +223,63 @@ async def main():
         await asyncio.sleep(1)
         ok("depois de executar de novo, o aviso de formulário alterado some",
            "foi alterado depois desta execução" not in await js("document.body.innerText"))
+
+        # ── Laço de multicolinearidade (VIF severo injetado na 1ª resposta) ───────────
+        posts = lambda: [e for e in ev if e["method"] == "Network.requestWillBeSent"
+                         and e["params"]["request"]["method"] == "POST"
+                         and e["params"]["request"]["url"].split("?")[0].endswith("/hipotese")]
+        await cmd("Fetch.enable", patterns=[{"urlPattern": "*/api/e-xplainenade/hipotese*", "requestStage": "Response"}])
+        mock["pendente"] = True
+        await js("__btn('Executar hipótese').click()")
+        achou_botao = await esperar("document.body.innerText.includes('Remover variável de maior VIF')", 90)
+        ok("com VIF severo na resposta, aparece o botão 'Remover variável de maior VIF e reexecutar'", achou_botao)
+        variavel_severa = mock.get("variavel", "")
+        habilitado = await js("!__btn('Remover variável de maior VIF').disabled")
+        ok("e ele está habilitado logo após a execução", habilitado)
+
+        await js("__cb('Situação de Trabalho').click()")  # altera o formulário SEM executar
+        await asyncio.sleep(0.8)
+        ok("formulário alterado depois da execução: o botão de remoção fica desabilitado",
+           await js("__btn('Remover variável de maior VIF').disabled"))
+        await js("__cb('Situação de Trabalho').click()")  # desfaz
+        await asyncio.sleep(0.8)
+        ok("formulário de volta ao exibido: o botão volta a ficar habilitado",
+           not await js("__btn('Remover variável de maior VIF').disabled"))
+
+        n_antes = len(posts())
+        await js("__btn('Remover variável de maior VIF').click()")
+        for _ in range(180):
+            await asyncio.sleep(0.5)
+            if len(posts()) > n_antes and not await js("document.body.innerText.includes('Calculando...')"):
+                break
+        corpo = json.loads(posts()[-1]["params"]["request"]["postData"])
+        ok(f"o botão reenviou a hipótese SEM a variável removida ({variavel_severa})",
+           len(posts()) == n_antes + 1 and variavel_severa not in corpo["x_vars"] and len(corpo["x_vars"]) >= 2,
+           f"x_vars = {corpo['x_vars']}")
+        formula = await js("__formula()")
+        ok("a fórmula exibida é a do modelo recalculado (sem a variável)", variavel_severa not in (formula or ""), formula)
+        ok("o formulário foi sincronizado: a variável removida está desmarcada",
+           await js(f"!__cb({json.dumps({'TP_SEXO': 'Sexo'}.get(variavel_severa, variavel_severa))}).checked"))
+        texto_tela = await js("document.body.innerText")
+        ok("depois da remoção o alerta some: sem botão de remoção e com o texto de 'sem multicolinearidade'",
+           "Remover variável de maior VIF" not in texto_tela and "Não foi detectada multicolinearidade relevante" in texto_tela)
+        await cmd("Fetch.disable")
+
+        # ── "Baixar configuração (JSON)": mesmo Exec-ID e hash do PDF ─────────────────
+        arq_json = await baixar("Baixar configuração (JSON)", ".json")
+        cfg = json.load(open(arq_json, encoding="utf-8")) if arq_json else {}
+        ok("o arquivo se chama config_<8 primeiros do Exec-ID>.json",
+           re.fullmatch(r"config_[0-9a-f]{8}\.json", os.path.basename(arq_json)) is not None and
+           os.path.basename(arq_json) == f"config_{cfg.get('exec_id', '')[:8]}.json", os.path.basename(arq_json))
+        chaves = {"exec_id", "gerado_em", "y", "x_vars", "interactions", "formula", "avisos", "fonte_dados",
+                  "filtros", "funil_cursos", "hash_base_sha256", "cov_type", "aleatoriedade", "versoes"}
+        ok("o JSON traz o registro completo (hipótese, filtros, hash da base, versões…)", chaves <= set(cfg),
+           f"faltam: {sorted(chaves - set(cfg))}")
+        ok("a fórmula do JSON é a exibida na tela", cfg.get("formula") == await js("__formula()"))
+        pdf = await baixar_pdf()
+        ok("o PDF da mesma execução leva o MESMO Exec-ID do JSON", f"Exec-ID: {cfg.get('exec_id')}" in pdf,
+           cfg.get("exec_id"))
+        ok("e o mesmo hash da base", cfg.get("hash_base_sha256", "?") in pdf)
 
         # ── Rede fora do ar (tem de ser o ÚLTIMO passo) ──────────────────────────────
         await cmd("Network.emulateNetworkConditions", offline=True, latency=0, downloadThroughput=-1, uploadThroughput=-1)

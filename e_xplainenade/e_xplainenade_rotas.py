@@ -21,6 +21,7 @@ import os
 import shutil
 import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
@@ -65,6 +66,13 @@ class HipoteseRequest(BaseModel):
     ies_filter: Optional[List[int]] = None
     # Corte opcional de nº mínimo de presentes por curso (sem corte por padrão).
     min_alunos: Optional[int] = Field(default=None, ge=1)
+    # Exec-ID de uma execução anterior (devolvido por /hipotese). Se vier, /hipotese o repete e
+    # /relatorio o usa no PDF — assim o JSON de configuração e o PDF da MESMA execução levam o
+    # mesmo identificador. Sem ele, cada chamada gera um novo (UUID v4).
+    exec_id: Optional[str] = Field(
+        default=None,
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    )
 
 
 def _clean_nans(obj: Any) -> Any:
@@ -198,6 +206,25 @@ def _computar(req: HipoteseRequest) -> dict:
     }
 
 
+def _configuracao(c: dict, exec_id: str) -> dict:
+    """
+    Registro formal da execução (requisito 2.3 do artigo: decisões e configurações em arquivo
+    estruturado). É o MESMO dicionário que a interface oferece para download (.json) e que o PDF
+    imprime no bloco de rastreabilidade — uma só fonte, para os dois não divergirem.
+    """
+    hyp = c["hyp"]
+    return {
+        "exec_id": exec_id,
+        "gerado_em": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "y": hyp.y,
+        "x_vars": hyp.x_vars,
+        "interactions": [list(par) for par in hyp.interactions],
+        "formula": hyp.to_formula(),
+        "avisos": c["avisos"],
+        **c["reprodutibilidade"],
+    }
+
+
 def _fonte_dados() -> str:
     tabelas = ", ".join(etl.table_name(n) for n in etl.ARQUIVOS_USADOS)
     return f"Supabase ({tabelas}; agregado por CO_CURSO)"
@@ -286,7 +313,10 @@ def hipotese(req: HipoteseRequest):
     treinado para servir — cada chamada é um cálculo novo.
     """
     c = _computar(req)
+    exec_id = req.exec_id or str(uuid.uuid4())
     resp = {
+        "exec_id": exec_id,
+        "configuracao": _configuracao(c, exec_id),
         "formula": c["hyp"].to_formula(),
         "y_label": c["y_label"],
         "model_metrics": c["metrics"],
@@ -313,19 +343,11 @@ def hipotese(req: HipoteseRequest):
 def relatorio(req: HipoteseRequest):
     """Mesmo cálculo de /hipotese, devolvendo o PDF gerado por modules/report.py."""
     c = _computar(req)
-    exec_id = str(uuid.uuid4())
+    exec_id = req.exec_id or str(uuid.uuid4())
 
     session = {
         "exec_id": exec_id,
-        "config": {
-            "exec_id": exec_id,
-            "y": c["hyp"].y,
-            "x_vars": c["hyp"].x_vars,
-            "interactions": [list(par) for par in c["hyp"].interactions],
-            "formula": c["hyp"].to_formula(),
-            "avisos": c["avisos"],
-            **c["reprodutibilidade"],
-        },
+        "config": _configuracao(c, exec_id),
         "formula": c["hyp"].to_formula(),
         "y_label": c["y_label"],
         "model_metrics": c["metrics"],
