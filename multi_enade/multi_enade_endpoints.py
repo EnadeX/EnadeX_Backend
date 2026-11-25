@@ -61,8 +61,8 @@ def multi_enade_relatorio_cluster():
     """
     tbl_multi_enade_clusters não guarda um nome legível por cluster (só
     Cluster_ID, que é um índice arbitrário do KMeans). O nome é recalculado
-    aqui a partir do NT_GER médio de cada grupo, sem precisar de coluna nova
-    no Supabase — ver modelo_clusters.nomear_clusters.
+    aqui a partir do perfil médio de cada grupo (financiamento, QE_I11), sem
+    precisar de coluna nova no Supabase — ver modelo_clusters.nomear_clusters.
     """
     try:
         dic_credenciais = credenciais_banco()
@@ -72,8 +72,10 @@ def multi_enade_relatorio_cluster():
             dic_credenciais["key_banco"],
         )
         if not df_cluster.empty and "Cluster_ID" in df_cluster.columns and "NT_GER" in df_cluster.columns:
-            df_cluster["NT_GER"] = pd.to_numeric(df_cluster["NT_GER"], errors="coerce")
-            perfil = df_cluster.groupby("Cluster_ID")["NT_GER"].mean().to_frame()
+            colunas_perfil = ["NT_GER"] + [c for c in df_cluster.columns if c.startswith("QE_I11_")]
+            for coluna in colunas_perfil:
+                df_cluster[coluna] = pd.to_numeric(df_cluster[coluna], errors="coerce")
+            perfil = df_cluster.groupby("Cluster_ID")[colunas_perfil].mean()
             nomes = nomear_clusters(perfil)
             df_cluster["Cluster_Nome"] = df_cluster["Cluster_ID"].map(nomes)
         return df_cluster.to_dict(orient="records")
@@ -125,8 +127,8 @@ class ReprocessarClustersRequest(BaseModel):
 class ReprocessarAssociacaoRequest(BaseModel):
     # Validados em EXPLORACAO_MODELO_ASSOCIACAO.md: suporte 0,25/confiança 0,7
     # nunca encontra nenhuma regra ligada a desempenho (matematicamente
-    # impossível); 0,03/0,5 foi a configuração validada por repetição em
-    # duas amostras independentes.
+    # impossível); 0,03/0,5 foi escolhida na exploração, que comparou as regras
+    # encontradas em duas metades da base de alunos.
     suporte_minimo: float = 0.03
     confianca_minima: float = 0.5
 

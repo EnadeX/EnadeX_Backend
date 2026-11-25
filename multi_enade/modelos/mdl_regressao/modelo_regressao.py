@@ -2,10 +2,13 @@ import matplotlib
 matplotlib.use("Agg")  # backend não-interativo: roda em servidor/API sem travar em plt.show() (sem display)
 
 from util.util_db import consultar_dados, credenciais_banco, upsert_supabase, truncar_tabela_supabase
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import r2_score, mean_absolute_error
 from util.util_general import calcular_tempo
 from util.util_pandas import show_df, avaliar_modelo_regressao
 from matplotlib.lines import Line2D
@@ -47,6 +50,38 @@ COLUNAS_FEATURES = [
     'QE_I13_A', 'QE_I13_B', 'QE_I13_D', 'QE_I24_A', 'QE_I12_A', 'QE_I11_A',
     'QE_I19_B', 'PCA_ECON_1', 'PCA_ECON_2',
 ]
+# O PCA econômico faz parte do modelo (Pipeline): é ajustado só com os cursos
+# de treino em cada avaliação, e o ajuste final é salvo junto com o Random
+# Forest no .joblib. As colunas "diretas" entram no modelo como estão.
+COLUNAS_ECONOMICAS = ['QE_I08_media', 'QE_I09_media', 'QE_I10_media']
+COLUNAS_DIRETAS = [c for c in COLUNAS_FEATURES if not c.startswith('PCA_ECON_')]
+
+# Alvo do modelo: nota centrada por área (NT_GER_c = NT_GER - média nacional
+# da área). As provas de Ciência da Computação (4004) e de Sistemas de
+# Informação (4006) são diferentes; sem centrar, o modelo aprenderia em parte a
+# diferença entre as provas. Média nacional = média das médias dos cursos do
+# Brasil inteiro com >= 5 alunos com NT_GER > 0 (microdados ENADE 2021, arq1 +
+# arq3), calculada em MultiENADE_Analises/scripts/_alvo.py. Vem de fora da
+# amostra, então não causa vazamento entre treino e teste.
+MEDIA_NACIONAL_AREA = {'4004': 35.6128543859, '4006': 37.9142157510}
+# Área (CO_GRUPO) de cada curso do recorte Norte + Nordeste, tirada do arq1 do
+# INEP (as tabelas do Supabase não guardam CO_GRUPO).
+_ARQUIVO_AREA_CURSOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'area_cursos_recorte.csv')
+
+# Validação cruzada repetida (5 partes x 10 embaralhamentos): é a medida
+# principal de desempenho; o teste único 80/20 fica como referência.
+CV_PARTES, CV_REPETICOES = 5, 10
+
+
+def media_nacional_por_curso(co_cursos: pd.Series) -> pd.Series:
+    """Média nacional da área de cada curso (mesmo índice de `co_cursos`).
+    Falha se algum curso não tiver área conhecida, em vez de seguir com NaN."""
+    area = pd.read_csv(_ARQUIVO_AREA_CURSOS, dtype=str).set_index('CO_CURSO')['CO_GRUPO']
+    grupos = co_cursos.astype(str).map(area)
+    if grupos.isna().any():
+        faltando = co_cursos[grupos.isna()].astype(str).tolist()
+        raise ValueError(f"Cursos sem área (CO_GRUPO) em {_ARQUIVO_AREA_CURSOS}: {faltando}")
+    return grupos.map(MEDIA_NACIONAL_AREA).astype(float)
 
 
 def _media_ordinal(df: DataFrame, coluna: str, mapa: dict, nome_saida: str) -> DataFrame:
@@ -143,29 +178,18 @@ def preparar_dados_regressao(
     df_consolidado = df_consolidado[df_consolidado['QT_ALUNOS'] >= N_MINIMO_ALUNOS].reset_index(drop=True)
     print(f"[INFO] Piso de {N_MINIMO_ALUNOS} alunos/curso: {total_antes} -> {len(df_consolidado)} cursos.")
 
-    # 15. PCA das 3 variáveis econômicas (renda, situação financeira,
-    # trabalho) em 2 componentes — testado em EXPLORACAO_MODELO_REGRESSAO.md:
-    # ganho real de CV sobre usá-las separadas (0,400 -> 0,424), porque são
-    # ordinais da mesma escala e cada uma já tinha sinal individual forte
-    # (diferente de outros grupos testados — bolsas/auxílios e percepção de
-    # ensino — que não melhoraram). Recalculado a cada reprocessamento (não
-    # é "treinado" e salvo como o RandomForest): são só 3 variáveis estáveis,
-    # sem necessidade de persistir o ajuste do PCA entre execuções.
-    colunas_economicas = ['QE_I08_media', 'QE_I09_media', 'QE_I10_media']
-    scaler_economico = StandardScaler()
-    bloco_padronizado = scaler_economico.fit_transform(df_consolidado[colunas_economicas])
-    pca_economico = PCA(n_components=2, random_state=42)
-    componentes_economicos = pca_economico.fit_transform(bloco_padronizado)
-    df_consolidado['PCA_ECON_1'] = componentes_economicos[:, 0]
-    df_consolidado['PCA_ECON_2'] = componentes_economicos[:, 1]
+    # 15. As 3 variáveis econômicas (renda, situação financeira, trabalho)
+    # seguem como médias por curso; o PCA que as condensa em PCA_ECON_1/2
+    # (testado em EXPLORACAO_MODELO_REGRESSAO.md: CV 0,400 -> 0,424) agora faz
+    # parte do modelo (ver _criar_pipeline), ajustado só no treino.
 
-    # Garante que todas as colunas selecionadas existem (uma categoria rara
-    # pode não aparecer em algum recorte/reprocessamento)
-    for coluna in COLUNAS_FEATURES:
-        if coluna not in df_consolidado.columns:
-            df_consolidado[coluna] = 0.0
+    # Falha em vez de preencher com zero: uma coluna ausente indica dado lido
+    # com tipo errado (ex.: turno como decimal), e o zero escondia o problema.
+    faltando = [c for c in COLUNAS_DIRETAS + COLUNAS_ECONOMICAS if c not in df_consolidado.columns]
+    if faltando:
+        raise ValueError(f"Colunas do modelo ausentes na base preparada: {faltando}")
 
-    df_consolidado = df_consolidado[['CO_CURSO', 'NT_GER', 'QT_ALUNOS'] + COLUNAS_FEATURES]
+    df_consolidado = df_consolidado[['CO_CURSO', 'NT_GER', 'QT_ALUNOS'] + COLUNAS_DIRETAS + COLUNAS_ECONOMICAS]
 
     show_df(df_consolidado) if print_flag else None
     return df_consolidado
@@ -183,59 +207,97 @@ def _criar_random_forest() -> RandomForestRegressor:
     )
 
 
+def _criar_pipeline() -> Pipeline:
+    """PCA econômico (padroniza + 2 componentes) e Random Forest num único
+    modelo. 'direto' vem antes de 'econ' para manter a ordem de
+    COLUNAS_FEATURES (PCA_ECON_1/2 por último)."""
+    bloco_economico = Pipeline([('padroniza', StandardScaler()),
+                                ('pca', PCA(n_components=2, random_state=42))])
+    pre = ColumnTransformer([('direto', 'passthrough', COLUNAS_DIRETAS),
+                             ('econ', bloco_economico, COLUNAS_ECONOMICAS)])
+    return Pipeline([('pre', pre), ('rf', _criar_random_forest())])
+
+
+def _entradas_e_alvo(df_consolidado: DataFrame):
+    x = df_consolidado[COLUNAS_DIRETAS + COLUNAS_ECONOMICAS]
+    media_area = media_nacional_por_curso(df_consolidado['CO_CURSO'])
+    y_centrado = df_consolidado['NT_GER'] - media_area   # NT_GER_c
+    return x, y_centrado, media_area
+
+
+def validacao_cruzada_repetida(x: DataFrame, y: pd.Series, pesos: pd.Series) -> dict:
+    """R² e MAE fora da dobra em 5 partes x 10 embaralhamentos (sementes 0-9).
+    O PCA é reajustado em cada dobra (está dentro do Pipeline) e o treino é
+    ponderado por QT_ALUNOS; o R² não é ponderado."""
+    r2s, maes = [], []
+    for semente in range(CV_REPETICOES):
+        for idx_tr, idx_te in KFold(CV_PARTES, shuffle=True, random_state=semente).split(x):
+            modelo = _criar_pipeline()
+            modelo.fit(x.iloc[idx_tr], y.iloc[idx_tr], rf__sample_weight=pesos.iloc[idx_tr].to_numpy())
+            previsto = modelo.predict(x.iloc[idx_te])
+            r2s.append(r2_score(y.iloc[idx_te], previsto))
+            maes.append(mean_absolute_error(y.iloc[idx_te], previsto))
+    return {'R2_CV_media': float(np.mean(r2s)), 'R2_CV_desvio': float(np.std(r2s)),
+            'MAE_CV_media': float(np.mean(maes)), 'n_avaliacoes_cv': len(r2s)}
+
+
 def treinar_e_salvar_modelo(df_consolidado: DataFrame, fatia_treino: float = 0.2,
                             caminho_modelo: str = 'rf_regressor.joblib'):
     """
-    Treina em duas etapas:
-    1. Avalia honestamente num conjunto de teste nunca visto (held-out) —
-       gera R²/MAE/RMSE que refletem a capacidade real de generalização.
-    2. Reajusta o modelo final com 100% dos dados (prática padrão: depois de
+    Treina em três etapas, sempre com o alvo centrado por área (NT_GER_c):
+    1. Validação cruzada repetida (5 partes x 10 repetições): medida principal.
+    2. Teste único 80/20 (semente 42), mantido como referência.
+    3. Modelo final reajustado com 100% dos dados (prática padrão: depois de
        medir a qualidade, usa-se toda a base disponível no modelo publicado).
-       Isso evita publicar previsões que misturam cursos "vistos no treino"
-       (parcialmente memorizados) com cursos genuinamente fora da amostra.
-    Salva (serializa) o modelo final no disco e retorna (modelo, métricas).
+    Salva o Pipeline final (PCA econômico + Random Forest) no disco e retorna
+    (modelo, métricas). As métricas de erro ficam em pontos da nota.
     """
-    x = df_consolidado.drop(columns=['CO_CURSO', 'NT_GER', 'QT_ALUNOS'])
-    y = df_consolidado['NT_GER']
+    x, y, _ = _entradas_e_alvo(df_consolidado)
     pesos = df_consolidado['QT_ALUNOS']
 
+    # 1. Validação cruzada repetida
+    metricas_cv = validacao_cruzada_repetida(x, y, pesos)
+
+    # 2. Teste único 80/20
     X_train, X_test, y_train, y_test, pesos_train, pesos_test = train_test_split(
         x, y, pesos, test_size=fatia_treino, random_state=42
     )
-
-    # 1. Avaliação honesta no conjunto de teste
-    modelo_avaliacao = _criar_random_forest()
-    modelo_avaliacao.fit(X_train, y_train, sample_weight=pesos_train)
+    modelo_avaliacao = _criar_pipeline()
+    modelo_avaliacao.fit(X_train, y_train, rf__sample_weight=pesos_train.to_numpy())
     y_previsto_teste = modelo_avaliacao.predict(X_test)
-    metricas = avaliar_modelo_regressao(y_test, y_previsto_teste, modelo_avaliacao, x.columns)
+    metricas = avaliar_modelo_regressao(y_test, y_previsto_teste, modelo_avaliacao.named_steps['rf'], COLUNAS_FEATURES)
     metricas['n_treino'] = len(X_train)
     metricas['n_teste'] = len(X_test)
+    metricas.update(metricas_cv)
+    metricas['alvo'] = 'NT_GER_c (nota centrada pela média nacional da área)'
 
-    # 2. Modelo final, reajustado com toda a base
-    rf_model = _criar_random_forest()
-    rf_model.fit(x, y, sample_weight=pesos)
+    # 3. Modelo final, reajustado com toda a base
+    modelo_final = _criar_pipeline()
+    modelo_final.fit(x, y, rf__sample_weight=pesos.to_numpy())
 
     # Cria a pasta caso ela não exista e salva o modelo
     os.makedirs(os.path.dirname(caminho_modelo), exist_ok=True)
-    joblib.dump(rf_model, caminho_modelo)
+    joblib.dump(modelo_final, caminho_modelo)
     print(f"[INFO] Inteligência Artificial treinada e salva em: {caminho_modelo}")
-    return rf_model, metricas
+    return modelo_final, metricas
 
 
 def aplicar_modelo(df_consolidado: DataFrame, caminho_modelo: str = 'modelos/rf_regressor.joblib', print_flag=False):
     """
-    Carrega o modelo do disco e aplica aos dados para gerar a nova coluna de predições.
+    Carrega o modelo (Pipeline) do disco e gera a tabela publicada: as 14
+    variáveis (com PCA_ECON_1/2 calculados pelo PCA salvo no modelo) e a nota
+    prevista na escala original (previsão centrada + média nacional da área).
+    Devolve (Random Forest, tabela) — o Random Forest é o que o SHAP explica.
     """
-    # Carrega a IA da memória do disco
-    rf_model = joblib.load(caminho_modelo)
+    modelo = joblib.load(caminho_modelo)
+    x, _, media_area = _entradas_e_alvo(df_consolidado)
 
-    x = df_consolidado.drop(columns=['CO_CURSO', 'NT_GER', 'QT_ALUNOS'])
-
-    df_pos_treino = df_consolidado.copy()
-    df_pos_treino['NT_GER_PREVISTA'] = rf_model.predict(x)
+    df_pos_treino = df_consolidado[['CO_CURSO', 'NT_GER', 'QT_ALUNOS']].copy()
+    df_pos_treino[COLUNAS_FEATURES] = modelo.named_steps['pre'].transform(x)
+    df_pos_treino['NT_GER_PREVISTA'] = modelo.predict(x) + media_area.to_numpy()
 
     show_df(df_pos_treino) if print_flag else None
-    return rf_model, df_pos_treino
+    return modelo.named_steps['rf'], df_pos_treino
 
 
 def preparar_dados_plotagem(df, variavel_destaque='professores'):
@@ -408,8 +470,10 @@ def multi_enade_modelo_regressao(url_conexao, key_conexao, flag_exe_treino=False
 
     if flag_exe_treino:
         _, metricas = treinar_e_salvar_modelo(df_preparado, 0.2, caminho_do_modelo)
-        print(f"[INFO] Qualidade do modelo (conjunto de teste, n={metricas['n_teste']}): "
-              f"R²={metricas['R2']:.3f} | MAE={metricas['MAE']:.3f} | RMSE={metricas['RMSE']:.3f}")
+        print(f"[INFO] Qualidade do modelo (alvo centrado por área): validação cruzada "
+              f"{CV_PARTES}x{CV_REPETICOES} R²={metricas['R2_CV_media']:.3f} ± {metricas['R2_CV_desvio']:.3f}, "
+              f"MAE={metricas['MAE_CV_media']:.3f} | teste único (n={metricas['n_teste']}): "
+              f"R²={metricas['R2']:.3f}, MAE={metricas['MAE']:.3f}, RMSE={metricas['RMSE']:.3f}")
         pd.DataFrame([metricas]).to_csv(os.path.join(diretorio_atual, "metricas_regressao.csv"), index=False)
 
     print("Iniciando o treinamento dos modelos...\n")

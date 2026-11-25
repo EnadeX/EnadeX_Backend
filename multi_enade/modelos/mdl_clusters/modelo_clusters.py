@@ -21,14 +21,31 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="supabase"
 # geram médias/proporções instáveis e não devem pesar igual a cursos bem amostrados.
 N_MINIMO_ALUNOS = 5
 
+# Inicializações do K-Means. Com 10, a semente 42 parava num ótimo local
+# (grupos 73/16/72, inércia 2.743,7) que só aparece em 13 de 100 sementes; com
+# 20 ou mais, chega à solução de menor inércia (74/8/79, inércia 2.728,0), a
+# mesma de 77 de 100 sementes. 50 dá margem e custa pouco (161 cursos). Ver
+# MultiENADE_Analises/scripts/a2_escolha_k.py.
+N_INICIALIZACOES = 50
+
+# Nomes dos 3 grupos pelo perfil de financiamento (QE_I11), que é o que separa
+# os grupos, e não pela nota: a partição reproduz público × privado e os dois
+# grupos privados têm nota média quase igual.
+NOME_PUBLICAS = 'Públicas gratuitas'
+NOME_PROUNI = 'Privadas com ProUni parcial'
+NOME_PAGAS = 'Privadas pagas ou com FIES'
+
 def preparar_dados_cluster_triplo(df_arq3: DataFrame, df_arq4: DataFrame, df_arq21: DataFrame, df_arq17: DataFrame, print_flag=False) -> DataFrame:
     """
     Consolida e transforma os dados de Desempenho (Arq 3), Infraestrutura (Arq 4),
     Diversidade (Arq 21) e Bolsa/Financiamento (Arq 17) por Curso para aplicação
     de Clusterização.
     """
-    # 1. Tratamento Arq 3: Isola a nota geral, calcula a média e o tamanho da amostra
-    df_3 = df_arq3[['CO_CURSO', 'NT_GER']].dropna()
+    # 1. Tratamento Arq 3: Isola a nota geral, calcula a média e o tamanho da amostra.
+    # Mesmo filtro da regressão e da associação: nota numérica e maior que zero.
+    df_3 = df_arq3[['CO_CURSO', 'NT_GER']].copy()
+    df_3['NT_GER'] = pd.to_numeric(df_3['NT_GER'], errors='coerce')
+    df_3 = df_3[(df_3['NT_GER'].notna()) & (df_3['NT_GER'] > 0)]
     df_3_agrupado = df_3.groupby('CO_CURSO').agg(
         NT_GER=('NT_GER', 'mean'),
         QT_ALUNOS=('NT_GER', 'count'),
@@ -83,18 +100,27 @@ def preparar_dados_cluster_triplo(df_arq3: DataFrame, df_arq4: DataFrame, df_arq
 
 def nomear_clusters(perfil_clusters: pd.DataFrame) -> dict:
     """
-    Dá um nome legível a cada Cluster_ID com base no desempenho médio (NT_GER)
-    relativo entre os clusters. O índice numérico que o KMeans atribui a cada
-    grupo é arbitrário e pode mudar entre retreinos — nomear pelo ranking (não
-    pelo índice) garante que o nome continue correto mesmo se os índices virarem.
+    Dá um nome legível a cada Cluster_ID pelo perfil de financiamento médio do
+    grupo (proporções de QE_I11). O índice que o KMeans atribui a cada grupo é
+    arbitrário e pode mudar entre retreinos — nomear pelo perfil (não pelo
+    índice) mantém o nome certo mesmo se os índices virarem.
+    - maior proporção de "nenhum financiamento, curso gratuito" (QE_I11_A): Públicas gratuitas;
+    - entre os outros, maior proporção de ProUni parcial (QE_I11_D, só ProUni
+      parcial; QE_I11_F, ProUni parcial e FIES): Privadas com ProUni parcial;
+    - o restante: Privadas pagas ou com FIES.
+    Com outro número de grupos (ou sem as colunas de QE_I11), usa "Grupo N"
+    pela ordem de nota média.
     """
-    ranking = perfil_clusters['NT_GER'].sort_values(ascending=False)
-    rotulos_3_grupos = ['Desempenho Alto', 'Desempenho Médio', 'Desempenho Baixo']
-    if len(ranking) == len(rotulos_3_grupos):
-        rotulos = rotulos_3_grupos
-    else:
-        rotulos = [f'Grupo {i + 1} (desempenho)' for i in range(len(ranking))]
-    return dict(zip(ranking.index, rotulos))
+    colunas = {'QE_I11_A', 'QE_I11_D', 'QE_I11_F'}
+    if len(perfil_clusters) == 3 and colunas.issubset(perfil_clusters.columns):
+        perfil = perfil_clusters.apply(pd.to_numeric, errors='coerce')
+        publicas = perfil['QE_I11_A'].idxmax()
+        restantes = perfil.drop(index=publicas)
+        prouni = (restantes['QE_I11_D'] + restantes['QE_I11_F']).idxmax()
+        pagas = restantes.drop(index=prouni).index[0]
+        return {publicas: NOME_PUBLICAS, prouni: NOME_PROUNI, pagas: NOME_PAGAS}
+    ranking = pd.to_numeric(perfil_clusters['NT_GER'], errors='coerce').sort_values(ascending=False)
+    return {cid: f'Grupo {i + 1}' for i, cid in enumerate(ranking.index)}
 
 
 def treinar_e_salvar_clusters(df_dados: pd.DataFrame, num_clusters: int = 3, diretorio_modelos: str = '.'):
@@ -114,7 +140,7 @@ def treinar_e_salvar_clusters(df_dados: pd.DataFrame, num_clusters: int = 3, dir
     dados_padronizados = scaler.fit_transform(df_matematica)
 
     # 2. Treina o K-Means
-    kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=10)
+    kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=N_INICIALIZACOES)
     kmeans.fit(dados_padronizados)
 
     # 3. Treina o PCA (Redução Dimensional para 2D)
@@ -163,7 +189,7 @@ def aplicar_clusters(df_dados: pd.DataFrame, diretorio_modelos: str = '.', print
     print("=" * 60)
 
     nomes_clusters = nomear_clusters(perfil_clusters)
-    print("\nNOMES DOS CLUSTERS (por NT_GER médio — o índice numérico é arbitrário, o nome não):")
+    print("\nNOMES DOS CLUSTERS (pelo perfil de financiamento, QE_I11 — o índice numérico é arbitrário, o nome não):")
     for cluster_id, nome in nomes_clusters.items():
         print(f"  Cluster {cluster_id}: {nome} (NT_GER médio={perfil_clusters.loc[cluster_id, 'NT_GER']:.2f})")
     df_clusterizado['Cluster_Nome'] = df_clusterizado['Cluster_ID'].map(nomes_clusters)
