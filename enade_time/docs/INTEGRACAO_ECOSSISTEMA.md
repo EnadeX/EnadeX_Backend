@@ -80,6 +80,7 @@ Endpoints úteis para outros projetos (caminhos relativos à base):
 | `GET /health` | Verificar disponibilidade (503 quando o banco está fora) |
 | `GET /dim/*` | Dimensões (regiões, UFs, anos, grupos, categorias…) |
 | `GET /analises/resumo-anual` | Série por ano (média FG/GER/CE + n), aceita filtros |
+| `GET /analises/descritiva` | Estatística descritiva por edição, **unidade curso-ano**: n, média, DP, variância, CV, mín, Q1, mediana, Q3, máx de NT GER, NT FG e NT CE |
 | `GET /analises/resumo-regiao` / `resumo-uf` / `resumo-ies` | Agregações |
 | `GET /analises/registros` | Registros paginados (3 notas) |
 
