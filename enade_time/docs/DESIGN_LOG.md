@@ -285,6 +285,27 @@ rede não se concentre numa delas. Script `15_benchmark_carga.py`; tabela
 
 ---
 
+## D18 — Estatística descritiva por curso-ano (25/11/2026)
+**Problema:** a D16 fixou o curso-ano (582) como unidade de análise, mas `desvio_padrao`,
+`media_min`, `media_max` e `media_geral` dos resumos ainda eram calculados sobre as 24.967
+linhas de inscrição (cada uma repete a média do curso) e só para a NT_FG. Na NT_FG por edição
+o desvio-padrão por inscrição era 7,97 / 6,38 / 5,23 / 6,03 / 6,04 / 5,80 contra 8,73 / 6,93 /
+6,26 / 6,90 / 6,83 / 6,41 por curso-ano: cursos grandes pesavam mais e a dispersão entre
+cursos saía subestimada. No painel, o indicador "Média NT GER" (37,14) era a média simples das
+seis médias anuais, uma média entre edições que o trabalho declara não comparáveis (o INEP não
+garante comparabilidade; 2005 e 2008 ainda misturam ingressantes).
+**Decisão:** `GET /analises/descritiva` devolve, por `nu_ano` e para NT_GER, NT_FG e NT_CE, n,
+média, desvio-padrão e variância amostrais, coeficiente de variação, mínimo, Q1, mediana, Q3 e
+máximo. A fato é reduzida a um registro por (`nu_ano`, `co_curso`) (`MAX` da média, igual em todo
+o par, ignorando nulos) antes de agregar; quartis por `PERCENTILE_CONT` (interpolação linear).
+Os resumos por região e UF ganham `desvio_padrao_{ger,fg,ce}_curso_ano` (aditivos). Os campos
+antigos continuam na resposta, marcados como legados no OpenAPI.
+**Verificação:** sem filtros, a rota reproduz a base publicada (`tests/dados/curso_ano_api_2026-11-25.csv`,
+582 pares, 568 com NT_GER) e a prévia do trabalho (2005: n = 110, média 33,11, DP 6,93; 2014:
+n = 66, média 43,59, DP 8,84), mais testes com dados sintéticos contra `statistics` (n = 1, nota
+nula, média zero, peso de inscrições). Diferença conhecida: NT_CE do curso 20239 em 2008 vale
+28,6938 na base publicada e 28,6937 no banco local (empate de arredondamento do NUMERIC(7,4)).
+
 ## Convenções de ambiente
 - Diretório oficial: `C:\Projetos\ENADE` (rodar **fora** do OneDrive).
 - Comandos Node em `frontend/`; Python/Docker na raiz.

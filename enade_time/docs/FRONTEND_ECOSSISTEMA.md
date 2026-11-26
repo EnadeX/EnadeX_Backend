@@ -44,7 +44,7 @@ pnpm dev -p 3000                      # http://localhost:3000/enade-time
 
 ## Contrato com a API
 
-O módulo consome 19 das 20 rotas GET de `/api/enade-time` (`/benchmark/campanhas`
+O módulo consome 20 das 21 rotas GET de `/api/enade-time` (`/benchmark/campanhas`
 existe e não é usada). Só o prefixo e a URL base mudaram em relação à SPA original;
 tipos e parâmetros são os mesmos de `api/schemas/`.
 
@@ -109,6 +109,7 @@ Para reproduzir (com a API e o `pnpm start -p 3000` no ar):
 cd enade_time\tools\e2e_frontend
 npm install
 npm run funcional
+npm run anual            # página Por Ano: indicadores e tabela descritiva por curso-ano
 npm run acessibilidade
 npm run degradacao      # derruba e religa a API e o container do Postgres
 ```

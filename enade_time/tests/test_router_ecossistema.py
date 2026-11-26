@@ -1,7 +1,7 @@
 """
 Modo ecossistema: o router do ENADE-Time incluído num `FastAPI()` sem lifespan,
 como o `api_main.py` central faria. Cobre o contrato com o frontend do grupo
-(`EnadeX_Frontend/app/enade-time`): prefixo `/api/enade-time`, 20 rotas GET, e
+(`EnadeX_Frontend/app/enade-time`): prefixo `/api/enade-time`, 21 rotas GET, e
 falhas de banco devolvidas como 503/500 **com cabeçalhos CORS** — um 500 sem
 CORS aparece no navegador como erro de rede e o dashboard não sabe o que houve.
 """
@@ -48,9 +48,9 @@ def client_central():
     return TestClient(_app_central())  # sem `with`: lifespan não roda, como no api_main
 
 
-def test_inventario_19_rotas_get_sob_o_prefixo():
+def test_inventario_21_rotas_get_sob_o_prefixo():
     rotas = [r for r in _app_central().routes if isinstance(r, APIRoute) and r.path.startswith(PREFIXO)]
-    assert len(rotas) == 20
+    assert len(rotas) == 21
     assert all(r.methods == {"GET"} for r in rotas)
     grupos = {r.path.split("/")[3] for r in rotas}
     assert grupos == {"health", "dim", "analises", "benchmark"}
@@ -220,7 +220,7 @@ def test_erro_de_sql_devolve_500_com_cors(client_central):
 ROTAS_COM_BANCO = [
     "/health",
     "/dim/regioes", "/dim/anos",
-    "/analises/resumo-anual", "/analises/registros?page=1&page_size=5",
+    "/analises/resumo-anual", "/analises/descritiva", "/analises/registros?page=1&page_size=5",
     "/benchmark/execucoes", "/benchmark/campanhas", "/benchmark/comparativo",
 ]
 
