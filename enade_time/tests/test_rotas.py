@@ -15,6 +15,7 @@ ROTAS_200 = [
     "/dim/regioes", "/dim/ufs", "/dim/ufs?co_regiao=1", "/dim/anos", "/dim/grupos",
     "/dim/modalidades", "/dim/categorias-adm", "/dim/organizacoes-academicas",
     "/analises/resumo-anual", "/analises/resumo-anual?co_regiao=1",
+    "/analises/descritiva", "/analises/descritiva?nu_ano=2021", "/analises/descritiva?co_regiao=1&co_grupo=4004",
     "/analises/resumo-regiao", "/analises/resumo-uf",
     "/analises/resumo-ies?limit=5", "/analises/registros?page=1&page_size=5",
     "/benchmark/execucoes", "/benchmark/execucoes?apenas_validas=false",
