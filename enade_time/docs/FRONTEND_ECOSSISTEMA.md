@@ -109,6 +109,7 @@ Para reproduzir (com a API e o `pnpm start -p 3000` no ar):
 cd enade_time\tools\e2e_frontend
 npm install
 npm run funcional
+npm run anual            # página Por Ano: indicadores e tabela descritiva por curso-ano
 npm run acessibilidade
 npm run degradacao      # derruba e religa a API e o container do Postgres
 ```
